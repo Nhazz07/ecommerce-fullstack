@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import bleach from "../assets/figurebleach.jpg";
 import ProductCard from "../Components/ProductCard";
-
+import {getAllProduct} from "../Services/productApi";
+import { useEffect, useState } from "react";
 const categories = [
     "All",
     "Figures",
@@ -13,35 +14,33 @@ const categories = [
     "Accessories",
 ];
 
-const products = [
-    {
-        id: 1,
-        productVariantId: 7,
-        name: "Bleach Figure",
-        category: "Bleach",
-        price: "$85.00",
-        image: bleach
-    },
-    {
-        id: 3,
-        productVariantId: null,
-        name: "Bleach Figure",
-        category: "Bleach",
-        price: "$85.00",
-        image: bleach
-    },
-    {
-        id: 4,
-        productVariantId: null,
-        name: "Black Clover Figure",
-        category: "Black Clover",
-        price: "$85.00",
-        image: bleach
-    }
-];
-
 function Home() {
-    const navigate = useNavigate();
+const navigate = useNavigate();
+
+const [products, setProducts] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState("");
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try{
+                const response = await getAllProduct();
+
+                setProducts(response.data.content);
+            }catch(error){
+                console.log("Failed to fetch a products.", error);
+                setError("Failed to load a product");
+            }finally{
+                setLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+    if(loading) {
+        return <p>Loading products....</p>;
+    }
+    if(error){
+        return <p>{}</p>
+    }
 
     return (
         <main className="bg-white text-[#0B1020] dark:bg-[#0B1020] dark:text-white">

@@ -1,46 +1,66 @@
 import React from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {useCart} from "../Context/CartContent"
+import { useCart } from "../Context/CartContent";
+import bleach from "../assets/figurebleach.jpg";
 
 function ProductCard({ product }) {
     const navigate = useNavigate();
-    const {addToCart} = useCart();
+    const { addToCart } = useCart();
+
+    const handleAddToCart = () => {
+        // Get the first available variant
+        const productVariantId = product.variants?.[0]?.id;
+
+        console.log("Product:", product);
+        console.log("Selected Product Variant ID:", productVariantId);
+
+        if (!productVariantId) {
+            console.error(
+                "This product does not have a product variant ID."
+            );
+            return;
+        }
+
+        addToCart(product, productVariantId);
+    };
+
     return (
         <div
             onClick={() => navigate(`/products/${product.id}`)}
-            className="group overflow-hidden rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 cursor-pointer hover:border-pink-400 transition"
+            className="group cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-pink-400 dark:border-white/10 dark:bg-white/5"
         >
             {/* Product Image */}
-            <div className="h-56 bg-gray-100 dark:bg-white/5 overflow-hidden">
+            <div className="h-56 overflow-hidden bg-gray-100 dark:bg-white/5">
                 <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    src={product.image || bleach}
+                    alt={product.productName || product.name}
+                    className="h-full w-full object-cover object-cover transition duration-300 group-hover:scale-105"
                 />
             </div>
 
             {/* Product Information */}
             <div className="p-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {product.category}
+                    {product.category || "Anime Figure"}
                 </p>
 
-                <h3 className="mt-1 font-semibold text-[#0B1020] dark:text-white truncate">
-                    {product.name}
+                <h3 className="mt-1 truncate font-semibold text-[#0B1020] dark:text-white">
+                    {product.productName || product.name}
                 </h3>
 
-                <div className="flex items-center justify-between mt-4">
+                <div className="mt-4 flex items-center justify-between">
                     <span className="font-bold text-[#0B1020] dark:text-white">
-                        {product.price}
+                        ${Number(product.price).toFixed(2)}
                     </span>
 
                     <button
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation();
-                            addToCart(product);
+                            handleAddToCart();
                         }}
-                        className="p-2 rounded-lg bg-pink-400 text-[#0B1020] hover:bg-pink-300 transition"
+                        className="rounded-lg bg-pink-400 p-2 text-[#0B1020] transition hover:bg-pink-300"
                         title="Add to cart"
                     >
                         <ShoppingCart size={18} />
