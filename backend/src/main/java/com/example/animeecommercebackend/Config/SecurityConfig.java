@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
@@ -50,15 +51,28 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow CORS preflight
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Allow CORS preflight requests
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
 
-                        // Public endpoints
+                        // Public authentication endpoints
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
-                                "/api/cart",
-                                "api/product",
+                                "/api/cart"
+                        ).permitAll()
+
+                        // Public product browsing
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/product",
+                                "/api/product/**"
+                        ).permitAll()
+
+                        // Swagger endpoints
+                        .requestMatchers(
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
@@ -83,9 +97,11 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of("http://localhost:3000",
+                List.of(
+                        "http://localhost:3000",
                         "http://localhost:5173",
-                        "http://localhost:5174")
+                        "http://localhost:5174"
+                )
         );
 
         configuration.setAllowedMethods(
