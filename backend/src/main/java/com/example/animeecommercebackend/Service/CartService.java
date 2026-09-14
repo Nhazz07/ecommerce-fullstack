@@ -8,8 +8,10 @@ import java.util.List;
 
 public interface CartService {
 
-    CartResponseDto createCart(CartRequestDto dto)
-            throws AccessDeniedException;
+    CartResponseDto createCart(
+            CartRequestDto dto,
+            String cartToken
+    ) throws AccessDeniedException;
 
     CartResponseDto getCartById(
             Long id,

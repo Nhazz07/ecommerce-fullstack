@@ -26,19 +26,21 @@ public class CartController {
 
     @PostMapping
     public ResponseEntity<ApiResponseDto<CartResponseDto>> createCart(
-            @RequestBody @Valid CartRequestDto dto){
+            @RequestBody CartRequestDto dto,
+            @RequestHeader(value = "X-Cart-Token", required = false)
+            String cartToken
+    ) {
+        CartResponseDto response =
+                cartServiceImpl.createCart(dto, cartToken);
 
-        CartResponseDto cart = cartServiceImpl.createCart(dto);
-
-        ApiResponseDto<CartResponseDto> response = new ApiResponseDto<>(
-                true,
-                "Cart Created Successfully!",
-                cart
+        return ResponseEntity.ok(
+                new ApiResponseDto<>(
+                        true,
+                        "Cart Created Successfully!",
+                        response
+                )
         );
-
-        return ResponseEntity.ok(response);
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDto<CartResponseDto>> getCartById(
