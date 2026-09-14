@@ -24,11 +24,17 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Size(
+            min = 3,
+            max = 50,
+            message = "Username must be between 3 and 50 characters"
+    )
     @Column(nullable = false, unique = true)
     private String username;
 
@@ -38,17 +44,23 @@ public class User {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+    @Size(
+            min = 8,
+            message = "Password must be at least 8 characters"
+    )
+    @Column(nullable = false)
     private String password;
 
-
     @NotBlank(message = "First name is required")
+    @Column(nullable = false)
     private String firstName;
 
     @NotBlank(message = "Last name is required")
+    @Column(nullable = false)
     private String lastName;
 
     @NotBlank(message = "Phone number is required")
+    @Column(nullable = false)
     private String phoneNumber;
 
     @NotNull(message = "User role is required")
@@ -58,11 +70,19 @@ public class User {
 
     @NotNull(message = "User status is required")
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private UserStatus status;
 
-
+    /*
+     * One user can have one cart.
+     *
+     * The users table contains the cart_id foreign key.
+     */
     @OneToOne
-    @JoinColumn(name = "cart_id")
+    @JoinColumn(
+            name = "cart_id",
+            referencedColumnName = "id"
+    )
     private Cart cart;
 
     @ManyToOne
@@ -85,7 +105,10 @@ public class User {
     private List<Wishlist> wishlists;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(
+            nullable = false,
+            updatable = false
+    )
     private LocalDateTime createdAt;
 
     @UpdateTimestamp

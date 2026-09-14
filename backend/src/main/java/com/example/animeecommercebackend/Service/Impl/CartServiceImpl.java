@@ -2,24 +2,25 @@ package com.example.animeecommercebackend.Service.Impl;
 
 import com.example.animeecommercebackend.Dto.Request.CartRequestDto;
 import com.example.animeecommercebackend.Dto.Response.CartResponseDto;
-import com.example.animeecommercebackend.Entity.*;
+import com.example.animeecommercebackend.Entity.Cart;
+import com.example.animeecommercebackend.Entity.CartItem;
+import com.example.animeecommercebackend.Entity.ProductVariant;
+import com.example.animeecommercebackend.Entity.User;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.CartMapper;
 import com.example.animeecommercebackend.Repository.CartRepository;
-import com.example.animeecommercebackend.Repository.ProductRepository;
 import com.example.animeecommercebackend.Repository.ProductVariantRepository;
 import com.example.animeecommercebackend.Repository.UserRepository;
 import com.example.animeecommercebackend.Service.CartService;
 import com.example.animeecommercebackend.Service.CurrentUserService;
-import org.springframework.security.access.AccessDeniedException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.UUID;
 
 @Service
@@ -29,26 +30,13 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final ProductVariantRepository productVariantRepository;
     private final CurrentUserService currentUserService;
-
+    private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public CartResponseDto createCart(CartRequestDto dto) {
 
-        User currentUser;
-
-        // Check if a user is authenticated
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication != null &&
-                authentication.isAuthenticated() &&
-                !authentication.getAuthorities().stream()
-                        .anyMatch(a -> a.getAuthority().equals("ROLE_ANONYMOUS"))) {
-
-            currentUser = currentUserService.getCurrentUser();
-        } else {
-            currentUser = null;
-        }
+        User currentUser = getAuthenticatedUserOrNull();
 
         ProductVariant productVariant =
                 productVariantRepository.findById(dto.getProductVariantId())
@@ -59,27 +47,29 @@ public class CartServiceImpl implements CartService {
 
         Cart cart;
 
-        // 1. Find existing cart for authenticated user
         if (currentUser != null) {
 
-            cart = cartRepository.findFirstByUserId(currentUser.getId())
-                    .orElseGet(() -> {
+            cart = currentUser.getCart();
 
-                        Cart newCart = new Cart();
-                        newCart.setUser(currentUser);
-                        newCart.setCartToken(UUID.randomUUID().toString());
+            if (cart == null) {
 
-                        return newCart;
-                    });
+                cart = new Cart();
+                cart.setCartToken(null);
+                cart.setUser(currentUser);
+
+                cart = cartRepository.save(cart);
+
+                currentUser.setCart(cart);
+                userRepository.save(currentUser);
+            }
 
         } else {
 
-            // 2. Create a new guest cart
             cart = new Cart();
             cart.setCartToken(UUID.randomUUID().toString());
+            cart = cartRepository.save(cart);
         }
 
-        // 3. Check if this product variant is already in cart
         CartItem existingCartItem = cart.getCartItems()
                 .stream()
                 .filter(item ->
@@ -92,16 +82,13 @@ public class CartServiceImpl implements CartService {
 
         if (existingCartItem != null) {
 
-            // Variant already exists, increase quantity
             existingCartItem.setQuantity(
                     existingCartItem.getQuantity() + dto.getQuantity()
             );
 
         } else {
 
-            // Variant does not exist, create a new cart item
             CartItem cartItem = new CartItem();
-
             cartItem.setCart(cart);
             cartItem.setProductVariant(productVariant);
             cartItem.setQuantity(dto.getQuantity());
@@ -115,14 +102,13 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public CartResponseDto getCartById(
-            Long id,
-            String cartToken) {
+    @Transactional(readOnly = true)
+    public CartResponseDto getCartById(Long id, String cartToken) {
 
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Cart Not Found!!"
+                                "Cart Not Found!"
                         ));
 
         checkCartOwnership(cart, cartToken);
@@ -130,28 +116,25 @@ public class CartServiceImpl implements CartService {
         return CartMapper.toResponse(cart);
     }
 
-
     @Override
+    @Transactional(readOnly = true)
     public List<CartResponseDto> getAllCart() {
 
         List<Cart> carts = cartRepository.findAll();
 
         if (carts.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "Cart Not Found!!"
-            );
+            throw new ResourceNotFoundException("Cart Not Found!");
         }
 
-        return carts
-                .stream()
+        return carts.stream()
                 .map(CartMapper::toResponse)
                 .toList();
     }
 
-
     @Override
-    public List<CartResponseDto> getCartByUserId(
-            Long userId) throws AccessDeniedException {
+    @Transactional(readOnly = true)
+    public List<CartResponseDto> getCartByUserId(Long userId)
+            throws AccessDeniedException {
 
         User currentUser = currentUserService.getCurrentUser();
 
@@ -161,23 +144,17 @@ public class CartServiceImpl implements CartService {
             );
         }
 
-        List<Cart> carts =
-                cartRepository.findByUserId(userId);
+        Cart cart = currentUser.getCart();
 
-        if (carts.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "Cart Not Found!"
-            );
+        if (cart == null) {
+            throw new ResourceNotFoundException("Cart Not Found!");
         }
 
-        return carts
-                .stream()
-                .map(CartMapper::toResponse)
-                .toList();
+        return List.of(CartMapper.toResponse(cart));
     }
 
-
     @Override
+    @Transactional
     public CartResponseDto updateCart(
             Long id,
             CartRequestDto dto,
@@ -186,48 +163,56 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Cart Not Found"
+                                "Cart Not Found!"
                         ));
 
         checkCartOwnership(cart, cartToken);
 
-        List<ProductVariant> productVariants =
-                productVariantRepository.findAllById(
-                        List.of(dto.getProductVariantId())
-                );
+        ProductVariant productVariant =
+                productVariantRepository.findById(dto.getProductVariantId())
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Product Variant Not Found!"
+                                ));
 
-        if (productVariants.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "No Product Variant Found!"
-            );
-        }
+        CartItem existingCartItem = cart.getCartItems()
+                .stream()
+                .filter(item ->
+                        item.getProductVariant()
+                                .getId()
+                                .equals(productVariant.getId())
+                )
+                .findFirst()
+                .orElse(null);
 
-        for (ProductVariant productVariant : productVariants) {
+        if (existingCartItem != null) {
+
+            existingCartItem.setQuantity(dto.getQuantity());
+
+        } else {
 
             CartItem cartItem = new CartItem();
-
             cartItem.setCart(cart);
             cartItem.setProductVariant(productVariant);
-            cartItem.setQuantity(1);
+            cartItem.setQuantity(dto.getQuantity());
 
             cart.getCartItems().add(cartItem);
         }
 
-        Cart updated = cartRepository.save(cart);
+        Cart updatedCart = cartRepository.save(cart);
 
-        return CartMapper.toResponse(updated);
+        return CartMapper.toResponse(updatedCart);
     }
 
-
     @Override
-    public void deleteCart(
-            Long id,
-            String cartToken) throws AccessDeniedException {
+    @Transactional
+    public void deleteCart(Long id, String cartToken)
+            throws AccessDeniedException {
 
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Cart Not Found"
+                                "Cart Not Found!"
                         ));
 
         checkCartOwnership(cart, cartToken);
@@ -235,8 +220,8 @@ public class CartServiceImpl implements CartService {
         cartRepository.delete(cart);
     }
 
-
     @Override
+    @Transactional
     public CartResponseDto addProductVariant(
             Long cartId,
             Long productVariantId,
@@ -245,7 +230,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Cart Not Found"
+                                "Cart Not Found!"
                         ));
 
         checkCartOwnership(cart, cartToken);
@@ -257,21 +242,39 @@ public class CartServiceImpl implements CartService {
                                         "Product Variant Not Found!"
                                 ));
 
-        CartItem cartItem = new CartItem();
+        CartItem existingCartItem = cart.getCartItems()
+                .stream()
+                .filter(item ->
+                        item.getProductVariant()
+                                .getId()
+                                .equals(productVariantId)
+                )
+                .findFirst()
+                .orElse(null);
 
-        cartItem.setCart(cart);
-        cartItem.setProductVariant(productVariant);
-        cartItem.setQuantity(1);
+        if (existingCartItem != null) {
 
-        cart.getCartItems().add(cartItem);
+            existingCartItem.setQuantity(
+                    existingCartItem.getQuantity() + 1
+            );
 
-        Cart updated = cartRepository.save(cart);
+        } else {
 
-        return CartMapper.toResponse(updated);
+            CartItem cartItem = new CartItem();
+            cartItem.setCart(cart);
+            cartItem.setProductVariant(productVariant);
+            cartItem.setQuantity(1);
+
+            cart.getCartItems().add(cartItem);
+        }
+
+        Cart updatedCart = cartRepository.save(cart);
+
+        return CartMapper.toResponse(updatedCart);
     }
 
-
     @Override
+    @Transactional
     public CartResponseDto removeProductVariant(
             Long cartId,
             Long productVariantId,
@@ -280,7 +283,7 @@ public class CartServiceImpl implements CartService {
         Cart cart = cartRepository.findById(cartId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Cart Not Found"
+                                "Cart Not Found!"
                         ));
 
         checkCartOwnership(cart, cartToken);
@@ -296,29 +299,43 @@ public class CartServiceImpl implements CartService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Product Variant is not in the cart"
-                        )
-                );
+                        ));
 
         cart.getCartItems().remove(cartItem);
 
-        Cart updated = cartRepository.save(cart);
+        Cart updatedCart = cartRepository.save(cart);
 
-        return CartMapper.toResponse(updated);
+        return CartMapper.toResponse(updatedCart);
     }
 
-    private void checkCartOwnership(
-            Cart cart,
-            String cartToken) {
+    private User getAuthenticatedUserOrNull() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
-        // Customer cart
+        System.out.println("AUTHENTICATION: " + authentication);
+        System.out.println("PRINCIPAL: " +
+                (authentication != null ? authentication.getPrincipal() : null));
+        System.out.println("USERNAME: " +
+                (authentication != null ? authentication.getName() : null));
+        System.out.println("AUTHORITIES: " +
+                (authentication != null ? authentication.getAuthorities() : null));
+
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+
+        return currentUserService.getCurrentUser();
+    }
+
+    private void checkCartOwnership(Cart cart, String cartToken) {
+
         if (cart.getUser() != null) {
 
-            User currentUser =
-                    currentUserService.getCurrentUser();
+            User currentUser = currentUserService.getCurrentUser();
 
-            if (!cart.getUser().getId()
-                    .equals(currentUser.getId())) {
-
+            if (!cart.getUser().getId().equals(currentUser.getId())) {
                 throw new AccessDeniedException(
                         "You cannot access this cart"
                 );
@@ -327,14 +344,10 @@ public class CartServiceImpl implements CartService {
             return;
         }
 
-        // Guest cart
-        if (cart.getCartToken() == null ||
-                cartToken == null ||
-                !cart.getCartToken().equals(cartToken)) {
-
-            throw new AccessDeniedException(
-                    "Invalid cart token"
-            );
+        if (cart.getCartToken() == null
+                || cartToken == null
+                || !cart.getCartToken().equals(cartToken)) {
+            throw new AccessDeniedException("Invalid cart token");
         }
     }
 }

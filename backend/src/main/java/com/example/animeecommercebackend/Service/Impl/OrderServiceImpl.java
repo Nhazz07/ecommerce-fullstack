@@ -42,19 +42,25 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto createOrder(OrderRequestDto dto) {
 
-        // 1. Get the currently authenticated customer
+        // 1. Get the currently authenticated user
         User user = currentUserService.getCurrentUser();
 
-        // 2. Get the cart connected to the current user
+        // 2. Get the cart assigned to this user
         Cart cart = user.getCart();
 
         if (cart == null) {
-            throw new ResourceNotFoundException("Cart Not Found!");
+            throw new ResourceNotFoundException(
+                    "Cart Not Found!"
+            );
         }
 
-        // 3. Check whether the cart contains any items
-        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
-            throw new ResourceNotFoundException("Cart Is Empty!");
+        // 3. Check whether the cart contains items
+        if (cart.getCartItems() == null
+                || cart.getCartItems().isEmpty()) {
+
+            throw new ResourceNotFoundException(
+                    "Cart Is Empty!"
+            );
         }
 
         // 4. Create the order
@@ -62,7 +68,9 @@ public class OrderServiceImpl implements OrderService {
 
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
-        order.setOrderNumber((int) (Math.random() * 90000000) + 10000000);
+        order.setOrderNumber(
+                (int) (Math.random() * 90000000) + 10000000
+        );
         order.setOrderDate(LocalDateTime.now());
         order.setShippingAddress(dto.getShippingAddress());
 
@@ -89,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
-            // 6. Check inventory before creating the order
+            // 6. Check inventory
             if (!inventoryService.hasEnoughStock(
                     variant.getId(),
                     quantity
@@ -109,7 +117,7 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
-            // 8. Calculate product promotion discount
+            // 8. Calculate promotion discount
             BigDecimal promotionDiscount =
                     promotionService.calculateDiscount(
                             variant.getProduct().getId(),
@@ -120,12 +128,12 @@ public class OrderServiceImpl implements OrderService {
                 promotionDiscount = BigDecimal.ZERO;
             }
 
-            // Prevent the promotion discount from being negative
+            // Prevent negative promotion discounts
             if (promotionDiscount.compareTo(BigDecimal.ZERO) < 0) {
                 promotionDiscount = BigDecimal.ZERO;
             }
 
-            // Prevent the promotion discount from exceeding the unit price
+            // Prevent discount from exceeding the product price
             if (promotionDiscount.compareTo(unitPrice) > 0) {
                 promotionDiscount = unitPrice;
             }
@@ -139,7 +147,7 @@ public class OrderServiceImpl implements OrderService {
                             BigDecimal.valueOf(quantity)
                     );
 
-            // 10. Create the order item
+            // 10. Create order item
             OrderItem orderItem = new OrderItem();
 
             orderItem.setOrder(order);
@@ -153,7 +161,7 @@ public class OrderServiceImpl implements OrderService {
             subTotal = subTotal.add(itemSubtotal);
         }
 
-        // 11. Attach order items to the order
+        // 11. Attach order items
         order.setOrderItems(orderItems);
         order.setSubTotal(subTotal);
 
@@ -201,10 +209,10 @@ public class OrderServiceImpl implements OrderService {
 
         order.setTotalAmount(totalAmount);
 
-        // 15. Save the order
+        // 15. Save order
         Order savedOrder = orderRepository.save(order);
 
-        // 16. Decrease inventory after the order is saved
+        // 16. Decrease inventory
         for (CartItem cartItem : cart.getCartItems()) {
 
             ProductVariant variant = cartItem.getProductVariant();
@@ -215,14 +223,10 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        // 17. Clear the cart after successful order creation
+        // 17. Clear cart after successful order creation
         cart.getCartItems().clear();
 
-        // Because Cart is managed inside the transaction,
-        // the cart changes will be persisted automatically.
-        // No cartRepository.save(cart) is required here.
-
-        // 18. Return the order response
+        // 18. Return order response
         return OrderMapper.toResponse(savedOrder);
     }
 
@@ -243,15 +247,19 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Order Not Found!")
-                );
+                        new ResourceNotFoundException(
+                                "Order Not Found!"
+                        ));
 
         Long currentUserId =
                 currentUserService.getCurrentUser().getId();
 
         if (order.getUser() == null
                 || !order.getUser().getId().equals(currentUserId)) {
-            throw new ResourceNotFoundException("Order Not Found!");
+
+            throw new ResourceNotFoundException(
+                    "Order Not Found!"
+            );
         }
 
         return OrderMapper.toResponse(order);
@@ -263,7 +271,9 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findOrderByUserId(userId);
 
         if (order == null) {
-            throw new ResourceNotFoundException("Order Not Found!");
+            throw new ResourceNotFoundException(
+                    "Order Not Found!"
+            );
         }
 
         return OrderMapper.toResponse(order);
@@ -285,15 +295,19 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Order Not Found!")
-                );
+                        new ResourceNotFoundException(
+                                "Order Not Found!"
+                        ));
 
         Long currentUserId =
                 currentUserService.getCurrentUser().getId();
 
         if (order.getUser() == null
                 || !order.getUser().getId().equals(currentUserId)) {
-            throw new ResourceNotFoundException("Order Not Found!");
+
+            throw new ResourceNotFoundException(
+                    "Order Not Found!"
+            );
         }
 
         order.setShippingAddress(dto.getShippingAddress());
@@ -308,15 +322,19 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Order Not Found!")
-                );
+                        new ResourceNotFoundException(
+                                "Order Not Found!"
+                        ));
 
         Long currentUserId =
                 currentUserService.getCurrentUser().getId();
 
         if (order.getUser() == null
                 || !order.getUser().getId().equals(currentUserId)) {
-            throw new ResourceNotFoundException("Order Not Found!");
+
+            throw new ResourceNotFoundException(
+                    "Order Not Found!"
+            );
         }
 
         orderRepository.delete(order);
@@ -329,10 +347,14 @@ public class OrderServiceImpl implements OrderService {
 
         Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Order Not Found!")
-                );
+                        new ResourceNotFoundException(
+                                "Order Not Found!"
+                        ));
 
-        if (!isValidStatusTransition(order.getStatus(), status)) {
+        if (!isValidStatusTransition(
+                order.getStatus(),
+                status
+        )) {
             throw new RuntimeException(
                     "Invalid order status transition"
             );

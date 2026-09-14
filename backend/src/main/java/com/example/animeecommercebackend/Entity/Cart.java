@@ -9,7 +9,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -25,6 +24,7 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Used mainly for guest carts
     @Column(unique = true)
     private String cartToken;
 
@@ -36,6 +36,7 @@ public class Cart {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    // Inverse side of User.cart
     @OneToOne(mappedBy = "cart", fetch = FetchType.LAZY)
     private User user;
 
@@ -45,5 +46,4 @@ public class Cart {
             orphanRemoval = true
     )
     private Set<CartItem> cartItems = new HashSet<>();
-
 }

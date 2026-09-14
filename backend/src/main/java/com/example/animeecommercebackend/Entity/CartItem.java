@@ -22,7 +22,10 @@ import java.time.LocalDateTime;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_cart_product_variant",
-                        columnNames = {"cart_id", "product_variant_id"}
+                        columnNames = {
+                                "cart_id",
+                                "product_variant_id"
+                        }
                 )
         }
 )
@@ -36,7 +39,6 @@ public class CartItem {
     @Min(value = 1, message = "Quantity must be at least 1")
     @Column(nullable = false)
     private Integer quantity;
-
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
