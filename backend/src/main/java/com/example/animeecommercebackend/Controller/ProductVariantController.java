@@ -24,88 +24,128 @@ public class ProductVariantController {
 
     private final ProductVariantServiceImpl productVariantServiceImpl;
 
+    // ADMIN: CREATE PRODUCT VARIANT
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<ProductVariantResponseDto>> createProductVariant(
-            @RequestBody @Valid ProductVariantRequestDto dto){
-        ProductVariantResponseDto productVariant = productVariantServiceImpl.createProductVariant(dto);
+            @RequestBody @Valid ProductVariantRequestDto dto) {
 
-        ApiResponseDto<ProductVariantResponseDto> response = new ApiResponseDto<>(
-                true,
-                "Product Variant Created Successfully",
-                productVariant
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        ProductVariantResponseDto productVariant =
+                productVariantServiceImpl.createProductVariant(dto);
+
+        ApiResponseDto<ProductVariantResponseDto> response =
+                new ApiResponseDto<>(
+                        true,
+                        "Product Variant Created Successfully",
+                        productVariant
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
+
+    // CUSTOMER / ADMIN: GET PRODUCT VARIANT BY ID
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<ProductVariantResponseDto>> getProductVariantById(
-            @PathVariable @Positive Long id){
-        ProductVariantResponseDto productVariant = productVariantServiceImpl.getProductVariantById(id);
+            @PathVariable @Positive Long id) {
 
-        ApiResponseDto<ProductVariantResponseDto> response = new ApiResponseDto<>(
-                true,
-                "Product Variant Retrieved Successfully",
-                productVariant
-        );
+        ProductVariantResponseDto productVariant =
+                productVariantServiceImpl.getProductVariantById(id);
+
+        ApiResponseDto<ProductVariantResponseDto> response =
+                new ApiResponseDto<>(
+                        true,
+                        "Product Variant Retrieved Successfully",
+                        productVariant
+                );
+
         return ResponseEntity.ok(response);
     }
+
+    // ADMIN: GET ALL PRODUCT VARIANTS
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ApiResponseDto<List<ProductVariantResponseDto>>> getAllProductVariant(){
-        List<ProductVariantResponseDto> productVariants = productVariantServiceImpl.getAllProductVariant();
-        ApiResponseDto<List<ProductVariantResponseDto>> response = new ApiResponseDto<>(
-                true,
-                "Product Variant Retrieved Successfully",
-                productVariants
-        );
-        return ResponseEntity.ok(response);
-    }
-    @GetMapping("/productId/{productId}")
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ApiResponseDto<List<ProductVariantResponseDto>>> getProductVariantByProductid(
-            @PathVariable @Positive Long productId){
-        List<ProductVariantResponseDto> productVariants = productVariantServiceImpl.getVariantByProductId(productId);
+    public ResponseEntity<ApiResponseDto<List<ProductVariantResponseDto>>> getAllProductVariant() {
 
-        ApiResponseDto<List<ProductVariantResponseDto>> response = new ApiResponseDto<>(
-                true,
-                "Product Variant Retrieved Successfully",
-                productVariants
-        );
+        List<ProductVariantResponseDto> productVariants =
+                productVariantServiceImpl.getAllProductVariant();
+
+        ApiResponseDto<List<ProductVariantResponseDto>> response =
+                new ApiResponseDto<>(
+                        true,
+                        "Product Variant Retrieved Successfully",
+                        productVariants
+                );
+
         return ResponseEntity.ok(response);
     }
+
+    // PUBLIC: GET PRODUCT VARIANTS BY PRODUCT ID
+
+    @GetMapping("/productId/{productId}")
+    public ResponseEntity<ApiResponseDto<List<ProductVariantResponseDto>>> getProductVariantByProductid(
+            @PathVariable @Positive Long productId) {
+
+        List<ProductVariantResponseDto> productVariants =
+                productVariantServiceImpl.getVariantByProductId(productId);
+
+        ApiResponseDto<List<ProductVariantResponseDto>> response =
+                new ApiResponseDto<>(
+                        true,
+                        "Product Variant Retrieved Successfully",
+                        productVariants
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    // ADMIN: UPDATE PRODUCT VARIANT
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<ProductVariantResponseDto>> updateProductVariant(
             @PathVariable @Positive Long id,
-            @RequestBody @Valid ProductVariantRequestDto dto){
-        ProductVariantResponseDto productVariants = productVariantServiceImpl.updateProductVariant(id,dto);
+            @RequestBody @Valid ProductVariantRequestDto dto) {
 
-        ApiResponseDto<ProductVariantResponseDto> response = new ApiResponseDto<>(
-                true,
-                "Product Variant Updated Successfully",
-                productVariants
-        );
+        ProductVariantResponseDto productVariants =
+                productVariantServiceImpl.updateProductVariant(id, dto);
+
+        ApiResponseDto<ProductVariantResponseDto> response =
+                new ApiResponseDto<>(
+                        true,
+                        "Product Variant Updated Successfully",
+                        productVariants
+                );
+
         return ResponseEntity.ok(response);
     }
+
+    // ADMIN: DELETE PRODUCT VARIANT
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<Void>> deleteProductVariant(
-            @PathVariable @Positive Long id){
+            @PathVariable @Positive Long id) {
+
         productVariantServiceImpl.deleteProductVariant(id);
-        ApiResponseDto<Void> response = new ApiResponseDto<>(
-                true,
-                "Product Variant Deleted Successfully",
-                null
-        );
+
+        ApiResponseDto<Void> response =
+                new ApiResponseDto<>(
+                        true,
+                        "Product Variant Deleted Successfully",
+                        null
+                );
+
         return ResponseEntity.ok(response);
     }
 }

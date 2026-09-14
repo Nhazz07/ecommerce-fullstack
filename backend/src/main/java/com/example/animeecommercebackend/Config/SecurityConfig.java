@@ -68,7 +68,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/product",
-                                "/api/product/**"
+                                "/api/product/**",
+                                "/api/productVariant/productId/**"
                         ).permitAll()
 
                         // Swagger endpoints

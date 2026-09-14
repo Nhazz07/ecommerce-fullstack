@@ -34,7 +34,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponseDto createCart(CartRequestDto dto) {
 
-        User currentUser = null;
+        User currentUser;
 
         // Check if a user is authenticated
         Authentication authentication =
@@ -46,6 +46,8 @@ public class CartServiceImpl implements CartService {
                         .anyMatch(a -> a.getAuthority().equals("ROLE_ANONYMOUS"))) {
 
             currentUser = currentUserService.getCurrentUser();
+        } else {
+            currentUser = null;
         }
 
         ProductVariant productVariant =
@@ -55,17 +57,57 @@ public class CartServiceImpl implements CartService {
                                         "Product Variant Not Found!"
                                 ));
 
-        Cart cart = CartMapper.toEntity(dto);
+        Cart cart;
 
-        cart.setUser(currentUser);
-        cart.setCartToken(UUID.randomUUID().toString());
+        // 1. Find existing cart for authenticated user
+        if (currentUser != null) {
 
-        CartItem cartItem = new CartItem();
-        cartItem.setCart(cart);
-        cartItem.setProductVariant(productVariant);
-        cartItem.setQuantity(dto.getQuantity());
+            cart = cartRepository.findFirstByUserId(currentUser.getId())
+                    .orElseGet(() -> {
 
-        cart.getCartItems().add(cartItem);
+                        Cart newCart = new Cart();
+                        newCart.setUser(currentUser);
+                        newCart.setCartToken(UUID.randomUUID().toString());
+
+                        return newCart;
+                    });
+
+        } else {
+
+            // 2. Create a new guest cart
+            cart = new Cart();
+            cart.setCartToken(UUID.randomUUID().toString());
+        }
+
+        // 3. Check if this product variant is already in cart
+        CartItem existingCartItem = cart.getCartItems()
+                .stream()
+                .filter(item ->
+                        item.getProductVariant()
+                                .getId()
+                                .equals(productVariant.getId())
+                )
+                .findFirst()
+                .orElse(null);
+
+        if (existingCartItem != null) {
+
+            // Variant already exists, increase quantity
+            existingCartItem.setQuantity(
+                    existingCartItem.getQuantity() + dto.getQuantity()
+            );
+
+        } else {
+
+            // Variant does not exist, create a new cart item
+            CartItem cartItem = new CartItem();
+
+            cartItem.setCart(cart);
+            cartItem.setProductVariant(productVariant);
+            cartItem.setQuantity(dto.getQuantity());
+
+            cart.getCartItems().add(cartItem);
+        }
 
         Cart savedCart = cartRepository.save(cart);
 

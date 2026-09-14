@@ -2,14 +2,25 @@ package com.example.animeecommercebackend.Service.Impl;
 
 import com.example.animeecommercebackend.Dto.Request.OrderRequestDto;
 import com.example.animeecommercebackend.Dto.Response.OrderResponseDto;
-import com.example.animeecommercebackend.Entity.*;
+import com.example.animeecommercebackend.Entity.Cart;
+import com.example.animeecommercebackend.Entity.CartItem;
+import com.example.animeecommercebackend.Entity.Order;
+import com.example.animeecommercebackend.Entity.OrderItem;
+import com.example.animeecommercebackend.Entity.ProductVariant;
+import com.example.animeecommercebackend.Entity.User;
 import com.example.animeecommercebackend.Entity.Enums.OrderStatus;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.OrderMapper;
 import com.example.animeecommercebackend.Repository.CartRepository;
-
 import com.example.animeecommercebackend.Repository.OrderRepository;
-import com.example.animeecommercebackend.Service.*;
+import com.example.animeecommercebackend.Service.CartService;
+import com.example.animeecommercebackend.Service.CouponService;
+import com.example.animeecommercebackend.Service.CurrentUserService;
+import com.example.animeecommercebackend.Service.InventoryService;
+import com.example.animeecommercebackend.Service.OrderService;
+import com.example.animeecommercebackend.Service.PaymentService;
+import com.example.animeecommercebackend.Service.PromotionService;
+import com.example.animeecommercebackend.Service.ShipmentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,14 +42,14 @@ public class OrderServiceImpl implements OrderService {
     private final CouponService couponService;
     private final ShipmentService shipmentService;
 
-
     @Transactional
     @Override
     public OrderResponseDto createOrder(OrderRequestDto dto) {
 
+        // 1. Get the currently authenticated customer
         User user = currentUserService.getCurrentUser();
 
-
+        // 2. Find the customer's cart
         List<Cart> carts = cartRepository.findByUserId(user.getId());
 
         if (carts.isEmpty()) {
@@ -47,27 +58,44 @@ public class OrderServiceImpl implements OrderService {
 
         Cart cart = carts.get(0);
 
-        if (cart.getCartItems().isEmpty()) {
+        // 3. Check whether the cart contains any items
+        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
             throw new ResourceNotFoundException("Cart Is Empty!");
         }
 
+        // 4. Create the order
         Order order = new Order();
 
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
         order.setOrderNumber((int) (Math.random() * 90000000) + 10000000);
         order.setOrderDate(LocalDateTime.now());
+        order.setShippingAddress(dto.getShippingAddress());
 
         BigDecimal subTotal = BigDecimal.ZERO;
 
         List<OrderItem> orderItems = new ArrayList<>();
 
+        // 5. Validate stock and create order items
         for (CartItem cartItem : cart.getCartItems()) {
 
             ProductVariant variant = cartItem.getProductVariant();
 
+            if (variant == null) {
+                throw new ResourceNotFoundException(
+                        "Product Variant Not Found!"
+                );
+            }
+
             int quantity = cartItem.getQuantity();
 
+            if (quantity <= 0) {
+                throw new IllegalArgumentException(
+                        "Cart item quantity must be greater than zero!"
+                );
+            }
+
+            // 6. Check inventory before creating the order
             if (!inventoryService.hasEnoughStock(
                     variant.getId(),
                     quantity
@@ -77,18 +105,36 @@ public class OrderServiceImpl implements OrderService {
                                 + variant.getId()
                 );
             }
+
+            // 7. Get the current product variant price
             BigDecimal unitPrice = variant.getPrice();
 
-            BigDecimal discount = promotionService.calculateDiscount(
-                    variant.getProduct().getId(),unitPrice
-            );
+            // 8. Calculate product promotion discount
+            BigDecimal promotionDiscount =
+                    promotionService.calculateDiscount(
+                            variant.getProduct().getId(),
+                            unitPrice
+                    );
+
+            if (promotionDiscount == null) {
+                promotionDiscount = BigDecimal.ZERO;
+            }
 
             BigDecimal finalUnitPrice =
-                    unitPrice.subtract(discount);
+                    unitPrice.subtract(promotionDiscount);
 
+            // Prevent a negative final price
+            if (finalUnitPrice.compareTo(BigDecimal.ZERO) < 0) {
+                finalUnitPrice = BigDecimal.ZERO;
+            }
+
+            // 9. Calculate item subtotal
             BigDecimal itemSubtotal =
-                    finalUnitPrice.multiply(BigDecimal.valueOf(quantity));
+                    finalUnitPrice.multiply(
+                            BigDecimal.valueOf(quantity)
+                    );
 
+            // 10. Create the order item
             OrderItem orderItem = new OrderItem();
 
             orderItem.setOrder(order);
@@ -102,47 +148,71 @@ public class OrderServiceImpl implements OrderService {
             subTotal = subTotal.add(itemSubtotal);
         }
 
+        // 11. Attach order items to the order
         order.setOrderItems(orderItems);
-
-
         order.setSubTotal(subTotal);
 
-        // Temporary business logic
-        // Discount and shipping will be implemented later.
-       BigDecimal couponDiscount = BigDecimal.ZERO;
-       if(dto.getCouponId() != null){
-           couponDiscount = couponService.calculateDiscount(dto.getCouponId(), subTotal);
-       }
-       order.setDiscountAmount(couponDiscount);
+        // 12. Calculate coupon discount
+        BigDecimal couponDiscount = BigDecimal.ZERO;
 
-       BigDecimal shippingFee = shipmentService
-               .calculateShipmentFee(subTotal);
-       order.setShippingFee(shippingFee);
-       BigDecimal total = subTotal
-               .subtract(couponDiscount)
-               .add(shippingFee);
+        if (dto.getCouponId() != null) {
 
-        order.setTotalAmount(total);
+            couponDiscount = couponService.calculateDiscount(
+                    dto.getCouponId(),
+                    subTotal
+            );
 
-        order.setShippingAddress(dto.getShippingAddress());
+            if (couponDiscount == null) {
+                couponDiscount = BigDecimal.ZERO;
+            }
+        }
 
+        // Prevent coupon discount from exceeding subtotal
+        if (couponDiscount.compareTo(subTotal) > 0) {
+            couponDiscount = subTotal;
+        }
+
+        order.setDiscountAmount(couponDiscount);
+
+        // 13. Calculate shipping fee
+        BigDecimal shippingFee =
+                shipmentService.calculateShipmentFee(subTotal);
+
+        if (shippingFee == null) {
+            shippingFee = BigDecimal.ZERO;
+        }
+
+        order.setShippingFee(shippingFee);
+
+        // 14. Calculate final total
+        BigDecimal totalAmount = subTotal
+                .subtract(couponDiscount)
+                .add(shippingFee);
+
+        order.setTotalAmount(totalAmount);
+
+        // 15. Save the order
         Order savedOrder = orderRepository.save(order);
 
-        for(CartItem cartItem : cart.getCartItems()){
-            ProductVariant variant =  cartItem.getProductVariant();
+        // 16. Decrease inventory after the order is successfully saved
+        for (CartItem cartItem : cart.getCartItems()) {
+
+            ProductVariant variant = cartItem.getProductVariant();
 
             inventoryService.decreaseStock(
                     variant.getId(),
                     cartItem.getQuantity()
             );
         }
+
+        // 17. Clear the cart after successful order creation
         cart.getCartItems().clear();
 
         cartRepository.save(cart);
 
+        // 18. Return the order response
         return OrderMapper.toResponse(savedOrder);
     }
-
 
     @Override
     public List<OrderResponseDto> getMyOrders() {
@@ -155,7 +225,6 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderMapper::toResponse)
                 .toList();
     }
-
 
     @Override
     public OrderResponseDto getOrderById(Long id) {
@@ -174,7 +243,6 @@ public class OrderServiceImpl implements OrderService {
         return OrderMapper.toResponse(order);
     }
 
-
     @Override
     public OrderResponseDto getOrderByUserId(Long userId) {
 
@@ -187,7 +255,6 @@ public class OrderServiceImpl implements OrderService {
         return OrderMapper.toResponse(order);
     }
 
-
     @Override
     public List<OrderResponseDto> getAllOrder() {
 
@@ -196,7 +263,6 @@ public class OrderServiceImpl implements OrderService {
                 .map(OrderMapper::toResponse)
                 .toList();
     }
-
 
     @Override
     public OrderResponseDto updateOrder(
@@ -216,11 +282,10 @@ public class OrderServiceImpl implements OrderService {
 
         order.setShippingAddress(dto.getShippingAddress());
 
-        Order saved = orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
 
-        return OrderMapper.toResponse(saved);
+        return OrderMapper.toResponse(savedOrder);
     }
-
 
     @Override
     public void deleteOrder(Long id) {
@@ -240,35 +305,52 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponseDto updateOrderStatus(Long id, OrderStatus status) {
-        Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+    public OrderResponseDto updateOrderStatus(
+            Long id,
+            OrderStatus status) {
 
-        if(isValidStatusTransition(order.getStatus(),status)){
-            throw new RuntimeException("Invalid order status transition");
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Order Not Found!"));
+
+        if (!isValidStatusTransition(order.getStatus(), status)) {
+            throw new RuntimeException(
+                    "Invalid order status transition"
+            );
         }
+
         order.setStatus(status);
 
-        Order updated = orderRepository.save(order);
-        return OrderMapper.toResponse(updated);
+        Order updatedOrder = orderRepository.save(order);
+
+        return OrderMapper.toResponse(updatedOrder);
     }
 
-    private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus status) {
-        return switch(currentStatus){
+    private boolean isValidStatusTransition(
+            OrderStatus currentStatus,
+            OrderStatus status) {
+
+        return switch (currentStatus) {
+
             case PENDING ->
-                status == OrderStatus.CONFIRMED||
-                status == OrderStatus.CANCELED;
+                    status == OrderStatus.CONFIRMED
+                            || status == OrderStatus.CANCELED;
+
             case CONFIRMED ->
-                status == OrderStatus.PAID||
-                status == OrderStatus.CANCELED;
+                    status == OrderStatus.PAID
+                            || status == OrderStatus.CANCELED;
+
             case PAID ->
-                status == OrderStatus.PROCESSING;
+                    status == OrderStatus.PROCESSING;
+
             case PROCESSING ->
-                status == OrderStatus.SHIPPED;
+                    status == OrderStatus.SHIPPED;
+
             case SHIPPED ->
-                status == OrderStatus.DELIVERED;
-            case DELIVERED,
-                 CANCELED ->
-                false;
+                    status == OrderStatus.DELIVERED;
+
+            case DELIVERED, CANCELED ->
+                    false;
         };
     }
 }
