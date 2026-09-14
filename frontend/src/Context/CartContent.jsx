@@ -3,6 +3,7 @@
 import React, {
     createContext,
     useContext,
+    useEffect,
     useState,
 } from "react";
 
@@ -12,8 +13,20 @@ import { getVariantsByProductId } from "../Services/productVariantApi";
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-    const [cartItems, setCartItems] = useState([]);
+    /*
+     * Load cart items from localStorage when the app starts.
+     */
+    const [cartItems, setCartItems] = useState(() => {
+        const savedCartItems = localStorage.getItem("cartItems");
 
+        return savedCartItems
+            ? JSON.parse(savedCartItems)
+            : [];
+    });
+
+    /*
+     * Load cart ID and cart token from localStorage.
+     */
     const [cartId, setCartId] = useState(
         localStorage.getItem("cartId")
     );
@@ -21,6 +34,16 @@ export function CartProvider({ children }) {
     const [cartToken, setCartToken] = useState(
         localStorage.getItem("cartToken")
     );
+
+    /*
+     * Save cart items whenever they change.
+     */
+    useEffect(() => {
+        localStorage.setItem(
+            "cartItems",
+            JSON.stringify(cartItems)
+        );
+    }, [cartItems]);
 
     const addToCart = async (product) => {
         try {
@@ -49,12 +72,23 @@ export function CartProvider({ children }) {
                 productVariantId
             );
 
+            /*
+             * Send the existing cart token to the backend.
+             * If there is no token, the backend creates a new cart.
+             */
+            console.log("Cart token being sent:", cartToken);
+
             const response = await createCart(
                 product.id,
                 productVariantId,
-                1
+                1,
+                cartToken
             );
 
+            /*
+             * createCart() returns response.data from Axios.
+             * Therefore, the actual cart is response.data.
+             */
             const cart = response.data;
 
             if (!cart) {
@@ -62,12 +96,21 @@ export function CartProvider({ children }) {
                 return;
             }
 
+            /*
+             * Save the latest cart ID and token.
+             */
             setCartId(cart.id);
             setCartToken(cart.cartToken);
-            setCartItems(cart.items || []);
 
             localStorage.setItem("cartId", cart.id);
             localStorage.setItem("cartToken", cart.cartToken);
+
+            /*
+             * Use the complete cart items returned by the backend.
+             * Do not manually merge quantities because the backend
+             * already calculates the updated quantity.
+             */
+            setCartItems(cart.items || []);
 
             console.log("Cart added successfully:", cart);
         } catch (error) {
@@ -79,8 +122,10 @@ export function CartProvider({ children }) {
     };
 
     const removeFromCart = (productId) => {
-        setCartItems((prevItems) =>
-            prevItems.filter((item) => item.id !== productId)
+        setCartItems((previousItems) =>
+            previousItems.filter(
+                (item) => item.id !== productId
+            )
         );
     };
 
@@ -89,17 +134,21 @@ export function CartProvider({ children }) {
             return;
         }
 
-        setCartItems((prevItems) =>
-            prevItems.map((item) =>
+        setCartItems((previousItems) =>
+            previousItems.map((item) =>
                 item.id === productId
-                    ? { ...item, quantity }
+                    ? {
+                          ...item,
+                          quantity,
+                      }
                     : item
             )
         );
     };
 
     const cartCount = cartItems.reduce(
-        (total, item) => total + item.quantity,
+        (total, item) =>
+            total + Number(item.quantity || 0),
         0
     );
 

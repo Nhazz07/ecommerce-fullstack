@@ -1,15 +1,20 @@
-import React from "react";
 import { ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContent";
 import bleach from "../assets/figurebleach.jpg";
 
 function ProductCard({ product }) {
+    console.log("CARD PRODUCT:", product.id, product.name);
     const navigate = useNavigate();
     const { addToCart } = useCart();
 
     const handleAddToCart = async () => {
-        console.log("Product:", product);
+        console.log("Clicked product:", {
+            id: product.id,
+            name: product.name,
+            productName: product.productName,
+            image: product.image,
+        });
 
         await addToCart(product);
     };
@@ -19,7 +24,6 @@ function ProductCard({ product }) {
             onClick={() => navigate(`/products/${product.id}`)}
             className="group cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-pink-400 dark:border-white/10 dark:bg-white/5"
         >
-            {/* Product Image */}
             <div className="h-56 overflow-hidden bg-gray-100 dark:bg-white/5">
                 <img
                     src={product.image || bleach}
@@ -28,7 +32,6 @@ function ProductCard({ product }) {
                 />
             </div>
 
-            {/* Product Information */}
             <div className="p-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                     {product.category || "Anime Figure"}
