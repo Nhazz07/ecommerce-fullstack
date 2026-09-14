@@ -1,5 +1,6 @@
 package com.example.animeecommercebackend.Dto.Request;
 
+import com.example.animeecommercebackend.Entity.Enums.PaymentMethod;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,4 +17,7 @@ public class OrderRequestDto {
 
     @NotBlank(message = "Shipping address is required")
     private String shippingAddress;
+
+
+    private PaymentMethod paymentMethod;
 }

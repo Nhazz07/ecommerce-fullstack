@@ -92,8 +92,4 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public void setDiscount(BigDecimal zero) {
-
-    }
-
 }
