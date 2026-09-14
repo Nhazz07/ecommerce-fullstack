@@ -222,7 +222,7 @@ function Cart() {
                         <button
                             type="button"
                             onClick={() =>
-                                console.log("Proceed to checkout")
+                                navigate("/checkout")
                             }
                             className="mt-6 w-full rounded-lg bg-pink-400 py-3 font-semibold text-[#0B1020] transition hover:bg-pink-300"
                         >
