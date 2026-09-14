@@ -1,34 +1,53 @@
+// src/Context/CartContent.jsx
 
+import React, {
+    createContext,
+    useContext,
+    useState,
+} from "react";
 
-import React, { createContext, useContext, useState } from "react";
 import { createCart } from "../Services/cartApi";
+import { getVariantsByProductId } from "../Services/productVariantApi";
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
     const [cartItems, setCartItems] = useState([]);
+
     const [cartId, setCartId] = useState(
         localStorage.getItem("cartId")
     );
+
     const [cartToken, setCartToken] = useState(
         localStorage.getItem("cartToken")
     );
 
-    const addToCart = async (product, productVariantId) => {
+    const addToCart = async (product) => {
         try {
             console.log("Product being added:", product);
-            console.log("Product ID:", product.id);
-            console.log("Product Variant ID:", productVariantId);
 
             if (!product?.id) {
                 console.error("Product ID is missing.");
                 return;
             }
 
-            if (!productVariantId) {
-                console.error("Product Variant ID is missing.");
+            console.log("Product ID:", product.id);
+
+            const variants = await getVariantsByProductId(product.id);
+
+            console.log("Product variants:", variants);
+
+            if (!variants || variants.length === 0) {
+                console.log("No variant found for this product.");
                 return;
             }
+
+            const productVariantId = variants[0].id;
+
+            console.log(
+                "Selected Product Variant ID:",
+                productVariantId
+            );
 
             const response = await createCart(
                 product.id,
@@ -37,6 +56,11 @@ export function CartProvider({ children }) {
             );
 
             const cart = response.data;
+
+            if (!cart) {
+                console.error("Cart data is missing:", response);
+                return;
+            }
 
             setCartId(cart.id);
             setCartToken(cart.cartToken);
@@ -61,6 +85,10 @@ export function CartProvider({ children }) {
     };
 
     const updateQuantity = (productId, quantity) => {
+        if (quantity < 1) {
+            return;
+        }
+
         setCartItems((prevItems) =>
             prevItems.map((item) =>
                 item.id === productId

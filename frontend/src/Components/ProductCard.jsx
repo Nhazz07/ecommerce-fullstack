@@ -8,21 +8,10 @@ function ProductCard({ product }) {
     const navigate = useNavigate();
     const { addToCart } = useCart();
 
-    const handleAddToCart = () => {
-        // Get the first available variant
-        const productVariantId = product.variants?.[0]?.id;
-
+    const handleAddToCart = async () => {
         console.log("Product:", product);
-        console.log("Selected Product Variant ID:", productVariantId);
 
-        if (!productVariantId) {
-            console.error(
-                "This product does not have a product variant ID."
-            );
-            return;
-        }
-
-        addToCart(product, productVariantId);
+        await addToCart(product);
     };
 
     return (
@@ -35,7 +24,7 @@ function ProductCard({ product }) {
                 <img
                     src={product.image || bleach}
                     alt={product.productName || product.name}
-                    className="h-full w-full object-cover object-cover transition duration-300 group-hover:scale-105"
+                    className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                 />
             </div>
 

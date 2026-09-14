@@ -15,5 +15,5 @@ export const createCart = async (
 
     console.log("Backend cart response:", response.data);
 
-    return response;
+    return response.data;
 };
