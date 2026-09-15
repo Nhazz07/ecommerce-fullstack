@@ -2,10 +2,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContent";
 import bleach from "../assets/figurebleach.jpg";
+import { createOrder } from "../Services/orderApi";
 
 function Checkout() {
     const navigate = useNavigate();
-    const { cartItems } = useCart();
+    const { cartItems, clearCart } = useCart();
 
     const [formData, setFormData] = useState({
         fullName: "",
@@ -15,9 +16,12 @@ function Checkout() {
         country: "",
     });
 
-  const [paymentMethod, setPaymentMethod] = useState(
-    "CASH_ON_DELIVERY"
-);
+    const [paymentMethod, setPaymentMethod] = useState(
+        "CASH_ON_DELIVERY"
+    );
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
     const totalPrice = cartItems.reduce((total, item) => {
         const price = Number(item.price || 0);
@@ -38,20 +42,57 @@ function Checkout() {
         }));
     };
 
-    const handleSubmit = (event) => {
-        event.preventDefault();
+ const handleSubmit = async (event) => {
+    event.preventDefault();
 
-        console.log("Checkout information:", {
-            ...formData,
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+            throw new Error(
+                "You must be logged in before placing an order."
+            );
+        }
+
+        const shippingAddress = [
+            formData.fullName,
+            formData.phone,
+            formData.address,
+            formData.city,
+            formData.country,
+        ]
+            .filter(Boolean)
+            .join(", ");
+
+        const orderData = {
+            couponId: null,
+            shippingAddress,
             paymentMethod,
-            cartItems,
-            totalPrice,
-            shippingFee,
-            finalTotal,
-        });
+        };
 
-        alert("Checkout information submitted successfully.");
-    };
+        const response = await createOrder(orderData);
+
+        console.log("Order created successfully:", response);
+
+        alert("Your order has been placed successfully.");
+
+        navigate("/orders");
+    } catch (submitError) {
+        console.error("Order creation failed:", submitError);
+
+        const errorMessage =
+            submitError.response?.data?.message ||
+            submitError.message ||
+            "Something went wrong while placing your order.";
+
+        setError(errorMessage);
+    } finally {
+        setIsSubmitting(false);
+    }
+};
 
     if (cartItems.length === 0) {
         return (
@@ -93,6 +134,12 @@ function Checkout() {
                         <h2 className="text-xl font-bold">
                             Shipping Information
                         </h2>
+
+                        {error && (
+                            <div className="mt-5 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-300">
+                                {error}
+                            </div>
+                        )}
 
                         <div className="mt-6 grid gap-5 sm:grid-cols-2">
                             <div>
@@ -196,154 +243,68 @@ function Checkout() {
                             </div>
                         </div>
 
-                       {/* Payment Method */}
-<div className="mt-8">
-    <h2 className="text-xl font-bold">
-        Payment Method
-    </h2>
+                        {/* Payment Method */}
+                        <div className="mt-8">
+                            <h2 className="text-xl font-bold">
+                                Payment Method
+                            </h2>
 
-    <div className="mt-4 space-y-3">
-        {/* Cash on Delivery */}
-        <label
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                paymentMethod === "CASH_ON_DELIVERY"
-                    ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
-                    : "border-gray-300 dark:border-white/10"
-            }`}
-        >
-            <input
-                type="radio"
-                name="paymentMethod"
-                value="CASH_ON_DELIVERY"
-                checked={
-                    paymentMethod === "CASH_ON_DELIVERY"
-                }
-                onChange={(event) =>
-                    setPaymentMethod(event.target.value)
-                }
-            />
+                            <div className="mt-4 space-y-3">
+                                {[
+                                    {
+                                        value: "CASH_ON_DELIVERY",
+                                        label: "Cash on Delivery",
+                                    },
+                                    {
+                                        value: "ABA",
+                                        label: "ABA Pay",
+                                    },
+                                    {
+                                        value: "ACLEDA",
+                                        label: "ACLEDA",
+                                    },
+                                    {
+                                        value: "CREDIT_CARD",
+                                        label: "Visa / Mastercard Credit Card",
+                                    },
+                                    {
+                                        value: "DEBIT_CARD",
+                                        label: "Visa / Mastercard Debit Card",
+                                    },
+                                    {
+                                        value: "PAYPAL",
+                                        label: "PayPal",
+                                    },
+                                ].map((method) => (
+                                    <label
+                                        key={method.value}
+                                        className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
+                                            paymentMethod === method.value
+                                                ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
+                                                : "border-gray-300 dark:border-white/10"
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value={method.value}
+                                            checked={
+                                                paymentMethod === method.value
+                                            }
+                                            onChange={(event) =>
+                                                setPaymentMethod(
+                                                    event.target.value
+                                                )
+                                            }
+                                        />
 
-            <span className="font-medium">
-                Cash on Delivery
-            </span>
-        </label>
-
-        {/* ABA */}
-        <label
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                paymentMethod === "ABA"
-                    ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
-                    : "border-gray-300 dark:border-white/10"
-            }`}
-        >
-            <input
-                type="radio"
-                name="paymentMethod"
-                value="ABA"
-                checked={paymentMethod === "ABA"}
-                onChange={(event) =>
-                    setPaymentMethod(event.target.value)
-                }
-            />
-
-            <span className="font-medium">
-                ABA Pay
-            </span>
-        </label>
-
-        {/* ACLEDA */}
-        <label
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                paymentMethod === "ACLEDA"
-                    ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
-                    : "border-gray-300 dark:border-white/10"
-            }`}
-        >
-            <input
-                type="radio"
-                name="paymentMethod"
-                value="ACLEDA"
-                checked={paymentMethod === "ACLEDA"}
-                onChange={(event) =>
-                    setPaymentMethod(event.target.value)
-                }
-            />
-
-            <span className="font-medium">
-                ACLEDA
-            </span>
-        </label>
-
-        {/* Credit Card */}
-        <label
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                paymentMethod === "CREDIT_CARD"
-                    ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
-                    : "border-gray-300 dark:border-white/10"
-            }`}
-        >
-            <input
-                type="radio"
-                name="paymentMethod"
-                value="CREDIT_CARD"
-                checked={paymentMethod === "CREDIT_CARD"}
-                onChange={(event) =>
-                    setPaymentMethod(event.target.value)
-                }
-            />
-
-            <span className="font-medium">
-                Visa / Mastercard Credit Card
-            </span>
-        </label>
-
-        {/* Debit Card */}
-        <label
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                paymentMethod === "DEBIT_CARD"
-                    ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
-                    : "border-gray-300 dark:border-white/10"
-            }`}
-        >
-            <input
-                type="radio"
-                name="paymentMethod"
-                value="DEBIT_CARD"
-                checked={paymentMethod === "DEBIT_CARD"}
-                onChange={(event) =>
-                    setPaymentMethod(event.target.value)
-                }
-            />
-
-            <span className="font-medium">
-                Visa / Mastercard Debit Card
-            </span>
-        </label>
-
-        {/* PayPal */}
-        <label
-            className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition ${
-                paymentMethod === "PAYPAL"
-                    ? "border-pink-400 bg-pink-50 dark:bg-pink-500/10"
-                    : "border-gray-300 dark:border-white/10"
-            }`}
-        >
-            <input
-                type="radio"
-                name="paymentMethod"
-                value="PAYPAL"
-                checked={paymentMethod === "PAYPAL"}
-                onChange={(event) =>
-                    setPaymentMethod(event.target.value)
-                }
-            />
-
-            <span className="font-medium">
-                PayPal
-            </span>
-        </label>
-    </div>
-</div>
+                                        <span className="font-medium">
+                                            {method.label}
+                                        </span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
                     </section>
 
                     {/* Order Summary */}
@@ -370,9 +331,7 @@ function Checkout() {
                                         className="flex items-center gap-3"
                                     >
                                         <img
-                                            src={
-                                                item.image || bleach
-                                            }
+                                            src={item.image || bleach}
                                             alt={productName}
                                             className="h-16 w-16 rounded-lg object-cover"
                                         />
@@ -390,9 +349,7 @@ function Checkout() {
 
                                         <span className="font-semibold">
                                             $
-                                            {(price * quantity).toFixed(
-                                                2
-                                            )}
+                                            {(price * quantity).toFixed(2)}
                                         </span>
                                     </div>
                                 );
@@ -428,9 +385,12 @@ function Checkout() {
 
                         <button
                             type="submit"
-                            className="mt-6 w-full rounded-lg bg-pink-400 py-3 font-semibold text-[#0B1020] transition hover:bg-pink-300"
+                            disabled={isSubmitting}
+                            className="mt-6 w-full rounded-lg bg-pink-400 py-3 font-semibold text-[#0B1020] transition hover:bg-pink-300 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            Place Order
+                            {isSubmitting
+                                ? "Placing Order..."
+                                : "Place Order"}
                         </button>
                     </aside>
                 </form>
