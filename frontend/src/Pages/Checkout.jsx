@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContent";
-
-import CouponInput from "../Components/checkout/CouponInput";
-import OrderSummary from "../Components/checkout/OrderSummary";
-import PaymentMethod from "../Components/checkout/PaymentMethod";
-import ShippingForm from "../Components/checkout/ShippingForm";
-
+import CouponInput from "../Components/checkout/CouponInput"
+import OrderSummary from "../Components/checkout/OrderSummary"
+import PaymentMethod from "../Components/checkout/PaymentMethod"
+import ShippingForm from "../Components/checkout/ShipingForm"
 import useCheckout from "../hooks/useCheckout";
 import useCoupon from "../hooks/useCoupon";
 
@@ -13,7 +11,7 @@ import {
     calculateSubtotal,
     calculateDiscount,
     calculateFinalTotal,
-} from "../checkoutService/checkoutCalculation";
+} from "../checkoutService/checkoutCalculator"
 
 function Checkout() {
     const navigate = useNavigate();

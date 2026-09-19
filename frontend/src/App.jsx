@@ -9,7 +9,7 @@ import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 import Wishlist from "./Pages/Wishlist";
 import Order from "./Pages/Order";
-import Checkout from "./Pages/Checkout";
+import Checkout from "./Pages/Checkout"
 function App() {
     return (
         <BrowserRouter>
