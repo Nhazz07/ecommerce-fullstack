@@ -12,7 +12,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -36,7 +35,7 @@ public class ProductImages {
     @Min(value = 0, message = "Display order cannot be negative")
     private Integer displayOrder;
 
-  @ManyToOne
+    @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
 
@@ -48,3 +47,4 @@ public class ProductImages {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 }
+
