@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import bleach from "../assets/figurebleach.jpg";
 import ProductCard from "../Components/ProductCard";
-import {getAllProduct} from "../Services/productApi";
-import { useEffect, useState } from "react";
+import { getProducts } from "../Services/productApi";
 const categories = [
     "All",
     "Figures",
@@ -23,7 +23,7 @@ const [error, setError] = useState("");
     useEffect(() => {
         const fetchProducts = async () => {
             try{
-                const response = await getAllProduct();
+                const response = await getProducts();
 
                 setProducts(response.data.content);
             }catch(error){
