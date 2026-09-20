@@ -27,11 +27,6 @@ public class ProductImagesMapper {
         dto.setImageUrl(productImages.getImageUrl());
         dto.setAltText(productImages.getAltText());
         dto.setDisplayOrder(productImages.getDisplayOrder());
-        dto.setCreatedAt(productImages.getCreatedAt());
-        dto.setUpdatedAt(productImages.getUpdatedAt());
-        if(productImages.getProduct() != null){
-            dto.setProductId(productImages.getProduct().getId());
-        }
         return dto;
     }
 }

@@ -17,27 +17,38 @@ import java.util.List;
 public class ProductResponseDto {
 
     private Long id;
+
     private String name;
+
     private String description;
+
     private String sku;
+
     private BigDecimal price;
+
     private ProductStatus status;
+
     private LocalDateTime releaseDate;
 
     private Long categoryId;
+
     private String categoryName;
 
     private Long brandId;
+
     private String brandName;
 
     private Long seriesId;
+
     private String seriesName;
 
     private List<Long> productVariantIds;
-    private List<Long> productImagesId;
+
+    private List<ProductImageResponseDto> productImages;
 
     private List<Long> reviewId;
 
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 }

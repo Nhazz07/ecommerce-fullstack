@@ -14,6 +14,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +41,10 @@ public class Product {
     private String description;
 
     @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
+    @DecimalMin(
+            value = "0.01",
+            message = "Price must be greater than 0"
+    )
     private BigDecimal price;
 
     @NotNull(message = "Product status is required")
@@ -58,11 +62,18 @@ public class Product {
     @JoinColumn(name = "brand_id")
     private Brand brand;
 
-    @OneToMany(mappedBy = "product")
-    private List<ProductImages> productImages;
+    // Product Images
+    @OneToMany(
+            mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @OrderBy("displayOrder ASC")
+    private List<ProductImages> productImages = new ArrayList<>();
 
+    // Product Variants
     @OneToMany(mappedBy = "product")
-    private List<ProductVariant> productVariants;
+    private List<ProductVariant> productVariants = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(
@@ -73,7 +84,7 @@ public class Product {
     private Set<Promotion> promotions = new HashSet<>();
 
     @OneToMany(mappedBy = "product")
-    private List<Review> reviews;
+    private List<Review> reviews = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "series_id")
@@ -86,6 +97,4 @@ public class Product {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-
 }

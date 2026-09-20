@@ -13,30 +13,32 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "product_images")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name="productImage")
 public class ProductImages {
+
     @Id
-    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String publicId;
 
+    @Column(nullable = false)
     private String imageUrl;
 
-    @NotBlank(message = "Alt text is required")
+    @Column(nullable = false)
     private String altText;
 
-    @NotNull(message = "Display order is required")
-    @Min(value = 0, message = "Display order cannot be negative")
+    @Column(nullable = false)
     private Integer displayOrder;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @CreationTimestamp
@@ -47,4 +49,3 @@ public class ProductImages {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 }
-

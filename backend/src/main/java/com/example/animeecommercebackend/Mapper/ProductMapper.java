@@ -1,19 +1,18 @@
 package com.example.animeecommercebackend.Mapper;
 
 import com.example.animeecommercebackend.Dto.Request.ProductRequestDto;
+import com.example.animeecommercebackend.Dto.Response.ProductImageResponseDto;
 import com.example.animeecommercebackend.Dto.Response.ProductResponseDto;
 import com.example.animeecommercebackend.Entity.*;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 
 @Component
 public class ProductMapper {
-    public static Product toEntity(ProductRequestDto dto
-                            ){
+
+    public static Product toEntity(ProductRequestDto dto) {
+
         Product product = new Product();
 
         product.setProductName(dto.getProductName());
@@ -26,7 +25,8 @@ public class ProductMapper {
         return product;
     }
 
-    public static ProductResponseDto toResponse(Product product){
+    public static ProductResponseDto toResponse(Product product) {
+
         ProductResponseDto dto = new ProductResponseDto();
 
         dto.setId(product.getId());
@@ -39,37 +39,75 @@ public class ProductMapper {
         dto.setCreatedAt(product.getCreatedAt());
         dto.setUpdatedAt(product.getUpdatedAt());
 
-
-        if(product.getCategory() != null){
+        // Category
+        if (product.getCategory() != null) {
             dto.setCategoryId(product.getCategory().getId());
             dto.setCategoryName(product.getCategory().getName());
         }
-        if(product.getBrand() !=  null){
+
+        // Brand
+        if (product.getBrand() != null) {
             dto.setBrandId(product.getBrand().getId());
             dto.setBrandName(product.getBrand().getName());
         }
-        if(product.getSeries() != null){
+
+        // Series
+        if (product.getSeries() != null) {
             dto.setSeriesId(product.getSeries().getId());
             dto.setSeriesName(product.getSeries().getName());
         }
-        if(product.getProductVariants() != null){
-            dto.setProductVariantIds(product.getProductVariants().stream().map(ProductVariant::getId).toList());
-        }else{
+
+        // Product Variants
+        if (product.getProductVariants() != null) {
+            dto.setProductVariantIds(
+                    product.getProductVariants()
+                            .stream()
+                            .map(ProductVariant::getId)
+                            .toList()
+            );
+        } else {
             dto.setProductVariantIds(List.of());
         }
 
-        if(product.getProductImages() !=  null){
-            dto.setProductImagesId(product.getProductImages().stream().map(ProductImages::getId).toList());
-        }else{
-            dto.setProductImagesId(List.of());
+        // Product Images
+        if (product.getProductImages() != null) {
+            dto.setProductImages(
+                    product.getProductImages()
+                            .stream()
+                            .map(ProductMapper::toImageResponse)
+                            .toList()
+            );
+        } else {
+            dto.setProductImages(List.of());
         }
-        if(product.getReviews() != null){
-            dto.setReviewId(product.getReviews().stream().map(Review::getId).toList());
-        }else{
+
+        // Reviews
+        if (product.getReviews() != null) {
+            dto.setReviewId(
+                    product.getReviews()
+                            .stream()
+                            .map(Review::getId)
+                            .toList()
+            );
+        } else {
             dto.setReviewId(List.of());
         }
+
+        return dto;
+    }
+
+    private static ProductImageResponseDto toImageResponse(
+            ProductImages image
+    ) {
+
+        ProductImageResponseDto dto =
+                new ProductImageResponseDto();
+
+        dto.setId(image.getId());
+        dto.setImageUrl(image.getImageUrl());
+        dto.setAltText(image.getAltText());
+        dto.setDisplayOrder(image.getDisplayOrder());
+
         return dto;
     }
 }
-
-
