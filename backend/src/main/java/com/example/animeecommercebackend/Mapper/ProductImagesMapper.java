@@ -2,6 +2,7 @@ package com.example.animeecommercebackend.Mapper;
 
 import com.example.animeecommercebackend.Dto.Request.ProductImageRequestDto;
 import com.example.animeecommercebackend.Dto.Response.ProductImageResponseDto;
+import com.example.animeecommercebackend.Entity.ProductImages;
 import org.springframework.stereotype.Component;
 
 @Component

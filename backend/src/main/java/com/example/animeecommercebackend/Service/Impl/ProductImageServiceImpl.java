@@ -3,6 +3,7 @@ package com.example.animeecommercebackend.Service.Impl;
 import com.example.animeecommercebackend.Dto.Response.CloudinaryUploadResponseDto;
 import com.example.animeecommercebackend.Dto.Response.ProductImageResponseDto;
 import com.example.animeecommercebackend.Entity.Product;
+import com.example.animeecommercebackend.Entity.ProductImages;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.ProductImagesMapper;
 import com.example.animeecommercebackend.Repository.ProductImageRepository;
