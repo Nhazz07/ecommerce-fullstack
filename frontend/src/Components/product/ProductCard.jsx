@@ -1,12 +1,20 @@
 function ProductCard({ product }) {
+    const image = product.productImage?.[0];
     return (
         <article className="overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-white/5">
-            <div className="aspect-square bg-gray-100 dark:bg-white/10">
-                {/* Product image will be added later */}
-                <div className="flex h-full items-center justify-center text-gray-400">
-                    No Image
-                </div>
-            </div>
+            <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-white/10">
+    {image?.imageUrl ? (
+        <img
+            src={image.imageUrl}
+            alt={image.altText || product.name}
+            className="h-full w-full object-cover transition duration-300 hover:scale-105"
+        />
+    ) : (
+        <div className="flex h-full items-center justify-center text-gray-400">
+            No Image
+        </div>
+    )}
+</div>
 
             <div className="p-5">
                 <div className="mb-2 flex items-center justify-between gap-3">
