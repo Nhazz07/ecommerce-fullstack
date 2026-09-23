@@ -40,7 +40,7 @@ export default function Login() {
         >
             <div className="w-full max-w-md">
 
-                {/* Logo */}
+                {/* Logo of ma brand  */}
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-white">
                         Ani<span className="text-pink-400">Store</span>
