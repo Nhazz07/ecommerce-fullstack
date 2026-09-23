@@ -1,5 +1,6 @@
 function ProductCard({ product }) {
     const image = product.productImage?.[0];
+
     return (
         <article className="overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-white/5">
             <div className="aspect-square overflow-hidden bg-gray-100 dark:bg-white/10">
@@ -46,11 +47,12 @@ function ProductCard({ product }) {
                 </div>
 
                 <button
-                    type="button"
-                    className="mt-4 w-full rounded-lg bg-pink-400 py-2.5 font-semibold text-[#0B1020] transition hover:bg-pink-300"
-                >
-                    View Product
-                </button>
+    type="button"
+    onClick={() => navigate(`/products/${product.id}`)}
+    className="mt-4 w-full rounded-lg bg-pink-400 py-2.5 font-semibold text-[#0B1020] transition hover:bg-pink-300"
+>
+    View Product
+</button>
             </div>
         </article>
     );
