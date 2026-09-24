@@ -42,7 +42,7 @@ public class ProductResponseDto {
 
     private String seriesName;
 
-    private List<Long> productVariantIds;
+    private List<ProductVariantResponseDto> productVariants;
 
     private List<ProductImageResponseDto> productImages;
 

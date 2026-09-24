@@ -3,6 +3,7 @@ package com.example.animeecommercebackend.Mapper;
 import com.example.animeecommercebackend.Dto.Request.ProductRequestDto;
 import com.example.animeecommercebackend.Dto.Response.ProductImageResponseDto;
 import com.example.animeecommercebackend.Dto.Response.ProductResponseDto;
+import com.example.animeecommercebackend.Dto.Response.ProductVariantResponseDto;
 import com.example.animeecommercebackend.Entity.*;
 import org.springframework.stereotype.Component;
 
@@ -59,14 +60,14 @@ public class ProductMapper {
 
         // Product Variants
         if (product.getProductVariants() != null) {
-            dto.setProductVariantIds(
+            dto.setProductVariants(
                     product.getProductVariants()
                             .stream()
-                            .map(ProductVariant::getId)
+                            .map(ProductMapper::toVariantResponse)
                             .toList()
             );
         } else {
-            dto.setProductVariantIds(List.of());
+            dto.setProductVariants(List.of());
         }
 
         // Product Images
@@ -92,6 +93,28 @@ public class ProductMapper {
         } else {
             dto.setReviewId(List.of());
         }
+
+        return dto;
+    }
+
+    private static ProductVariantResponseDto toVariantResponse(ProductVariant productVariant) {
+        ProductVariantResponseDto dto = new ProductVariantResponseDto();
+        dto.setId(productVariant.getId());
+        dto.setSku(productVariant.getSku());
+        dto.setName(productVariant.getName());
+        dto.setPrice(productVariant.getPrice());
+        dto.setSize(productVariant.getSize());
+        dto.setColor(productVariant.getColor());
+
+        if(productVariant.getId() != null){
+            dto.setProductId(productVariant.getProduct().getId());
+            dto.setProductName(productVariant.getProduct().getProductName());
+        }
+        if(productVariant.getId() != null){
+            dto.setInventoryId(productVariant.getInventory().getId());
+        }
+        dto.setCreatedAt(dto.getCreatedAt());
+        dto.setUpdatedAt(dto.getUpdatedAt());
 
         return dto;
     }
