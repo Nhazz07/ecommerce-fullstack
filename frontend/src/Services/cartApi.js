@@ -20,7 +20,10 @@ export const createCart = async (
         }
     );
 
-    console.log("Backend cart response:", response.data);
+    console.log(
+        "Backend cart response:",
+        response.data
+    );
 
     return response.data;
 };
