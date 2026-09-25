@@ -56,3 +56,25 @@ export const updateCart = async (
 
     return response.data;
 };
+
+export const removeCartItem = async (
+    cartId,
+    productVariantId,
+    cartToken
+) => {
+    const response = await api.delete(
+        `/api/cart/${cartId}/products/${productVariantId}`,
+        {
+            headers: {
+                "X-Cart-Token": cartToken || "",
+            },
+        }
+    );
+
+    console.log(
+        "Backend removed cart item:",
+        response.data
+    );
+
+    return response.data;
+};
