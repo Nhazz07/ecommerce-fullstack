@@ -39,9 +39,6 @@ public class CartServiceImpl implements CartService {
             String cartToken
     ) {
 
-        System.out.println("========== CREATE CART ==========");
-        System.out.println("CART TOKEN RECEIVED: " + cartToken);
-
         User currentUser = getAuthenticatedUserOrNull();
 
         ProductVariant productVariant =
@@ -49,14 +46,10 @@ public class CartServiceImpl implements CartService {
 
         Cart cart;
 
-        /*
-         * Authenticated user cart
-         */
+        // =========================
+        // AUTHENTICATED USER CART
+        // =========================
         if (currentUser != null) {
-
-            System.out.println(
-                    "AUTHENTICATED USER ID: " + currentUser.getId()
-            );
 
             cart = currentUser.getCart();
 
@@ -70,20 +63,14 @@ public class CartServiceImpl implements CartService {
 
                 currentUser.setCart(cart);
                 userRepository.save(currentUser);
-
-                System.out.println(
-                        "NEW AUTHENTICATED CART CREATED: " + cart.getId()
-                );
             }
 
         }
 
-        /*
-         * Guest user cart
-         */
+        // =========================
+        // GUEST USER CART
+        // =========================
         else {
-
-            System.out.println("GUEST USER REQUEST");
 
             cart = getGuestCart(cartToken);
 
@@ -93,45 +80,22 @@ public class CartServiceImpl implements CartService {
                 cart.setCartToken(UUID.randomUUID().toString());
 
                 cart = cartRepository.save(cart);
-
-                System.out.println(
-                        "NEW GUEST CART CREATED: " + cart.getId()
-                );
-                System.out.println(
-                        "NEW GUEST CART TOKEN: " + cart.getCartToken()
-                );
-
-            } else {
-
-                System.out.println(
-                        "EXISTING GUEST CART FOUND: " + cart.getId()
-                );
             }
         }
 
-        /*
-         * Check whether this product variant
-         * already exists in the cart.
-         */
+        // =========================
+        // FIND EXISTING ITEM
+        // =========================
         CartItem existingCartItem =
                 findCartItem(cart, productVariant);
 
-        /*
-         * Increase quantity if the variant
-         * already exists.
-         */
         if (existingCartItem != null) {
 
             existingCartItem.setQuantity(
                     existingCartItem.getQuantity() + dto.getQuantity()
             );
 
-        }
-
-        /*
-         * Otherwise create a new cart item.
-         */
-        else {
+        } else {
 
             CartItem cartItem = new CartItem();
 
@@ -142,14 +106,7 @@ public class CartServiceImpl implements CartService {
             cart.getCartItems().add(cartItem);
         }
 
-        CartResponseDto response = saveAndMap(cart);
-
-        System.out.println(
-                "FINAL CART ID: " + response.getId()
-        );
-        System.out.println("================================");
-
-        return response;
+        return saveAndMap(cart);
     }
 
     @Override
@@ -301,6 +258,7 @@ public class CartServiceImpl implements CartService {
 
         Cart cart = getCart(cartId);
 
+        // Check that the current user/guest owns this cart
         checkCartOwnership(cart, cartToken);
 
         CartItem cartItem = cart.getCartItems()
@@ -322,9 +280,10 @@ public class CartServiceImpl implements CartService {
         return saveAndMap(cart);
     }
 
-    /*
-     * Reusable product variant lookup.
-     */
+    // ==========================================
+    // PRODUCT VARIANT LOOKUP
+    // ==========================================
+
     private ProductVariant getProductVariant(
             Long productVariantId
     ) {
@@ -337,9 +296,10 @@ public class CartServiceImpl implements CartService {
                 );
     }
 
-    /*
-     * Reusable cart lookup.
-     */
+    // ==========================================
+    // CART LOOKUP
+    // ==========================================
+
     private Cart getCart(Long id) {
 
         return cartRepository.findById(id)
@@ -350,34 +310,24 @@ public class CartServiceImpl implements CartService {
                 );
     }
 
-    /*
-     * Find an existing guest cart using its token.
-     */
+    // ==========================================
+    // GUEST CART LOOKUP
+    // ==========================================
+
     private Cart getGuestCart(String cartToken) {
 
-        System.out.println(
-                "SEARCHING CART WITH TOKEN: " + cartToken
-        );
-
         if (cartToken == null || cartToken.isBlank()) {
-            System.out.println("TOKEN IS NULL OR BLANK");
             return null;
         }
 
-        Cart cart = cartRepository.findByCartToken(cartToken)
+        return cartRepository.findByCartToken(cartToken)
                 .orElse(null);
-
-        System.out.println(
-                "GUEST CART FOUND: " +
-                        (cart != null ? cart.getId() : "NONE")
-        );
-
-        return cart;
     }
 
-    /*
-     * Reusable cart-item lookup.
-     */
+    // ==========================================
+    // FIND CART ITEM
+    // ==========================================
+
     private CartItem findCartItem(
             Cart cart,
             ProductVariant productVariant
@@ -394,9 +344,10 @@ public class CartServiceImpl implements CartService {
                 .orElse(null);
     }
 
-    /*
-     * Reusable save and response mapping.
-     */
+    // ==========================================
+    // SAVE + MAP
+    // ==========================================
+
     private CartResponseDto saveAndMap(Cart cart) {
 
         Cart savedCart = cartRepository.save(cart);
@@ -404,46 +355,15 @@ public class CartServiceImpl implements CartService {
         return CartMapper.toResponse(savedCart);
     }
 
-    /*
-     * Returns the authenticated user.
-     * Returns null for guest users.
-     */
+    // ==========================================
+    // GET AUTHENTICATED USER
+    // ==========================================
+
     private User getAuthenticatedUserOrNull() {
 
         Authentication authentication =
                 SecurityContextHolder.getContext()
                         .getAuthentication();
-
-        System.out.println(
-                "AUTHENTICATION: " + authentication
-        );
-
-        System.out.println(
-                "PRINCIPAL: " +
-                        (
-                                authentication != null
-                                        ? authentication.getPrincipal()
-                                        : null
-                        )
-        );
-
-        System.out.println(
-                "USERNAME: " +
-                        (
-                                authentication != null
-                                        ? authentication.getName()
-                                        : null
-                        )
-        );
-
-        System.out.println(
-                "AUTHORITIES: " +
-                        (
-                                authentication != null
-                                        ? authentication.getAuthorities()
-                                        : null
-                        )
-        );
 
         if (authentication == null
                 || !authentication.isAuthenticated()
@@ -457,23 +377,31 @@ public class CartServiceImpl implements CartService {
         return currentUserService.getCurrentUser();
     }
 
-    /*
-     * Checks whether the current user or guest
-     * owns the requested cart.
-     */
+    // ==========================================
+    // CART OWNERSHIP
+    // ==========================================
+
     private void checkCartOwnership(
             Cart cart,
             String cartToken
     ) {
 
-        /*
-         * Authenticated user's cart
-         */
+        // ======================================
+        // AUTHENTICATED USER CART
+        // ======================================
+
         if (cart.getUser() != null) {
 
-            User currentUser = currentUserService.getCurrentUser();
+            User currentUser = getAuthenticatedUserOrNull();
 
-            if (!cart.getUser().getId().equals(currentUser.getId())) {
+            if (currentUser == null) {
+                throw new AccessDeniedException(
+                        "You must be logged in to access this cart"
+                );
+            }
+
+            if (!cart.getUser().getId()
+                    .equals(currentUser.getId())) {
 
                 throw new AccessDeniedException(
                         "You cannot access this cart"
@@ -483,9 +411,10 @@ public class CartServiceImpl implements CartService {
             return;
         }
 
-        /*
-         * Guest user's cart
-         */
+        // ======================================
+        // GUEST CART
+        // ======================================
+
         if (cart.getCartToken() == null
                 || cartToken == null
                 || !cart.getCartToken().equals(cartToken)) {
