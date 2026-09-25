@@ -1,4 +1,4 @@
-// src/Context/CartContent.jsx
+
 
 import React, {
     createContext,
@@ -7,7 +7,11 @@ import React, {
     useState,
 } from "react";
 
-import { createCart } from "../Services/cartApi";
+import {
+    createCart,
+    updateCart,
+} from "../Services/cartApi";
+
 import { getVariantsByProductId } from "../Services/productVariantApi";
 
 const CartContext = createContext();
@@ -84,9 +88,6 @@ export function CartProvider({ children }) {
             /*
              * If no variant was provided,
              * get the variants from the backend.
-             *
-             * This keeps ProductCard working
-             * exactly like before.
              */
             if (!selectedVariant) {
                 console.log(
@@ -170,20 +171,7 @@ export function CartProvider({ children }) {
             );
 
             /*
-             * createCart() returns:
-             *
-             * {
-             *     success: true,
-             *     message: "...",
-             *     data: {
-             *         id: ...,
-             *         cartToken: "...",
-             *         items: [...]
-             *     }
-             * }
-             *
-             * Therefore:
-             * response.data = actual cart
+             * Create/update cart on backend.
              */
             const response = await createCart(
                 product.id,
@@ -198,7 +186,7 @@ export function CartProvider({ children }) {
             );
 
             /*
-             * Extract the actual cart.
+             * Extract actual cart.
              */
             const cart = response?.data;
 
@@ -266,6 +254,10 @@ export function CartProvider({ children }) {
 
     /*
      * Remove item from cart.
+     *
+     * For now this only changes the frontend.
+     * We will connect backend delete/remove
+     * after quantity update is confirmed working.
      */
     const removeFromCart = (productId) => {
         setCartItems((previousItems) =>
@@ -279,24 +271,174 @@ export function CartProvider({ children }) {
     /*
      * Update item quantity.
      */
-    const updateQuantity = (
+    const updateQuantity = async (
         productId,
         quantity
     ) => {
+        /*
+         * Quantity cannot be less than 1.
+         */
         if (quantity < 1) {
             return;
         }
 
-        setCartItems((previousItems) =>
-            previousItems.map((item) =>
-                item.id === productId
-                    ? {
-                          ...item,
-                          quantity,
-                      }
-                    : item
-            )
-        );
+        try {
+            /*
+             * Find the cart item.
+             */
+            const item = cartItems.find(
+                (item) =>
+                    item.id === productId
+            );
+
+            if (!item) {
+                console.error(
+                    "Cart item not found:",
+                    productId
+                );
+
+                return;
+            }
+
+            console.log(
+                "Cart item being updated:",
+                item
+            );
+
+            /*
+             * Get product ID.
+             */
+            const productIdValue =
+                item.productId ||
+                item.product?.id;
+
+            /*
+             * Get product variant ID.
+             */
+            const productVariantId =
+                item.productVariantId ||
+                item.productVariant?.id ||
+                item.variant?.id;
+
+            /*
+             * Validate product ID.
+             */
+            if (!productIdValue) {
+                console.error(
+                    "Product ID is missing from cart item:",
+                    item
+                );
+
+                return;
+            }
+
+            /*
+             * Validate variant ID.
+             */
+            if (!productVariantId) {
+                console.error(
+                    "Product variant ID is missing from cart item:",
+                    item
+                );
+
+                return;
+            }
+
+            /*
+             * Validate cart ID.
+             */
+            if (!cartId) {
+                console.error(
+                    "Cart ID is missing."
+                );
+
+                return;
+            }
+
+            console.log(
+                "Updating cart:",
+                {
+                    cartId,
+                    productId:
+                        productIdValue,
+                    productVariantId,
+                    quantity,
+                }
+            );
+
+            /*
+             * Send update to backend.
+             */
+            const response =
+                await updateCart(
+                    cartId,
+                    productIdValue,
+                    productVariantId,
+                    quantity,
+                    cartToken
+                );
+
+            console.log(
+                "Updated cart response:",
+                response
+            );
+
+            /*
+             * Extract actual cart.
+             */
+            const cart =
+                response?.data;
+
+            if (!cart) {
+                console.error(
+                    "Updated cart data is missing:",
+                    response
+                );
+
+                return;
+            }
+
+            /*
+             * Update cart items using
+             * backend response.
+             */
+            setCartItems(
+                cart.items || []
+            );
+
+            /*
+             * Keep cart ID synchronized.
+             */
+            setCartId(cart.id);
+
+            localStorage.setItem(
+                "cartId",
+                cart.id
+            );
+
+            /*
+             * Keep cart token synchronized.
+             */
+            setCartToken(
+                cart.cartToken
+            );
+
+            localStorage.setItem(
+                "cartToken",
+                cart.cartToken
+            );
+
+            console.log(
+                "Cart quantity updated successfully."
+            );
+
+        } catch (error) {
+            console.error(
+                "Failed to update cart:",
+                error.response?.data ||
+                    error.message
+            );
+        }
     };
 
     /*
