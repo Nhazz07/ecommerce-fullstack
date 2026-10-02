@@ -10,6 +10,7 @@ import Register from "./Pages/Register";
 import Wishlist from "./Pages/Wishlist";
 import Order from "./Pages/Order";
 import Checkout from "./Pages/Checkout"
+import Account from "./Pages/Account"
 function App() {
     return (
         <BrowserRouter>
@@ -26,6 +27,7 @@ function App() {
 
                 <Route path="/wishlist" element={<Wishlist />} />
                 <Route path="/orders" element={<Order />} />
+                <Route path="/account" element={<Account />} />
             </Routes>
         </BrowserRouter>
     );

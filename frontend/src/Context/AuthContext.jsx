@@ -8,7 +8,7 @@ import {
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({children}) => {
+export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(getToken());
 
     const login = async (loginData) => {
@@ -16,12 +16,14 @@ export const AuthProvider = ({children}) => {
 
         const accessToken = response.data?.accessToken;
 
-        if(accessToken){
+        if (accessToken) {
             setToken(accessToken);
         }
+
         return response;
-    }
-    const register = async(registerData) => {
+    };
+
+    const register = async (registerData) => {
         return await registerUser(registerData);
     };
 
@@ -30,17 +32,17 @@ export const AuthProvider = ({children}) => {
         setToken(null);
     };
 
-    const isAutheticated = !!token;
+    const isAuthenticated = !!token;
 
-    return(
+    return (
         <AuthContext.Provider
-        value={{
-            token,
-            isAutheticated,
-            login,
-            register,
-            logout
-        }}
+            value={{
+                token,
+                isAuthenticated,
+                login,
+                register,
+                logout,
+            }}
         >
             {children}
         </AuthContext.Provider>
