@@ -63,7 +63,8 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "/api/cart/**",
                                 "/api/brand",
-                                "/api/category"
+                                "/api/category",
+                                "/api/coupon/**"
                         ).permitAll()
 
                         // Public product browsing

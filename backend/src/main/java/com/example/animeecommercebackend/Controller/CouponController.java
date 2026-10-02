@@ -53,8 +53,6 @@ public class CouponController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/code/{code}")
-    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
-    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<CouponResponseDto>> getCouponByCode(
             @PathVariable String code){
         CouponResponseDto coupon = couponServiceImpl.getCouponByCode(code);
