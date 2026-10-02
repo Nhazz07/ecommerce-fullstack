@@ -7,56 +7,61 @@ function useCoupon(totalPrice) {
     const [couponError, setCouponError] = useState("");
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
-    const handleApplyCoupon = async () => {
-        const trimmedCode = couponCode.trim();
+const handleApplyCoupon = async () => {
+    const trimmedCode = couponCode.trim();
 
-        if(!trimmedCode){
-            setCoupon(null);
-            setCouponError("Please enter promo code.");
-            return ;
-        }
-        setCouponError("");
+    if (!trimmedCode) {
         setCoupon(null);
-        setIsApplyingCoupon(true);
+        setCouponError("Please enter promo code.");
+        return;
+    }
 
-        try{
-            const couponData = await validateCoupon(trimmedCode);
+    setCouponError("");
+    setCoupon(null);
+    setIsApplyingCoupon(true);
 
-            if(!couponData) {
-                throw new Error(
-                    "Coupon data was not returned by server."
-                );
-            }
+    try {
+        const response = await validateCoupon(trimmedCode);
 
-            if(couponData.active === false){
-                throw new Error(
-                    "Coupon is not active."
-                );
-            }
-            const minimumOrderAmount= Number(
-                couponData.minimumOrderAmount || 0
+        const couponData = response?.data ?? response;
+
+        if (!couponData) {
+            throw new Error(
+                "Coupon data was not returned by server."
             );
-
-            if(totalPrice < minimumOrderAmount){
-                setCouponError(
-                    `Your order must be at least $${minimumOrderAmount.toFixed(2)} to use this coupon`
-                );
-                return;
-            }
-
-            setCoupon(couponData);
-            setCouponError("");
-        }catch(error){
-            console.error(
-                "Coupon validation failed: ",
-                error.response?.data?.message ||
-                error.message ||
-                "Invalid, expired, or unavailable promo code."
-            );
-        } finally{
-            setIsApplyingCoupon(false);
         }
-    };
+
+        if (couponData.active === false) {
+            throw new Error(
+                "Coupon is not active."
+            );
+        }
+
+        const minimumOrderAmount = Number(
+            couponData.minimumOrderAmount || 0
+        );
+
+        if (totalPrice < minimumOrderAmount) {
+            setCouponError(
+                `Your order must be at least $${minimumOrderAmount.toFixed(2)} to use this coupon`
+            );
+            return;
+        }
+
+        setCoupon(couponData);
+        setCouponError("");
+
+    } catch (error) {
+        console.error(
+            "Coupon validation failed:",
+            error.response?.data?.message ||
+            error.message ||
+            "Invalid, expired, or unavailable promo code."
+        );
+    } finally {
+        setIsApplyingCoupon(false);
+    }
+};
 
     const handleRemoveCoupon = () => {
         setCoupon(null);

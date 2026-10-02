@@ -10,11 +10,25 @@ export const createOrder = async (orderData, token) => {
         body: JSON.stringify(orderData),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+
+    let data = null;
+
+    if (text) {
+        try {
+            data = JSON.parse(text);
+        } catch (error) {
+            console.error("Invalid JSON response:", text);
+        }
+    }
+
+    console.log("Order API status:", response.status);
+    console.log("Order API response:", data);
 
     if (!response.ok) {
         throw new Error(
-            data.message || "Failed to create order."
+            data?.message ||
+            `Failed to create order. HTTP ${response.status}`
         );
     }
 

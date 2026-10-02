@@ -12,7 +12,6 @@ import {
     calculateDiscount,
     calculateFinalTotal,
 } from "../checkoutService/checkoutCalculator"
-
 function Checkout() {
     const navigate = useNavigate();
     const { cartItems, clearCart } = useCart();

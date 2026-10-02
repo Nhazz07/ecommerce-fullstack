@@ -1,7 +1,7 @@
-import {useState} from "react";
-import {createOrder} from "../Services/orderApi"
+import { useState } from "react";
+import { createOrder } from "../Services/orderApi";
 
-function useCheckout ({coupon, clearCart, navigate}){
+function useCheckout({ coupon, clearCart, navigate, user }) {
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -9,33 +9,52 @@ function useCheckout ({coupon, clearCart, navigate}){
         city: "",
         country: "",
     });
+
     const [paymentMethod, setPaymentMethod] = useState(
         "CASH_ON_DELIVERY"
     );
-    const [isSummiting, setIsSummiting] = useState(false);
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
-    const handleChage = (event) => {
-        const {name, value} = event.target;
+    const handleChange = (event) => {
+        const { name, value } = event.target;
 
         setFormData((previousData) => ({
             ...previousData,
-            [name]: value
+            [name]: value,
         }));
     };
-    const handlSubmit = async (event) => {
-        event.previousData();
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
 
         setError("");
-        setIsSummiting(true);
+        setIsSubmitting(true);
 
         try {
+            // Guest user → Login
+            if (!user) {
+                navigate("/login", {
+                    state: {
+                        from: "/checkout",
+                    },
+                });
+
+                return;
+            }
+
+            // Get authenticated user's token
             const token = localStorage.getItem("token");
 
-            if(!token) {
-                throw new Error (
-                    "You must be looged in before placing an order"
-                );
+            if (!token) {
+                navigate("/login", {
+                    state: {
+                        from: "/checkout",
+                    },
+                });
+
+                return;
             }
 
             const shippingAddress = [
@@ -43,48 +62,62 @@ function useCheckout ({coupon, clearCart, navigate}){
                 formData.phone,
                 formData.address,
                 formData.city,
-                formData.country
+                formData.country,
             ]
-            .filter(Boolean)
-            .join(", ");
+                .filter(Boolean)
+                .join(", ");
 
             const orderData = {
                 couponId: coupon?.id || null,
                 shippingAddress,
                 paymentMethod,
             };
-            console.log("Order data: ", orderData);
 
-            const response = await createOrder(orderData);
+            console.log("Order data:", orderData);
 
-            console.log("Order created successfully.");
+            const response = await createOrder(
+                orderData,
+                token
+            );
 
-            navigate("/order");
-        }catch(submitError){
+            console.log(
+                "Order created successfully:",
+                response
+            );
+
+            // Clear cart after successful order
+            clearCart();
+
+            // Go to orders page
+            navigate("/orders");
+
+        } catch (submitError) {
             console.error(
-                "order creation failed: ",
+                "Order creation failed:",
                 submitError.response?.data || submitError
             );
 
             const errorMessage =
-            submitError.response?.data?.message ||
-            submitError.message ||
-            "Something went wrong while placing your order.";
+                submitError.response?.data?.message ||
+                submitError.message ||
+                "Something went wrong while placing your order.";
 
             setError(errorMessage);
-        }finally{
-            setIsSummiting(false);
+
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return {
         formData,
         paymentMethod,
-        isSummiting,
+        isSubmitting,
         error,
         setPaymentMethod,
-        handleChage,
-        handlSubmit,
+        handleChange,
+        handleSubmit,
     };
 }
+
 export default useCheckout;
