@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { createOrder } from "../Services/orderApi";
 
-function useCheckout({ coupon, clearCart, navigate, user }) {
+function useCheckout({
+    coupon,
+    clearCart,
+    navigate,
+    isAuthenticated,
+    token,
+}) {
     const [formData, setFormData] = useState({
         fullName: "",
         phone: "",
@@ -33,8 +39,8 @@ function useCheckout({ coupon, clearCart, navigate, user }) {
         setIsSubmitting(true);
 
         try {
-            // Guest user → Login
-            if (!user) {
+            // Check authentication
+            if (!isAuthenticated) {
                 navigate("/login", {
                     state: {
                         from: "/checkout",
@@ -44,9 +50,7 @@ function useCheckout({ coupon, clearCart, navigate, user }) {
                 return;
             }
 
-            // Get authenticated user's token
-            const token = localStorage.getItem("token");
-
+            // Check JWT token
             if (!token) {
                 navigate("/login", {
                     state: {
@@ -57,6 +61,7 @@ function useCheckout({ coupon, clearCart, navigate, user }) {
                 return;
             }
 
+            // Build shipping address
             const shippingAddress = [
                 formData.fullName,
                 formData.phone,
@@ -67,6 +72,7 @@ function useCheckout({ coupon, clearCart, navigate, user }) {
                 .filter(Boolean)
                 .join(", ");
 
+            // Create order request
             const orderData = {
                 couponId: coupon?.id || null,
                 shippingAddress,
@@ -75,6 +81,7 @@ function useCheckout({ coupon, clearCart, navigate, user }) {
 
             console.log("Order data:", orderData);
 
+            // Send order to backend
             const response = await createOrder(
                 orderData,
                 token
