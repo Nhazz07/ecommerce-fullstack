@@ -11,6 +11,7 @@ import com.example.animeecommercebackend.Entity.User;
 import com.example.animeecommercebackend.Entity.Enums.OrderStatus;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.OrderMapper;
+import com.example.animeecommercebackend.Repository.CartRepository;
 import com.example.animeecommercebackend.Repository.OrderRepository;
 import com.example.animeecommercebackend.Service.CouponService;
 import com.example.animeecommercebackend.Service.CurrentUserService;
@@ -32,6 +33,7 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
+    private final CartRepository cartRepository;
     private final CurrentUserService currentUserService;
     private final InventoryService inventoryService;
     private final PromotionService promotionService;
@@ -45,14 +47,14 @@ public class OrderServiceImpl implements OrderService {
         // 1. Get the currently authenticated user
         User user = currentUserService.getCurrentUser();
 
-        // 2. Get the cart assigned to this user
-        Cart cart = user.getCart();
-
-        if (cart == null) {
-            throw new ResourceNotFoundException(
-                    "Cart Not Found!"
-            );
-        }
+        // 2. Find the user's cart directly from the database
+        Cart cart = cartRepository
+                .findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Cart Not Found!"
+                        )
+                );
 
         // 3. Check whether the cart contains items
         if (cart.getCartItems() == null
@@ -81,7 +83,8 @@ public class OrderServiceImpl implements OrderService {
         // 5. Validate stock and create order items
         for (CartItem cartItem : cart.getCartItems()) {
 
-            ProductVariant variant = cartItem.getProductVariant();
+            ProductVariant variant =
+                    cartItem.getProductVariant();
 
             if (variant == null) {
                 throw new ResourceNotFoundException(
@@ -129,17 +132,23 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // Prevent negative promotion discounts
-            if (promotionDiscount.compareTo(BigDecimal.ZERO) < 0) {
+            if (promotionDiscount.compareTo(
+                    BigDecimal.ZERO
+            ) < 0) {
                 promotionDiscount = BigDecimal.ZERO;
             }
 
-            // Prevent discount from exceeding the product price
-            if (promotionDiscount.compareTo(unitPrice) > 0) {
+            // Prevent discount from exceeding product price
+            if (promotionDiscount.compareTo(
+                    unitPrice
+            ) > 0) {
                 promotionDiscount = unitPrice;
             }
 
             BigDecimal finalUnitPrice =
-                    unitPrice.subtract(promotionDiscount);
+                    unitPrice.subtract(
+                            promotionDiscount
+                    );
 
             // 9. Calculate item subtotal
             BigDecimal itemSubtotal =
@@ -170,10 +179,11 @@ public class OrderServiceImpl implements OrderService {
 
         if (dto.getCouponId() != null) {
 
-            couponDiscount = couponService.calculateDiscount(
-                    dto.getCouponId(),
-                    subTotal
-            );
+            couponDiscount =
+                    couponService.calculateDiscount(
+                            dto.getCouponId(),
+                            subTotal
+                    );
 
             if (couponDiscount == null) {
                 couponDiscount = BigDecimal.ZERO;
@@ -181,7 +191,9 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // Prevent negative coupon discounts
-        if (couponDiscount.compareTo(BigDecimal.ZERO) < 0) {
+        if (couponDiscount.compareTo(
+                BigDecimal.ZERO
+        ) < 0) {
             couponDiscount = BigDecimal.ZERO;
         }
 
@@ -194,7 +206,9 @@ public class OrderServiceImpl implements OrderService {
 
         // 13. Calculate shipping fee
         BigDecimal shippingFee =
-                shipmentService.calculateShipmentFee(subTotal);
+                shipmentService.calculateShipmentFee(
+                        subTotal
+                );
 
         if (shippingFee == null) {
             shippingFee = BigDecimal.ZERO;
@@ -203,19 +217,22 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingFee(shippingFee);
 
         // 14. Calculate final total
-        BigDecimal totalAmount = subTotal
-                .subtract(couponDiscount)
-                .add(shippingFee);
+        BigDecimal totalAmount =
+                subTotal
+                        .subtract(couponDiscount)
+                        .add(shippingFee);
 
         order.setTotalAmount(totalAmount);
 
         // 15. Save order
-        Order savedOrder = orderRepository.save(order);
+        Order savedOrder =
+                orderRepository.save(order);
 
         // 16. Decrease inventory
         for (CartItem cartItem : cart.getCartItems()) {
 
-            ProductVariant variant = cartItem.getProductVariant();
+            ProductVariant variant =
+                    cartItem.getProductVariant();
 
             inventoryService.decreaseStock(
                     variant.getId(),
@@ -234,9 +251,12 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponseDto> getMyOrders() {
 
         Long currentUserId =
-                currentUserService.getCurrentUser().getId();
+                currentUserService
+                        .getCurrentUser()
+                        .getId();
 
-        return orderRepository.findByUserId(currentUserId)
+        return orderRepository
+                .findByUserId(currentUserId)
                 .stream()
                 .map(OrderMapper::toResponse)
                 .toList();
@@ -245,17 +265,23 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto getOrderById(Long id) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Order Not Found!"
-                        ));
+        Order order =
+                orderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Order Not Found!"
+                                )
+                        );
 
         Long currentUserId =
-                currentUserService.getCurrentUser().getId();
+                currentUserService
+                        .getCurrentUser()
+                        .getId();
 
         if (order.getUser() == null
-                || !order.getUser().getId().equals(currentUserId)) {
+                || !order.getUser()
+                .getId()
+                .equals(currentUserId)) {
 
             throw new ResourceNotFoundException(
                     "Order Not Found!"
@@ -268,7 +294,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto getOrderByUserId(Long userId) {
 
-        Order order = orderRepository.findOrderByUserId(userId);
+        Order order =
+                orderRepository.findOrderByUserId(
+                        userId
+                );
 
         if (order == null) {
             throw new ResourceNotFoundException(
@@ -291,28 +320,38 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto updateOrder(
             Long id,
-            OrderRequestDto dto) {
+            OrderRequestDto dto
+    ) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Order Not Found!"
-                        ));
+        Order order =
+                orderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Order Not Found!"
+                                )
+                        );
 
         Long currentUserId =
-                currentUserService.getCurrentUser().getId();
+                currentUserService
+                        .getCurrentUser()
+                        .getId();
 
         if (order.getUser() == null
-                || !order.getUser().getId().equals(currentUserId)) {
+                || !order.getUser()
+                .getId()
+                .equals(currentUserId)) {
 
             throw new ResourceNotFoundException(
                     "Order Not Found!"
             );
         }
 
-        order.setShippingAddress(dto.getShippingAddress());
+        order.setShippingAddress(
+                dto.getShippingAddress()
+        );
 
-        Order savedOrder = orderRepository.save(order);
+        Order savedOrder =
+                orderRepository.save(order);
 
         return OrderMapper.toResponse(savedOrder);
     }
@@ -320,17 +359,23 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public void deleteOrder(Long id) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Order Not Found!"
-                        ));
+        Order order =
+                orderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Order Not Found!"
+                                )
+                        );
 
         Long currentUserId =
-                currentUserService.getCurrentUser().getId();
+                currentUserService
+                        .getCurrentUser()
+                        .getId();
 
         if (order.getUser() == null
-                || !order.getUser().getId().equals(currentUserId)) {
+                || !order.getUser()
+                .getId()
+                .equals(currentUserId)) {
 
             throw new ResourceNotFoundException(
                     "Order Not Found!"
@@ -343,13 +388,16 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto updateOrderStatus(
             Long id,
-            OrderStatus status) {
+            OrderStatus status
+    ) {
 
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Order Not Found!"
-                        ));
+        Order order =
+                orderRepository.findById(id)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Order Not Found!"
+                                )
+                        );
 
         if (!isValidStatusTransition(
                 order.getStatus(),
@@ -362,14 +410,16 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
 
-        Order updatedOrder = orderRepository.save(order);
+        Order updatedOrder =
+                orderRepository.save(order);
 
         return OrderMapper.toResponse(updatedOrder);
     }
 
     private boolean isValidStatusTransition(
             OrderStatus currentStatus,
-            OrderStatus status) {
+            OrderStatus status
+    ) {
 
         return switch (currentStatus) {
 
