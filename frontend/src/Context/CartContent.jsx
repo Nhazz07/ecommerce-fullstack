@@ -282,6 +282,17 @@ export function CartProvider({ children }) {
         }
     };
 
+    // clear cart
+    const clearCart = () => {
+    setCartItems([]);
+    setCartId(null);
+    setCartToken(null);
+
+    localStorage.removeItem("cartItems");
+    localStorage.removeItem("cartId");
+    localStorage.removeItem("cartToken");
+};
+
     /*
      * CART COUNT
      */
@@ -294,15 +305,16 @@ export function CartProvider({ children }) {
 
     return (
         <CartContext.Provider
-            value={{
-                cartItems,
-                cartId,
-                cartToken,
-                addToCart,
-                updateQuantity,
-                removeFromCart,
-                cartCount,
-            }}
+           value={{
+    cartItems,
+    cartId,
+    cartToken,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    cartCount,
+}}
         >
             {children}
         </CartContext.Provider>

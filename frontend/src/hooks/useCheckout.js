@@ -39,29 +39,24 @@ function useCheckout({
         setIsSubmitting(true);
 
         try {
-            // Check authentication
             if (!isAuthenticated) {
                 navigate("/login", {
                     state: {
                         from: "/checkout",
                     },
                 });
-
                 return;
             }
 
-            // Check JWT token
             if (!token) {
                 navigate("/login", {
                     state: {
                         from: "/checkout",
                     },
                 });
-
                 return;
             }
 
-            // Build shipping address
             const shippingAddress = [
                 formData.fullName,
                 formData.phone,
@@ -72,7 +67,6 @@ function useCheckout({
                 .filter(Boolean)
                 .join(", ");
 
-            // Create order request
             const orderData = {
                 couponId: coupon?.id || null,
                 shippingAddress,
@@ -81,7 +75,6 @@ function useCheckout({
 
             console.log("Order data:", orderData);
 
-            // Send order to backend
             const response = await createOrder(
                 orderData,
                 token
@@ -92,10 +85,10 @@ function useCheckout({
                 response
             );
 
-            // Clear cart after successful order
+            // Only clear cart after successful order
             clearCart();
 
-            // Go to orders page
+            // Redirect to orders
             navigate("/orders");
 
         } catch (submitError) {
