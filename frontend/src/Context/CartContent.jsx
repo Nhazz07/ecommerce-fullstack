@@ -1,5 +1,3 @@
-// src/Context/CartContent.jsx
-
 import React, {
     createContext,
     useContext,
@@ -31,10 +29,18 @@ export function CartProvider({ children }) {
         localStorage.getItem("cartId")
     );
 
-    const [cartToken, setCartToken] = useState(
-        localStorage.getItem("cartToken")
-    );
+    const [cartToken, setCartToken] = useState(() => {
+        const token = localStorage.getItem("cartToken");
 
+        // Prevent the string "null" from being treated as a token
+        return token && token !== "null"
+            ? token
+            : null;
+    });
+
+    /*
+     * SAVE CART ITEMS
+     */
     useEffect(() => {
         localStorage.setItem(
             "cartItems",
@@ -58,6 +64,10 @@ export function CartProvider({ children }) {
                 return false;
             }
 
+            /*
+             * Get first variant if no variant
+             * was selected.
+             */
             if (!selectedVariant) {
                 const variants =
                     await getVariantsByProductId(
@@ -88,6 +98,12 @@ export function CartProvider({ children }) {
                 return false;
             }
 
+            /*
+             * Send cart request.
+             *
+             * cartToken can be null for
+             * authenticated users.
+             */
             const response = await createCart(
                 product.id,
                 selectedVariant.id,
@@ -105,19 +121,44 @@ export function CartProvider({ children }) {
                 return false;
             }
 
+            /*
+             * Update cart state.
+             */
             setCartId(cart.id);
-            setCartToken(cart.cartToken);
             setCartItems(cart.items || []);
 
-            localStorage.setItem(
-                "cartId",
-                cart.id
-            );
+            /*
+             * Only use cartToken when the
+             * backend actually returns one.
+             */
+            const newCartToken =
+                cart.cartToken ?? null;
 
-            localStorage.setItem(
-                "cartToken",
-                cart.cartToken
-            );
+            setCartToken(newCartToken);
+
+            /*
+             * Save cart ID.
+             */
+            if (cart.id != null) {
+                localStorage.setItem(
+                    "cartId",
+                    cart.id
+                );
+            }
+
+            /*
+             * Save/remove cart token safely.
+             */
+            if (newCartToken) {
+                localStorage.setItem(
+                    "cartToken",
+                    newCartToken
+                );
+            } else {
+                localStorage.removeItem(
+                    "cartToken"
+                );
+            }
 
             return true;
         } catch (error) {
@@ -183,17 +224,38 @@ export function CartProvider({ children }) {
 
             setCartItems(cart.items || []);
             setCartId(cart.id);
-            setCartToken(cart.cartToken);
 
-            localStorage.setItem(
-                "cartId",
-                cart.id
-            );
+            /*
+             * Handle nullable cartToken.
+             */
+            const newCartToken =
+                cart.cartToken ?? null;
 
-            localStorage.setItem(
-                "cartToken",
-                cart.cartToken
-            );
+            setCartToken(newCartToken);
+
+            /*
+             * Save cart ID.
+             */
+            if (cart.id != null) {
+                localStorage.setItem(
+                    "cartId",
+                    cart.id
+                );
+            }
+
+            /*
+             * Save/remove cart token.
+             */
+            if (newCartToken) {
+                localStorage.setItem(
+                    "cartToken",
+                    newCartToken
+                );
+            } else {
+                localStorage.removeItem(
+                    "cartToken"
+                );
+            }
         } catch (error) {
             console.error(
                 "Failed to update cart:",
@@ -260,19 +322,38 @@ export function CartProvider({ children }) {
             );
 
             setCartId(cart.id);
-            setCartToken(
-                cart.cartToken
-            );
 
-            localStorage.setItem(
-                "cartId",
-                cart.id
-            );
+            /*
+             * Handle nullable cartToken.
+             */
+            const newCartToken =
+                cart.cartToken ?? null;
 
-            localStorage.setItem(
-                "cartToken",
-                cart.cartToken
-            );
+            setCartToken(newCartToken);
+
+            /*
+             * Save cart ID.
+             */
+            if (cart.id != null) {
+                localStorage.setItem(
+                    "cartId",
+                    cart.id
+                );
+            }
+
+            /*
+             * Save/remove cart token.
+             */
+            if (newCartToken) {
+                localStorage.setItem(
+                    "cartToken",
+                    newCartToken
+                );
+            } else {
+                localStorage.removeItem(
+                    "cartToken"
+                );
+            }
         } catch (error) {
             console.error(
                 "Failed to remove cart item:",
@@ -282,16 +363,26 @@ export function CartProvider({ children }) {
         }
     };
 
-    // clear cart
+    /*
+     * CLEAR CART
+     */
     const clearCart = () => {
-    setCartItems([]);
-    setCartId(null);
-    setCartToken(null);
+        setCartItems([]);
+        setCartId(null);
+        setCartToken(null);
 
-    localStorage.removeItem("cartItems");
-    localStorage.removeItem("cartId");
-    localStorage.removeItem("cartToken");
-};
+        localStorage.removeItem(
+            "cartItems"
+        );
+
+        localStorage.removeItem(
+            "cartId"
+        );
+
+        localStorage.removeItem(
+            "cartToken"
+        );
+    };
 
     /*
      * CART COUNT
@@ -305,16 +396,16 @@ export function CartProvider({ children }) {
 
     return (
         <CartContext.Provider
-           value={{
-    cartItems,
-    cartId,
-    cartToken,
-    addToCart,
-    updateQuantity,
-    removeFromCart,
-    clearCart,
-    cartCount,
-}}
+            value={{
+                cartItems,
+                cartId,
+                cartToken,
+                addToCart,
+                updateQuantity,
+                removeFromCart,
+                clearCart,
+                cartCount,
+            }}
         >
             {children}
         </CartContext.Provider>

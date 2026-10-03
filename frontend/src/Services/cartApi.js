@@ -1,11 +1,29 @@
+// src/Services/cartApi.js
+
 import api from "./api";
 
+/*
+ * CREATE CART
+ */
 export const createCart = async (
     productId,
     productVariantId,
     quantity,
     cartToken
 ) => {
+    const config = {};
+
+    /*
+     * Guest users use X-Cart-Token.
+     * Logged-in users may not have a cart token,
+     * so don't send an empty header.
+     */
+    if (cartToken) {
+        config.headers = {
+            "X-Cart-Token": cartToken,
+        };
+    }
+
     const response = await api.post(
         "/api/cart",
         {
@@ -13,11 +31,7 @@ export const createCart = async (
             productVariantId,
             quantity,
         },
-        {
-            headers: {
-                "X-Cart-Token": cartToken || "",
-            },
-        }
+        config
     );
 
     console.log(
@@ -28,6 +42,10 @@ export const createCart = async (
     return response.data;
 };
 
+
+/*
+ * UPDATE CART
+ */
 export const updateCart = async (
     cartId,
     productId,
@@ -35,6 +53,17 @@ export const updateCart = async (
     quantity,
     cartToken
 ) => {
+    const config = {};
+
+    /*
+     * Only send cart token when it exists.
+     */
+    if (cartToken) {
+        config.headers = {
+            "X-Cart-Token": cartToken,
+        };
+    }
+
     const response = await api.put(
         `/api/cart/${cartId}`,
         {
@@ -42,11 +71,7 @@ export const updateCart = async (
             productVariantId,
             quantity,
         },
-        {
-            headers: {
-                "X-Cart-Token": cartToken || "",
-            },
-        }
+        config
     );
 
     console.log(
@@ -57,18 +82,29 @@ export const updateCart = async (
     return response.data;
 };
 
+
+/*
+ * REMOVE CART ITEM
+ */
 export const removeCartItem = async (
     cartId,
     productVariantId,
     cartToken
 ) => {
+    const config = {};
+
+    /*
+     * Only send cart token when it exists.
+     */
+    if (cartToken) {
+        config.headers = {
+            "X-Cart-Token": cartToken,
+        };
+    }
+
     const response = await api.delete(
         `/api/cart/${cartId}/products/${productVariantId}`,
-        {
-            headers: {
-                "X-Cart-Token": cartToken || "",
-            },
-        }
+        config
     );
 
     console.log(
