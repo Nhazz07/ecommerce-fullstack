@@ -1,7 +1,7 @@
-import {useEffect, useState} from "react";
-import {getProducts} from "../Services/productApi";
+import { useEffect, useState } from "react";
+import { getProducts } from "../Services/productApi";
 
-function useProducts(){
+function useProducts() {
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
@@ -11,23 +11,25 @@ function useProducts(){
             setIsLoading(true);
             setError("");
 
-            try{
+            try {
                 const response = await getProducts();
 
                 setProducts(response.data?.content || []);
-            }catch(error){
+            } catch (error) {
                 console.error(
                     "Failed to fetch products:",
                     error.response?.data || error
                 );
+
                 setError(
                     error.response?.data?.message ||
                     "Failed to load products"
                 );
-            }finally{
+            } finally {
                 setIsLoading(false);
             }
         };
+
         fetchProducts();
     }, []);
 
