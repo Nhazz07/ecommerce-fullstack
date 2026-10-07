@@ -1,9 +1,13 @@
 import {
+    Home,
     Moon,
+    Package,
     Search,
     ShoppingCart,
     Sun,
+    User,
 } from "lucide-react";
+
 import { useEffect, useState } from "react";
 import {
     useLocation,
@@ -41,80 +45,104 @@ export default function Navbar() {
     };
 
     return (
-        <nav className="fixed top-0 z-50 w-full border-b border-gray-200 bg-white dark:border-white/10 dark:bg-[#0B1020]">
+        <nav className="fixed left-0 top-0 z-50 w-full border-b border-gray-200/80 bg-white/95 backdrop-blur-md dark:border-white/10 dark:bg-[#080C16]/95">
+
             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
 
-                {/* Logo */}
-                <h1
+                {/* ==================== LOGO ==================== */}
+
+                <button
                     onClick={() => navigate("/")}
-                    className="cursor-pointer text-2xl font-bold text-[#0B1020] dark:text-white"
+                    className="text-2xl font-bold tracking-tight"
                 >
-                    Ani<span className="text-pink-400">
+                    <span className="text-[#0B1020] dark:text-white">
+                        Ani
+                    </span>
+
+                    <span className="text-blue-500">
                         Store
                     </span>
-                </h1>
+                </button>
 
-                {/* Navigation */}
-                <div className="hidden items-center gap-7 text-sm font-medium text-gray-600 dark:text-gray-300 md:flex">
+
+                {/* ==================== NAVIGATION ==================== */}
+
+                <div className="hidden items-center gap-7 md:flex">
 
                     {/* Home */}
                     <button
                         onClick={() => navigate("/")}
-                        className={`h-16 ${
+                        className={`flex h-16 items-center gap-2 border-b-2 text-sm font-medium transition ${
                             isActive("/")
-                                ? "border-b-2 border-pink-400 text-pink-400"
-                                : "hover:text-pink-400"
+                                ? "border-blue-500 text-blue-500"
+                                : "border-transparent text-gray-600 hover:text-blue-500 dark:text-gray-300"
                         }`}
                     >
+                        <Home size={16} />
                         Home
                     </button>
 
+
                     {/* Products */}
                     <button
-                        onClick={() => navigate("/products")}
-                        className={`h-16 ${
+                        onClick={() =>
+                            navigate("/products")
+                        }
+                        className={`flex h-16 items-center gap-2 border-b-2 text-sm font-medium transition ${
                             isActive("/products")
-                                ? "border-b-2 border-pink-400 text-pink-400"
-                                : "hover:text-pink-400"
+                                ? "border-blue-500 text-blue-500"
+                                : "border-transparent text-gray-600 hover:text-blue-500 dark:text-gray-300"
                         }`}
                     >
+                        <Package size={16} />
                         Products
                     </button>
+
 
                     {/* Cart */}
                     <button
                         onClick={() => navigate("/cart")}
-                        className={`h-16 ${
+                        className={`flex h-16 items-center gap-2 border-b-2 text-sm font-medium transition ${
                             isActive("/cart")
-                                ? "border-b-2 border-pink-400 text-pink-400"
-                                : "hover:text-pink-400"
+                                ? "border-blue-500 text-blue-500"
+                                : "border-transparent text-gray-600 hover:text-blue-500 dark:text-gray-300"
                         }`}
                     >
+                        <ShoppingCart size={16} />
                         Cart
                     </button>
+
 
                     {/* Orders */}
                     {isAuthenticated && (
                         <button
-                            onClick={() => navigate("/orders")}
-                            className={`h-16 ${
+                            onClick={() =>
+                                navigate("/orders")
+                            }
+                            className={`flex h-16 items-center gap-2 border-b-2 text-sm font-medium transition ${
                                 isActive("/orders")
-                                    ? "border-b-2 border-pink-400 text-pink-400"
-                                    : "hover:text-pink-400"
+                                    ? "border-blue-500 text-blue-500"
+                                    : "border-transparent text-gray-600 hover:text-blue-500 dark:text-gray-300"
                             }`}
                         >
+                            <Package size={16} />
                             Orders
                         </button>
                     )}
+
                 </div>
 
-                {/* Actions */}
+
+                {/* ==================== ACTIONS ==================== */}
+
                 <div className="flex items-center gap-4">
 
                     {/* Search */}
                     <button
-                        onClick={() => navigate("/products")}
-                        className="text-[#0B1020] transition hover:text-pink-400 dark:text-white"
+                        onClick={() =>
+                            navigate("/products")
+                        }
+                        className="text-gray-700 transition hover:text-blue-500 dark:text-gray-200"
                         title="Search products"
                     >
                         <Search
@@ -123,10 +151,11 @@ export default function Navbar() {
                         />
                     </button>
 
+
                     {/* Cart */}
                     <button
                         onClick={() => navigate("/cart")}
-                        className="relative text-[#0B1020] transition hover:text-pink-400 dark:text-white"
+                        className="relative text-gray-700 transition hover:text-blue-500 dark:text-gray-200"
                         title="Shopping cart"
                     >
                         <ShoppingCart
@@ -134,17 +163,20 @@ export default function Navbar() {
                             strokeWidth={2}
                         />
 
-                        <span className="absolute -right-3 -top-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-pink-400 px-1 text-[10px] font-bold text-[#0B1020]">
-                            {cartCount}
-                        </span>
+                        {cartCount > 0 && (
+                            <span className="absolute -right-3 -top-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] font-bold text-white">
+                                {cartCount}
+                            </span>
+                        )}
                     </button>
 
-                    {/* Theme Toggle */}
+
+                    {/* Theme */}
                     <button
                         onClick={() =>
-                            setDarkMode(!darkMode)
+                            setDarkMode((previous) => !previous)
                         }
-                        className="text-[#0B1020] transition hover:text-pink-400 dark:text-white"
+                        className="text-gray-700 transition hover:text-blue-500 dark:text-gray-200"
                         title="Change theme"
                     >
                         {darkMode ? (
@@ -154,24 +186,33 @@ export default function Navbar() {
                         )}
                     </button>
 
+
                     {/* Account / Login */}
                     {isAuthenticated ? (
-    <button
-        onClick={() => navigate("/account")}
-        className="rounded-lg bg-pink-400 px-5 py-2 font-semibold text-[#0B1020] transition hover:bg-pink-300"
-    >
-        Account
-    </button>
-) : (
-    <button
-        onClick={() => navigate("/login")}
-        className="rounded-lg bg-pink-400 px-5 py-2 font-semibold text-[#0B1020] transition hover:bg-pink-300"
-    >
-        Login
-    </button>
-)}
+                        <button
+                            onClick={() =>
+                                navigate("/account")
+                            }
+                            className="flex items-center gap-2 rounded-lg bg-blue-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-600"
+                        >
+                            <User size={16} />
+                            Account
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() =>
+                                navigate("/login")
+                            }
+                            className="rounded-lg bg-blue-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-600"
+                        >
+                            Login
+                        </button>
+                    )}
+
                 </div>
+
             </div>
+
         </nav>
     );
 }
