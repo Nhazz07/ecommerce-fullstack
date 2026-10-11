@@ -11,23 +11,22 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
+    private static final String BEARER_AUTH = "bearerAuth";
     @Bean
     public OpenAPI customOpenAPI() {
+        SecurityScheme bearerScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT");
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Anime E-Commerce API")
-                        .version("1.0"))
-                .components(new Components()
-                        .addSecuritySchemes(
-                                "bearerAuth",
-                                new SecurityScheme()
-                                        .type(SecurityScheme.Type.HTTP)
-                                        .scheme("bearer")
-                                        .bearerFormat("JWT")
+                        .version("1.0")
+                        .description(
+                                "REST API for the Anime E-Commerce application."
                         ))
-                .addSecurityItem(
-                        new SecurityRequirement()
-                                .addList("bearerAuth")
-                );
+                .components(new Components()
+                        .addSecuritySchemes(BEARER_AUTH, bearerScheme));
     }
 }

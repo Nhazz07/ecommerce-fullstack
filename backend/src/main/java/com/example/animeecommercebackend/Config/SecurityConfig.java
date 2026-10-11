@@ -25,6 +25,12 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    private final List<String> ALLOWED_ORIGIN = List.of(
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:5174"
+    );
+
     // Password Encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -57,17 +63,21 @@ public class SecurityConfig {
                                 "/**"
                         ).permitAll()
 
-                        // Public authentication endpoints
+                        // public authentication
                         .requestMatchers(
                                 "/api/auth/register",
-                                "/api/auth/login",
+                                "/api/auth/login"
+                        ).permitAll()
+
+                        // Preserve an exiting guest-accessible routes
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/api/cart/**",
                                 "/api/brand",
                                 "/api/category",
                                 "/api/coupon/**",
-                                "/api/order/**"
+                                "/api/productVariant/productId/**"
                         ).permitAll()
-
                         // Public product browsing
                         .requestMatchers(
                                 HttpMethod.GET,
@@ -102,11 +112,7 @@ public class SecurityConfig {
                 new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-                List.of(
-                        "http://localhost:3000",
-                        "http://localhost:5173",
-                        "http://localhost:5174"
-                )
+              ALLOWED_ORIGIN
         );
 
         configuration.setAllowedMethods(
