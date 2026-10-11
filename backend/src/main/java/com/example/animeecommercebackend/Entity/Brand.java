@@ -1,18 +1,18 @@
+
 package com.example.animeecommercebackend.Entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -28,6 +28,7 @@ public class Brand {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(length = 255)
     private String publicId;
 
     @Column(length = 250)
@@ -37,6 +38,7 @@ public class Brand {
     @Column(nullable = false, length = 500)
     private String logoUrl;
 
+    @Builder.Default
     @OneToMany(mappedBy = "brand")
     private List<Product> products = new ArrayList<>();
 

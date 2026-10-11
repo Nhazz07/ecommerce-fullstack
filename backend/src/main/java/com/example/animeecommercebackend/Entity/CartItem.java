@@ -1,3 +1,4 @@
+
 package com.example.animeecommercebackend.Entity;
 
 import jakarta.persistence.*;
@@ -12,8 +13,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -52,7 +53,9 @@ public class CartItem {
     @JoinColumn(
             name = "product_variant_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_cart_item_product_variant")
+            foreignKey = @ForeignKey(
+                    name = "fk_cart_item_product_variant"
+            )
     )
     private ProductVariant productVariant;
 

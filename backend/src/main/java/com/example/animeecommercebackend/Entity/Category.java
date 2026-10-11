@@ -1,3 +1,4 @@
+
 package com.example.animeecommercebackend.Entity;
 
 import jakarta.persistence.*;
@@ -8,36 +9,37 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "categories")
 public class Category {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @NotBlank
-    @Column(nullable = false)
+    @NotBlank(message = "Category name is required")
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @NotBlank
-    @Column(nullable = false)
+    @NotBlank(message = "Category description is required")
+    @Column(nullable = false, length = 500)
     private String description;
 
-    @NotBlank
-    @Column(nullable = false)
+    @NotBlank(message = "Category image URL is required")
+    @Column(nullable = false, length = 500)
     private String imageUrl;
 
-    @OneToMany(mappedBy = "category")
-    private List<Product> products;
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    private List<Product> products = new ArrayList<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

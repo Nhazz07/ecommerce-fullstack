@@ -1,7 +1,9 @@
+
 package com.example.animeecommercebackend.Entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -12,10 +14,11 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@Setter
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "carts")
 public class Cart {
@@ -24,8 +27,8 @@ public class Cart {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Used mainly for guest carts
-    @Column(unique = true)
+    // Identifies a guest cart when the user is not logged in.
+    @Column(unique = true, length = 255)
     private String cartToken;
 
     @CreationTimestamp
@@ -36,10 +39,11 @@ public class Cart {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // Inverse side of User.cart
+    // Inverse side of User.cart.
     @OneToOne(mappedBy = "cart", fetch = FetchType.LAZY)
     private User user;
 
+    @Builder.Default
     @OneToMany(
             mappedBy = "cart",
             cascade = CascadeType.ALL,
