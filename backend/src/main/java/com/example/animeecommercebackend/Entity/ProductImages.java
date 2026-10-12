@@ -1,9 +1,11 @@
+
 package com.example.animeecommercebackend.Entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,19 +27,26 @@ public class ProductImages {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Cloudinary public ID is required")
+    @Size(max = 255)
+    @Column(nullable = false, length = 255)
     private String publicId;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Image URL is required")
+    @Size(max = 1000)
+    @Column(nullable = false, length = 1000)
     private String imageUrl;
 
-    @Column(nullable = false)
+    @Size(max = 255)
+    @Column(length = 255)
     private String altText;
 
+    @NotNull(message = "Display order is required")
+    @Min(value = 0, message = "Display order cannot be negative")
     @Column(nullable = false)
     private Integer displayOrder;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
