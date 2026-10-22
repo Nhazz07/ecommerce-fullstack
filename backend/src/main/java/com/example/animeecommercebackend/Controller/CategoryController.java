@@ -46,7 +46,6 @@ public class CategoryController {
 
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<CategoryResponseDto>> getCategoryById(
             @PathVariable @Positive Long id){
@@ -66,8 +65,6 @@ public class CategoryController {
 
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
-    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getAllCategory(){
 
         List<CategoryResponseDto> categories =
