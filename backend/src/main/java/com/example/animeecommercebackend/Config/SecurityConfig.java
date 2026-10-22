@@ -130,6 +130,10 @@ public class SecurityConfig {
                 List.of("*")
         );
 
+        configuration.setExposedHeaders(
+                List.of("X-Auth-Error")
+        );
+
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =

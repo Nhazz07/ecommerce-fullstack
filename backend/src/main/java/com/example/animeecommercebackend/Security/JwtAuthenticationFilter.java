@@ -1,9 +1,12 @@
 package com.example.animeecommercebackend.Security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,6 +18,10 @@ import java.io.IOException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final String AUTH_ERROR_HEADER = "X-Auth-Error";
+    private static final String TOKEN_EXPIRED = "token_expired";
 
     private final JwtService jwtService;
     private final CustomerUserDetailService customerUserDetailService;
@@ -45,9 +52,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
-
-        System.out.println("REQUEST: " + request.getMethod() + " " + request.getServletPath());
-        System.out.println("AUTH HEADER: " + authHeader);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -82,17 +86,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext()
                             .setAuthentication(authentication);
 
-                    System.out.println("AUTHENTICATED USER: "
-                            + userDetails.getUsername());
-                    System.out.println("AUTHORITIES: "
-                            + userDetails.getAuthorities());
                 } else {
-                    System.out.println("JWT TOKEN IS INVALID");
+                    logger.warn("Invalid JWT rejected for {} {}", request.getMethod(), request.getServletPath());
                 }
             }
 
+        } catch (ExpiredJwtException e) {
+            response.setHeader(AUTH_ERROR_HEADER, TOKEN_EXPIRED);
+            logger.warn("Expired JWT rejected for {} {}", request.getMethod(), request.getServletPath());
+            SecurityContextHolder.clearContext();
         } catch (Exception e) {
-            System.out.println("JWT ERROR: " + e.getMessage());
+            logger.warn("JWT rejected for {} {} ({})", request.getMethod(), request.getServletPath(), e.getClass().getSimpleName());
             SecurityContextHolder.clearContext();
         }
 
