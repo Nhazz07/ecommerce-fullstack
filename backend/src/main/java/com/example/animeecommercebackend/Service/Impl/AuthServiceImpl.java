@@ -23,12 +23,21 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+
     @Override
     public RegisterResponseDto register(RegisterRequestDto dto) {
 
+        // Normalize email to avoid case/whitespace mismatches
+        String email = dto.getEmail().trim().toLowerCase();
+
         // Check if email already exists
-        if (userRepository.findByEmail(dto.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already registered!");
+        }
+
+        // Check if username already exists
+        if (userRepository.existsByUsername(dto.getUsername().trim())) {
+            throw new IllegalArgumentException("Username already taken!");
         }
 
         // Check password confirmation
@@ -36,21 +45,25 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Passwords do not match!");
         }
 
-        // Convert DTO → Entity
+        // Convert DTO to Entity
         User user = RegisterMapper.toEntity(dto);
 
-        // set default role
+        // Store normalized email
+        user.setEmail(email);
+
+        // Set default role
         user.setRole(UserRole.CUSTOMER);
 
         // Hash password before saving
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // Save user
+        // Save only after all validation passes
         User savedUser = userRepository.save(user);
 
-        // Convert Entity → Response DTO
+        // Return response DTO
         return RegisterMapper.toResponse(savedUser);
     }
+
 
     @Override
     public LoginResponseDto login(LoginRequestDto dto) {
