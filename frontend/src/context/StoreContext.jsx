@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
-import { authApi, cartApi } from "../api/services";
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { authApi, cartApi, accountApi } from "../api/services";
+import { messageFrom } from "../api/client";
 
 export const StoreContext = createContext(null);
 const CART_KEY = "anteiku_guest_cart";
@@ -15,14 +16,49 @@ export function StoreProvider({ children }) {
   const [user, setUser] = useState(() => read(USER_KEY, null));
   const [theme, setTheme] = useState(() => localStorage.getItem("anteiku_theme") || "light");
   const [syncing, setSyncing] = useState(false);
+  const [wishlists, setWishlists] = useState(null);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistError, setWishlistError] = useState("");
+  const wishlistRequest = useRef(null);
+  const wishlistMutations = useRef(new Map());
 
   useEffect(() => { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem("anteiku_theme", theme); document.documentElement.classList.toggle("dark", theme === "dark"); }, [theme]);
   useEffect(() => {
-    const expireSession = () => setUser(null);
+    const expireSession = () => { setUser(null); setWishlists(null); setWishlistError(""); wishlistRequest.current = null; wishlistMutations.current.clear(); };
     window.addEventListener("anteiku:session-expired", expireSession);
     return () => window.removeEventListener("anteiku:session-expired", expireSession);
   }, []);
+
+  const loadWishlists = useCallback(() => {
+    if (!user) return Promise.reject(new Error("Sign in to view your wishlist."));
+    if (wishlistRequest.current) return wishlistRequest.current;
+    setWishlistLoading(true);
+    setWishlistError("");
+    const request = accountApi.wishlists()
+      .then((result) => {
+        setWishlists(result);
+        return result;
+      })
+      .catch((error) => {
+        setWishlistError(messageFrom(error));
+        throw error;
+      })
+      .finally(() => {
+        wishlistRequest.current = null;
+        setWishlistLoading(false);
+      });
+    wishlistRequest.current = request;
+    return request;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      wishlistRequest.current = null;
+      return;
+    }
+    loadWishlists().catch(() => {});
+  }, [user, loadWishlists]);
 
   const addToCart = useCallback((item) => setCart((current) => {
     const existing = current.find((entry) => entry.variantId === item.variantId);
@@ -49,8 +85,67 @@ export function StoreProvider({ children }) {
     setUser(signedIn);
     return signedIn;
   }, []);
-  const signOut = useCallback(() => { localStorage.removeItem("anteiku_token"); localStorage.removeItem(USER_KEY); setUser(null); }, []);
+  const signOut = useCallback(() => {
+    localStorage.removeItem("anteiku_token");
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+    setWishlists(null);
+    setWishlistError("");
+    wishlistRequest.current = null;
+    wishlistMutations.current.clear();
+  }, []);
 
-  const value = useMemo(() => ({ cart, user, theme, syncing, addToCart, updateQuantity, removeFromCart, syncCart, signIn, signOut, setTheme }), [cart, user, theme, syncing, addToCart, updateQuantity, removeFromCart, syncCart, signIn, signOut]);
+  const addWishlistProduct = useCallback((productId) => {
+    const key = `add:${productId}`;
+    if (wishlistMutations.current.has(key)) return wishlistMutations.current.get(key);
+    const request = (async () => {
+      const current = await loadWishlists();
+      const alreadySaved = current.find((list) => (list.productIds || []).some((id) => String(id) === String(productId)));
+      if (alreadySaved) return { wishlist: alreadySaved, alreadySaved: true };
+
+      let updated;
+      if (current[0]) {
+        updated = await accountApi.addWishlistProduct(current[0].id, productId);
+      } else {
+        try {
+          updated = await accountApi.createWishlist({ name: "My wishlist", description: "Saved products", isPublic: false, productIds: [productId] });
+        } catch (error) {
+          // Creation and adding are separate backend operations; refresh in case
+          // creation succeeded but the follow-up product operation failed.
+          await loadWishlists().catch(() => {});
+          throw error;
+        }
+      }
+      if (!updated?.id || !Array.isArray(updated.productIds) || !updated.productIds.some((id) => String(id) === String(productId))) {
+        throw new Error("The wishlist API did not confirm this product was saved.");
+      }
+      setWishlists((lists) => lists?.length
+        ? lists.map((list) => String(list.id) === String(updated.id) ? updated : list)
+        : [updated]);
+      setWishlistError("");
+      return { wishlist: updated, alreadySaved: false };
+    })();
+    wishlistMutations.current.set(key, request);
+    return request.finally(() => wishlistMutations.current.delete(key));
+  }, [loadWishlists]);
+
+  const removeWishlistProduct = useCallback((wishlistId, productId) => {
+    const key = `remove:${wishlistId}:${productId}`;
+    if (wishlistMutations.current.has(key)) return wishlistMutations.current.get(key);
+    const request = (async () => {
+      const updated = await accountApi.removeWishlistProduct(wishlistId, productId);
+      if (!updated?.id || String(updated.id) !== String(wishlistId) || !Array.isArray(updated.productIds) || updated.productIds.some((id) => String(id) === String(productId))) {
+        throw new Error("The wishlist API did not confirm this product was removed.");
+      }
+      setWishlists((lists) => (lists || []).map((list) => String(list.id) === String(updated.id) ? updated : list));
+      return updated;
+    })();
+    wishlistMutations.current.set(key, request);
+    return request.finally(() => wishlistMutations.current.delete(key));
+  }, []);
+
+  const isWishlisted = useCallback((productId) => (wishlists || []).some((list) => (list.productIds || []).some((id) => String(id) === String(productId))), [wishlists]);
+
+  const value = useMemo(() => ({ cart, user, theme, syncing, addToCart, updateQuantity, removeFromCart, syncCart, signIn, signOut, setTheme, wishlists, wishlistLoading, wishlistError, loadWishlists, addWishlistProduct, removeWishlistProduct, isWishlisted }), [cart, user, theme, syncing, addToCart, updateQuantity, removeFromCart, syncCart, signIn, signOut, wishlists, wishlistLoading, wishlistError, loadWishlists, addWishlistProduct, removeWishlistProduct, isWishlisted]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

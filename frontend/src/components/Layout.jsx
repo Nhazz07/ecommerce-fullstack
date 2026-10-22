@@ -12,6 +12,13 @@ export function Layout({ children }) {
   const count = cart.reduce((sum, item) => sum + item.quantity, 0);
   const goSearch = (event) => { event.preventDefault(); navigate(`/shop?q=${encodeURIComponent(term)}`); setOpen(false); };
   const logOut = () => { signOut(); setOpen(false); setAccountOpen(false); navigate("/", { replace: true }); };
+  const handleAccountClick = (event) => {
+    const desktop = window.matchMedia ? window.matchMedia("(min-width: 48rem)").matches : window.innerWidth >= 768;
+    if (desktop) {
+      event.preventDefault();
+      setAccountOpen((current) => !current);
+    }
+  };
   const links = [["Shop", "/shop"], ["Categories", "/categories"], ["Brands", "/brands"], ["Series", "/series"], ...(user ? [["Orders", "/orders"]] : [])];
   return <div className="flex min-h-screen flex-col overflow-x-clip bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
     <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
@@ -21,15 +28,14 @@ export function Layout({ children }) {
         <div className="flex items-center gap-1">
           <button aria-label="Toggle theme" onClick={() => setTheme(theme === "light" ? "dark" : "light")} className="icon-button">{theme === "light" ? <Moon size={18} /> : <Sun size={18} />}</button>
           <Link aria-label="Wishlist" to="/wishlist" className="icon-button"><Heart size={19} /></Link>
-          {user ? <div className="relative hidden md:block">
-            <button type="button" aria-label="Account menu" aria-haspopup="menu" aria-expanded={accountOpen} onClick={() => setAccountOpen(!accountOpen)} className="icon-button"><UserRound size={19} /></button>
+          {user ? <div className="relative">
+            <Link to="/account" aria-label="Account menu" aria-haspopup="menu" aria-expanded={accountOpen} onClick={handleAccountClick} className="icon-button"><UserRound size={19} /></Link>
             {accountOpen && <div role="menu" aria-label="Account" className="absolute right-0 top-full z-40 mt-2 w-44 border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
               <Link role="menuitem" to="/account" onClick={() => setAccountOpen(false)} className="block px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">Your account</Link>
               <Link role="menuitem" to="/orders" onClick={() => setAccountOpen(false)} className="block px-3 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">Orders</Link>
               <button role="menuitem" type="button" onClick={logOut} className="block w-full px-3 py-2 text-left text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800">Sign out</button>
             </div>}
           </div> : <Link aria-label="Account" to="/login" className="icon-button"><UserRound size={19} /></Link>}
-          {user && <Link aria-label="Account" to="/account" className="icon-button md:hidden"><UserRound size={19} /></Link>}
           <Link aria-label="Shopping cart" to="/cart" className="relative icon-button"><ShoppingBag size={19} />{count > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-black px-1 text-[10px] text-white dark:bg-white dark:text-black">{count}</span>}</Link>
           <button aria-label="Open menu" onClick={() => setOpen(!open)} className="icon-button md:hidden">{open ? <X size={20} /> : <Menu size={20} />}</button>
         </div>

@@ -1,19 +1,52 @@
 /* eslint-disable react-refresh/only-export-components */
 import { Check, Heart, Minus, Plus, ShoppingBag } from "lucide-react";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useContext, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { money } from "./Layout";
+import { StoreContext } from "../context/StoreContext";
 
 const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='700' height='900'%3E%3Crect width='100%25' height='100%25' fill='%23e4e4e7'/%3E%3Cpath d='M260 320h180v260H260z' fill='%23b4b4b8'/%3E%3C/svg%3E";
 export const imageOf = (product) => product?.productImages?.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))[0]?.imageUrl || placeholder;
 
-export function ProductCard({ product, onAdd, onWish }) {
+export function ProductCard({ product, onAdd }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [wishBusy, setWishBusy] = useState(false);
+  const [wishMessage, setWishMessage] = useState("");
+  const { user, wishlists, isWishlisted, addWishlistProduct, removeWishlistProduct } = useContext(StoreContext);
+  const navigate = useNavigate();
+  const location = useLocation();
   const variants = product.productVariants || [];
   const variant = variants.length === 1 ? variants[0] : null;
   const unavailable = product.status !== "ACTIVE" || variants.length === 0;
   const needsOptions = !unavailable && variants.length > 1;
+  const wished = isWishlisted(product.id);
+
+  const toggleWish = async () => {
+    if (!user) {
+      const returnTo = `${location.pathname}${location.search}${location.hash}`;
+      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`, { state: { notice: "Sign in to save products to your wishlist." } });
+      return;
+    }
+    if (wishBusy) return;
+    setWishBusy(true);
+    setWishMessage("");
+    try {
+      if (wished) {
+        const list = wishlists?.find((entry) => (entry.productIds || []).some((id) => String(id) === String(product.id)));
+        if (!list) throw new Error("Your wishlist is still loading. Please try again shortly.");
+        await removeWishlistProduct(list.id, product.id);
+        setWishMessage("Removed from your wishlist.");
+      } else {
+        const result = await addWishlistProduct(product.id);
+        setWishMessage(result.alreadySaved ? "Already in your wishlist." : "Saved to your wishlist.");
+      }
+    } catch (error) {
+      setWishMessage(error.message || "Could not update your wishlist. Please try again.");
+    } finally {
+      setWishBusy(false);
+    }
+  };
 
   const add = () => {
     if (!variant || unavailable || !onAdd) return;
@@ -30,8 +63,9 @@ export function ProductCard({ product, onAdd, onWish }) {
     <div className="pt-3">
       <div className="flex items-start justify-between gap-2">
         <div><p className="text-xs text-zinc-500">{product.brandName || product.categoryName || "ANTEIKU"}</p><Link to={`/product/${product.id}`} className="mt-1 block font-medium hover:underline">{product.name}</Link></div>
-        {onWish && <button aria-label={`Save ${product.name}`} onClick={() => onWish(product)} className="icon-button -mt-1"><Heart size={17}/></button>}
+        <button type="button" aria-label={`${wished ? "Remove" : "Save"} ${product.name} ${wished ? "from" : "to"} wishlist`} aria-pressed={wished} disabled={wishBusy} onClick={toggleWish} className="icon-button -mt-1 disabled:opacity-50"><Heart size={17} fill={wished ? "currentColor" : "none"}/></button>
       </div>
+      {wishMessage && <p aria-live="polite" className="mt-1 text-xs text-zinc-500">{wishMessage}</p>}
       <p className="mt-2 text-sm">{money(variant?.price ?? product.price)}</p>
       {unavailable ? <p className="mt-3 text-xs font-semibold text-zinc-500">Unavailable</p> : needsOptions ? <Link to={`/product/${product.id}`} className="mt-3 inline-block text-xs font-semibold underline underline-offset-4">Choose options</Link> : <>
         <div className="mt-3 flex items-center gap-3">
