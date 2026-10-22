@@ -27,6 +27,7 @@ public class OrderResponseDto {
     private String shippingAddress;
     private Long userId;
     private List<Long> productVariantIds;
+    private List<OrderItemResponseDto> orderItems;
     private Long couponId;
     private Long paymentId;
     private Long shipmentId;

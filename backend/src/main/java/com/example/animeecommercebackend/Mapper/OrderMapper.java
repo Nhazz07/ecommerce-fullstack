@@ -1,13 +1,12 @@
 package com.example.animeecommercebackend.Mapper;
 
 import com.example.animeecommercebackend.Dto.Request.OrderRequestDto;
+import com.example.animeecommercebackend.Dto.Response.OrderItemResponseDto;
 import com.example.animeecommercebackend.Dto.Response.OrderResponseDto;
 import com.example.animeecommercebackend.Entity.*;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 @Component
 public class OrderMapper {
@@ -38,6 +37,17 @@ public class OrderMapper {
 
         dto.setShippingAddress(order.getShippingAddress());
 
+        List<OrderItem> orderItems = order.getOrderItems() == null
+                ? List.of()
+                : order.getOrderItems();
+        dto.setProductVariantIds(orderItems.stream()
+                .filter(item -> item.getProductVariant() != null)
+                .map(item -> item.getProductVariant().getId())
+                .toList());
+        dto.setOrderItems(orderItems.stream()
+                .map(OrderMapper::toOrderItemResponse)
+                .toList());
+
         dto.setCreatedAt(order.getCreatedAt());
         dto.setUpdatedAt(order.getUpdatedAt());
         if(order.getUser() != null){
@@ -58,6 +68,29 @@ public class OrderMapper {
             dto.setReturnsId(List.of());
         }
         return dto;
+    }
+
+    private static OrderItemResponseDto toOrderItemResponse(OrderItem orderItem) {
+        ProductVariant variant = orderItem.getProductVariant();
+        Product product = variant == null ? null : variant.getProduct();
+        String productImageUrl = product == null || product.getProductImages() == null
+                ? null
+                : product.getProductImages().stream()
+                        .filter(image -> image.getImageUrl() != null && !image.getImageUrl().isBlank())
+                        .map(ProductImages::getImageUrl)
+                        .findFirst()
+                        .orElse(null);
+
+        return new OrderItemResponseDto(
+                orderItem.getId(),
+                product == null ? null : product.getProductName(),
+                variant == null ? null : variant.getName(),
+                variant == null ? null : variant.getSku(),
+                orderItem.getQuantity(),
+                orderItem.getUnitPrice(),
+                orderItem.getSubTotal(),
+                productImageUrl
+        );
     }
 
 

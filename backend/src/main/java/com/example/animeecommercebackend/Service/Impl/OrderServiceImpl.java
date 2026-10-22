@@ -248,6 +248,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public List<OrderResponseDto> getMyOrders() {
 
         Long currentUserId =
@@ -263,10 +264,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto getOrderById(Long id) {
 
         Order order =
-                orderRepository.findById(id)
+                orderRepository.findWithOrderItemsById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Order Not Found!"
@@ -292,6 +294,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto getOrderByUserId(Long userId) {
 
         Order order =
@@ -309,6 +312,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public List<OrderResponseDto> getAllOrder() {
 
         return orderRepository.findAll()
@@ -318,13 +322,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto updateOrder(
             Long id,
             OrderRequestDto dto
     ) {
 
         Order order =
-                orderRepository.findById(id)
+                orderRepository.findWithOrderItemsById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Order Not Found!"
@@ -360,7 +365,7 @@ public class OrderServiceImpl implements OrderService {
     public void deleteOrder(Long id) {
 
         Order order =
-                orderRepository.findById(id)
+                orderRepository.findWithOrderItemsById(id)
                         .orElseThrow(() ->
                                 new ResourceNotFoundException(
                                         "Order Not Found!"
@@ -386,6 +391,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto updateOrderStatus(
             Long id,
             OrderStatus status

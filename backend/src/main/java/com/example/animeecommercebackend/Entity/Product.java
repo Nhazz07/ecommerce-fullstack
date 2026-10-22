@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -86,6 +87,7 @@ public class Product {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @BatchSize(size = 32)
     @OrderBy("displayOrder ASC")
     private List<ProductImages> productImages = new ArrayList<>();
 
