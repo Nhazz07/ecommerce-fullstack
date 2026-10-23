@@ -1,4 +1,40 @@
 package com.example.animeecommercebackend.Client;
 
+import com.example.animeecommercebackend.Config.TelegramProperties;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+import java.util.Map;
+
+@Component
 public class TelegramClient {
+
+    private final TelegramProperties properties;
+    private final RestClient restClient;
+
+    public TelegramClient(TelegramProperties properties) {
+        this.properties = properties;
+        this.restClient = RestClient.create();
+    }
+
+    public void sendMessage(String message) {
+
+        String url = "https://api.telegram.org/bot"
+                + properties.token()
+                + "/sendMessage";
+
+        Map<String, Object> requestBody = Map.of(
+                "chat_id", properties.chatId(),
+                "text", message
+        );
+
+        restClient.post()
+                .uri(url)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .retrieve()
+                .toBodilessEntity();
+    }
 }
+
