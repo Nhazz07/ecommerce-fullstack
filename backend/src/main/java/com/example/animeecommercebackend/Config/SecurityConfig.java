@@ -85,11 +85,6 @@ public class SecurityConfig {
                                 "/api/product/**",
                                 "/api/productVariant/productId/**"
                         ).permitAll()
-                        // Temporary Telegram test endpoint
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/test/telegram"
-                        ).permitAll()
                         // Swagger endpoints
                         .requestMatchers(
                                 "/swagger-ui/**",

@@ -29,13 +29,13 @@ public class AdminSeeder {
     @Value("${ADMIN_FIRST_NAME}")
     private String adminFirstName;
 
-    @Value("ADMIN_LAST_NAME")
+    @Value("${ADMIN_LAST_NAME}")
     private String adminLastName;
 
-    @Value("ADMIN_USERNAME")
+    @Value("${ADMIN_USERNAME}")
     private String adminUsername;
 
-    @Value("ADMIN_PHONE_NUMBER")
+    @Value("${ADMIN_PHONE_NUMBER}")
     private String adminPhoneNumber;
 
     @Bean
@@ -57,6 +57,7 @@ public class AdminSeeder {
             admin.setFirstName(adminFirstName);
             admin.setLastName(adminLastName);
             admin.setUsername(adminUsername);
+            admin.setPhoneNumber(adminPhoneNumber);
             admin.setRole(UserRole.ADMIN);
             admin.setStatus(UserStatus.ACTIVE);
 
