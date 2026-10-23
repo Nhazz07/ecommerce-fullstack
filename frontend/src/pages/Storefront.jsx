@@ -6,6 +6,7 @@ import { messageFrom } from "../api/client";
 import { StoreContext } from "../context/StoreContext";
 import { imageOf, ProductCard } from "../components/ProductCard";
 import { money } from "../components/Layout";
+import { visibleShopProducts } from "../utils/productPrice";
 
 const Button = ({ className = "", ...props }) => <button className={`inline-flex items-center justify-center gap-2 bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200 ${className}`} {...props}/>;
 const Page = ({ eyebrow, title, children }) => <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-10 sm:px-6 sm:py-14"><p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p><h1 className="mt-3 break-words text-3xl font-bold tracking-tight sm:text-5xl">{title}</h1>{children}</section>;
@@ -149,7 +150,7 @@ export function ProductReviewsPage() {
   </section>;
 }
 
-export function ShopPage() { const { products, categories, brands, loading, error } = useCatalogue(); const { addToCart } = useContext(StoreContext); const [params, setParams] = useSearchParams(); const [showFilters, setShowFilters] = useState(false); const q = params.get("q") || ""; const category = params.get("category") || ""; const brand = params.get("brand") || ""; const sort = params.get("sort") || "featured"; const update = (key, value) => { const next = new URLSearchParams(params); value ? next.set(key, value) : next.delete(key); setParams(next); }; const shown = useMemo(() => products.filter((p) => (!q || `${p.name} ${p.brandName} ${p.categoryName} ${p.seriesName}`.toLowerCase().includes(q.toLowerCase())) && (!category || String(p.categoryId) === category) && (!brand || String(p.brandId) === brand)).sort((a, b) => sort === "price-low" ? Number(a.price) - Number(b.price) : sort === "price-high" ? Number(b.price) - Number(a.price) : sort === "name" ? a.name.localeCompare(b.name) : 0), [products, q, category, brand, sort]); if (loading) return <Loading/>; const filter = <aside className="space-y-7 text-sm"><label className="block font-semibold">Search<input value={q} onChange={(e) => update("q", e.target.value)} className="field mt-2" placeholder="Search products"/></label><label className="block font-semibold">Category<select value={category} onChange={(e) => update("category", e.target.value)} className="field mt-2"><option value="">All categories</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label className="block font-semibold">Brand<select value={brand} onChange={(e) => update("brand", e.target.value)} className="field mt-2"><option value="">All brands</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label><button onClick={() => setParams({})} className="text-zinc-500 underline underline-offset-4">Clear filters</button></aside>; return <Page eyebrow="The collection" title="Shop all"><div className="mt-10 flex flex-col gap-5 border-y border-zinc-200 py-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between"><span className="text-sm text-zinc-500">{shown.length} pieces</span><div className="flex gap-3"><button onClick={() => setShowFilters(!showFilters)} className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 lg:hidden"><SlidersHorizontal size={16}/> Filter</button><select value={sort} onChange={(e) => update("sort", e.target.value)} className="border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A–Z</option></select></div></div>{showFilters && <div className="border-b border-zinc-200 py-5 dark:border-zinc-800 lg:hidden">{filter}</div>}{error && <Notice>{error}</Notice>}<div className="mt-8 grid gap-8 lg:grid-cols-[210px_1fr]"><div className="hidden lg:block">{filter}</div><div>{shown.length ? <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">{shown.map((p) => <ProductCard key={p.id} product={p} onAdd={(product, variant) => addToCart(toCartItem(product, variant))}/>)}</div> : <div className="py-20 text-center text-zinc-500">No products match these filters.</div>}</div></div></Page>; }
+export function ShopPage() { const { products, categories, brands, loading, error } = useCatalogue(); const { addToCart } = useContext(StoreContext); const [params, setParams] = useSearchParams(); const [showFilters, setShowFilters] = useState(false); const q = params.get("q") || ""; const category = params.get("category") || ""; const brand = params.get("brand") || ""; const sort = params.get("sort") || "featured"; const update = (key, value) => { const next = new URLSearchParams(params); value ? next.set(key, value) : next.delete(key); setParams(next); }; const shown = useMemo(() => visibleShopProducts(products, { query: q, category, brand, sort }), [products, q, category, brand, sort]); if (loading) return <Loading/>; const filter = <aside className="space-y-7 text-sm"><label className="block font-semibold">Search<input value={q} onChange={(e) => update("q", e.target.value)} className="field mt-2" placeholder="Search products"/></label><label className="block font-semibold">Category<select value={category} onChange={(e) => update("category", e.target.value)} className="field mt-2"><option value="">All categories</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label className="block font-semibold">Brand<select value={brand} onChange={(e) => update("brand", e.target.value)} className="field mt-2"><option value="">All brands</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label><button onClick={() => setParams({})} className="text-zinc-500 underline underline-offset-4">Clear filters</button></aside>; return <Page eyebrow="The collection" title="Shop all"><div className="mt-10 flex flex-col gap-5 border-y border-zinc-200 py-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between"><span className="text-sm text-zinc-500">{shown.length} pieces</span><div className="flex gap-3"><button onClick={() => setShowFilters(!showFilters)} className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 lg:hidden"><SlidersHorizontal size={16}/> Filter</button><select value={sort} onChange={(e) => update("sort", e.target.value)} className="border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A–Z</option></select></div></div>{showFilters && <div className="border-b border-zinc-200 py-5 dark:border-zinc-800 lg:hidden">{filter}</div>}{error && <Notice>{error}</Notice>}<div className="mt-8 grid gap-8 lg:grid-cols-[210px_1fr]"><div className="hidden lg:block">{filter}</div><div>{shown.length ? <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">{shown.map((p) => <ProductCard key={p.id} product={p} onAdd={(product, variant) => addToCart(toCartItem(product, variant))}/>)}</div> : <div className="py-20 text-center text-zinc-500">No products match these filters.</div>}</div></div></Page>; }
 
 export function ProductPage() {
   const { id } = useParams();
@@ -210,10 +211,27 @@ const checkoutPaymentOptions = [
   { value: "ACLEDA", label: "ACLEDA", available: false },
   { value: "KHQR", label: "KHQR / Bakong", available: false },
 ];
+const emptyShippingAddress = () => ({ street: "", city: "", state: "", postalCode: "", country: "" });
+const shippingFromAddress = (address) => ({
+  street: address.street || "",
+  city: address.city || "",
+  state: address.state || "",
+  postalCode: address.postalCode || "",
+  country: address.country || "",
+});
+const formatShippingAddress = (shipping) => [
+  shipping.street.trim(),
+  `${shipping.city.trim()}, ${shipping.state.trim()} ${shipping.postalCode.trim()}`,
+  shipping.country.trim(),
+].join("\n");
 
 export function CheckoutPage() {
   const { user, cart, syncCart, syncing, removeFromCart } = useContext(StoreContext);
-  const [shipping, setShipping] = useState({ street: "", city: "", state: "", postalCode: "", country: "" });
+  const [shipping, setShipping] = useState(emptyShippingAddress);
+  const [addresses, setAddresses] = useState([]);
+  const [addressesLoading, setAddressesLoading] = useState(true);
+  const [addressError, setAddressError] = useState("");
+  const [selectedAddressId, setSelectedAddressId] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState("CASH_ON_DELIVERY");
   const [couponCode, setCouponCode] = useState("");
@@ -223,6 +241,27 @@ export function CheckoutPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(null);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    accountApi.addresses().then((result) => {
+      if (!active) return;
+      const savedAddresses = Array.isArray(result) ? result : [];
+      setAddresses(savedAddresses);
+      setAddressError("");
+      const preferred = savedAddresses.find((address) => address.isDefault) || savedAddresses[0];
+      if (preferred) {
+        setSelectedAddressId(String(preferred.id));
+        setShipping((current) => Object.values(current).some(Boolean) ? current : shippingFromAddress(preferred));
+      }
+    }).catch((loadError) => {
+      if (active) setAddressError(messageFrom(loadError));
+    }).finally(() => {
+      if (active) setAddressesLoading(false);
+    });
+    return () => { active = false; };
+  }, [user]);
 
   if (!user) return <Navigate to="/login?returnTo=/checkout" replace/>;
 
@@ -249,7 +288,7 @@ export function CheckoutPage() {
           setCouponFeedback({ type: "error", message: "This coupon has expired." });
         } else {
           setAppliedCoupon(coupon);
-          setCouponFeedback({ type: "success", message: `Coupon ${coupon.code} found. Final eligibility and savings are confirmed by the server when the order is placed.` });
+          setCouponFeedback({ type: "error", message: `Coupon ${coupon.code} is eligible, but coupon use cannot be recorded by the current order API. Remove it to place an order without a coupon.` });
         }
       }
     } catch (err) {
@@ -266,7 +305,13 @@ export function CheckoutPage() {
   };
   const updateShipping = (field, value) => {
     setShipping((current) => ({ ...current, [field]: value }));
+    setSelectedAddressId("");
     setFieldErrors((current) => ({ ...current, [field]: "" }));
+  };
+  const selectAddress = (address) => {
+    setSelectedAddressId(String(address.id));
+    setShipping(shippingFromAddress(address));
+    setFieldErrors({});
   };
   const validateShipping = () => {
     const errors = Object.fromEntries(
@@ -281,6 +326,10 @@ export function CheckoutPage() {
     event.preventDefault();
     setError("");
     if (couponBusy || busy || !validateShipping()) return;
+    if (appliedCoupon) {
+      setError("Remove the coupon before placing this order. The current order API cannot record coupon usage after a successful order.");
+      return;
+    }
     if (!checkoutPaymentOptions.some((option) => option.available && option.value === paymentMethod)) {
       setError("That payment method is not currently available.");
       return;
@@ -289,7 +338,7 @@ export function CheckoutPage() {
     setBusy(true);
     try {
       await syncCart();
-      const shippingAddress = `${shipping.street.trim()}, ${shipping.city.trim()}, ${shipping.state.trim()} ${shipping.postalCode.trim()}, ${shipping.country.trim()}`;
+      const shippingAddress = formatShippingAddress(shipping);
       const order = await accountApi.createOrder({ couponId: appliedCoupon?.id ?? null, shippingAddress, paymentMethod });
       setDone(order);
       cart.forEach((item) => removeFromCart(item.variantId));
@@ -344,6 +393,13 @@ export function CheckoutPage() {
       <div className="space-y-6">
         <fieldset className="space-y-4">
           <legend className="text-base font-bold">Shipping address</legend>
+          {addressesLoading ? <p className="text-sm text-zinc-500">Loading saved addresses…</p> : addresses.length ? <div className="space-y-2 border-y border-zinc-200 py-4 dark:border-zinc-800">
+            <p className="text-sm font-semibold">Saved addresses</p>
+            {addresses.map((address) => <label key={address.id} className={`block cursor-pointer border p-3 text-sm ${String(address.id) === selectedAddressId ? "border-black dark:border-white" : "border-zinc-200 dark:border-zinc-800"}`}>
+              <span className="flex items-start gap-3"><input type="radio" name="saved-address" checked={String(address.id) === selectedAddressId} onChange={() => selectAddress(address)} className="mt-1 accent-black dark:accent-white"/><span>{address.street}<br/>{address.city}, {address.state} {address.postalCode}<br/>{address.country}{address.isDefault && <span className="mt-1 block text-xs text-zinc-500">Default address</span>}</span></span>
+            </label>)}
+          </div> : null}
+          {addressError && <p role="alert" className="text-sm text-red-700 dark:text-red-300">Saved addresses could not be loaded. You can still enter a shipping address below.</p>}
           {field("street", "Street address", { autoComplete: "street-address", placeholder: "House number, street name, apartment or unit" })}
           <div className="grid gap-4 sm:grid-cols-2">
             {field("city", "City", { autoComplete: "address-level2" })}
@@ -366,7 +422,7 @@ export function CheckoutPage() {
             <input type="radio" name="payment-method" value={option.value} checked={paymentMethod === option.value} disabled={!option.available || busy || syncing} onChange={() => option.available && setPaymentMethod(option.value)} className="mt-1 accent-black dark:accent-white"/>
             <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold"><span>{option.label}</span><span className="text-xs font-medium text-zinc-500">{option.available ? "Available" : "Coming soon"}</span></span>{!option.available && <span className="mt-1 block text-xs leading-5 text-zinc-500">Not connected yet. This option cannot be selected or submitted.</span>}</span>
           </label>)}
-          <p className="text-xs leading-5 text-zinc-500">No card or banking credentials are collected here. Cash on Delivery is the only selectable payment method; the backend accepts its method value, but this checkout does not initiate or confirm payment processing.</p>
+          <p className="text-xs leading-5 text-zinc-500">No card or banking credentials are collected here. Cash on Delivery is the only selectable payment method. The current order API does not persist that selection or initiate payment processing.</p>
         </fieldset>
       </div>
       <aside className="h-fit bg-zinc-100 p-6 dark:bg-zinc-900">
@@ -379,7 +435,7 @@ export function CheckoutPage() {
             {appliedCoupon ? <button type="button" disabled={couponBusy || busy} onClick={removeCoupon} className="min-h-11 border border-zinc-400 px-3 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-50 dark:border-zinc-600 dark:hover:bg-zinc-800">Remove</button> : <button type="button" disabled={!couponCode.trim() || couponBusy || busy} onClick={applyCoupon} className="min-h-11 bg-black px-4 text-sm font-semibold text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200">{couponBusy ? "Checking…" : "Apply"}</button>}
           </div>
           {couponFeedback && <p role="status" className={`mt-2 text-xs leading-5 ${couponFeedback.type === "error" ? "text-red-700 dark:text-red-300" : "text-zinc-600 dark:text-zinc-400"}`}>{couponFeedback.message}</p>}
-          {appliedCoupon && <p className="mt-2 text-xs text-zinc-500">{appliedCoupon.minimumOrderAmount != null ? `Minimum order: ${money(appliedCoupon.minimumOrderAmount)}. ` : ""}Savings and final eligibility are confirmed in the server order response after placement.</p>}
+          {appliedCoupon && <p className="mt-2 text-xs text-zinc-500">{appliedCoupon.minimumOrderAmount != null ? `Minimum order: ${money(appliedCoupon.minimumOrderAmount)}. ` : ""}Remove this coupon to place an order until coupon usage can be persisted with the order.</p>}
         </div>
         <div className="flex justify-between pt-5 text-sm"><span className="text-zinc-500">Items total</span><span>{money(total)}</span></div>
         {appliedCoupon && <div className="mt-2 flex justify-between gap-3 text-sm"><span className="text-zinc-500">Coupon</span><span className="font-medium">{appliedCoupon.code}</span></div>}

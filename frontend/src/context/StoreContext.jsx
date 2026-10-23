@@ -21,11 +21,12 @@ export function StoreProvider({ children }) {
   const [wishlistError, setWishlistError] = useState("");
   const wishlistRequest = useRef(null);
   const wishlistMutations = useRef(new Map());
+  const wishlistMutationQueue = useRef(Promise.resolve());
 
   useEffect(() => { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }, [cart]);
   useEffect(() => { localStorage.setItem("anteiku_theme", theme); document.documentElement.classList.toggle("dark", theme === "dark"); }, [theme]);
   useEffect(() => {
-    const expireSession = () => { setUser(null); setWishlists(null); setWishlistError(""); wishlistRequest.current = null; wishlistMutations.current.clear(); };
+    const expireSession = () => { setUser(null); setWishlists(null); setWishlistError(""); wishlistRequest.current = null; wishlistMutations.current.clear(); wishlistMutationQueue.current = Promise.resolve(); };
     window.addEventListener("anteiku:session-expired", expireSession);
     return () => window.removeEventListener("anteiku:session-expired", expireSession);
   }, []);
@@ -93,12 +94,28 @@ export function StoreProvider({ children }) {
     setWishlistError("");
     wishlistRequest.current = null;
     wishlistMutations.current.clear();
+    wishlistMutationQueue.current = Promise.resolve();
+  }, []);
+
+  const queueWishlistMutation = useCallback((key, operation) => {
+    const existing = wishlistMutations.current.get(key);
+    if (existing) return existing;
+
+    // Mutations are serialized so two quick saves cannot both create an initial
+    // wishlist, or overwrite each other's confirmed server response.
+    const request = wishlistMutationQueue.current.then(operation);
+    wishlistMutationQueue.current = request.catch(() => {});
+    wishlistMutations.current.set(key, request);
+    request.then(
+      () => wishlistMutations.current.delete(key),
+      () => wishlistMutations.current.delete(key),
+    );
+    return request;
   }, []);
 
   const addWishlistProduct = useCallback((productId) => {
     const key = `add:${productId}`;
-    if (wishlistMutations.current.has(key)) return wishlistMutations.current.get(key);
-    const request = (async () => {
+    return queueWishlistMutation(key, async () => {
       const current = await loadWishlists();
       const alreadySaved = current.find((list) => (list.productIds || []).some((id) => String(id) === String(productId)));
       if (alreadySaved) return { wishlist: alreadySaved, alreadySaved: true };
@@ -124,25 +141,20 @@ export function StoreProvider({ children }) {
         : [updated]);
       setWishlistError("");
       return { wishlist: updated, alreadySaved: false };
-    })();
-    wishlistMutations.current.set(key, request);
-    return request.finally(() => wishlistMutations.current.delete(key));
-  }, [loadWishlists]);
+    });
+  }, [loadWishlists, queueWishlistMutation]);
 
   const removeWishlistProduct = useCallback((wishlistId, productId) => {
     const key = `remove:${wishlistId}:${productId}`;
-    if (wishlistMutations.current.has(key)) return wishlistMutations.current.get(key);
-    const request = (async () => {
+    return queueWishlistMutation(key, async () => {
       const updated = await accountApi.removeWishlistProduct(wishlistId, productId);
       if (!updated?.id || String(updated.id) !== String(wishlistId) || !Array.isArray(updated.productIds) || updated.productIds.some((id) => String(id) === String(productId))) {
         throw new Error("The wishlist API did not confirm this product was removed.");
       }
       setWishlists((lists) => (lists || []).map((list) => String(list.id) === String(updated.id) ? updated : list));
       return updated;
-    })();
-    wishlistMutations.current.set(key, request);
-    return request.finally(() => wishlistMutations.current.delete(key));
-  }, []);
+    });
+  }, [queueWishlistMutation]);
 
   const isWishlisted = useCallback((productId) => (wishlists || []).some((list) => (list.productIds || []).some((id) => String(id) === String(productId))), [wishlists]);
 
