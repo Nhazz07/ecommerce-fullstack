@@ -31,12 +31,12 @@ public class OrderCreateEventListener {
                  Delivery Address:
                 %s
 
-                ━━━━━━━━━━━━━━━━
+                -----------------
                  Subtotal: $%s
                  Discount: $%s
                  Shipping: $%s
                  TOTAL: $%s
-                ━━━━━━━━━━━━━━━━
+                -----------------
                 """.formatted(
                 event.orderNumber(),
                 event.orderDate(),
