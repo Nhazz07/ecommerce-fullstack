@@ -21,7 +21,9 @@ import com.example.animeecommercebackend.Service.PromotionService;
 import com.example.animeecommercebackend.Service.ShipmentService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import com.example.animeecommercebackend.Event.OrderCreateEvent;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,57 +41,45 @@ public class OrderServiceImpl implements OrderService {
     private final PromotionService promotionService;
     private final CouponService couponService;
     private final ShipmentService shipmentService;
+    private final ApplicationEventPublisher eventPublisher;
 
-    @Transactional
     @Override
+    @Transactional
     public OrderResponseDto createOrder(OrderRequestDto dto) {
 
         // 1. Get the currently authenticated user
         User user = currentUserService.getCurrentUser();
 
-        // 2. Find the user's cart directly from the database
+        // 2. Find the user's cart
         Cart cart = cartRepository
                 .findByUserId(user.getId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Cart Not Found!"
-                        )
+                        new ResourceNotFoundException("Cart Not Found!")
                 );
 
         // 3. Check whether the cart contains items
-        if (cart.getCartItems() == null
-                || cart.getCartItems().isEmpty()) {
-
-            throw new ResourceNotFoundException(
-                    "Cart Is Empty!"
-            );
+        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
+            throw new ResourceNotFoundException("Cart Is Empty!");
         }
 
         // 4. Create the order
         Order order = new Order();
-
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
-        order.setOrderNumber(
-                (int) (Math.random() * 90000000) + 10000000
-        );
+        order.setOrderNumber((int) (Math.random() * 90000000) + 10000000);
         order.setOrderDate(LocalDateTime.now());
         order.setShippingAddress(dto.getShippingAddress());
 
         BigDecimal subTotal = BigDecimal.ZERO;
-
         List<OrderItem> orderItems = new ArrayList<>();
 
         // 5. Validate stock and create order items
         for (CartItem cartItem : cart.getCartItems()) {
 
-            ProductVariant variant =
-                    cartItem.getProductVariant();
+            ProductVariant variant = cartItem.getProductVariant();
 
             if (variant == null) {
-                throw new ResourceNotFoundException(
-                        "Product Variant Not Found!"
-                );
+                throw new ResourceNotFoundException("Product Variant Not Found!");
             }
 
             int quantity = cartItem.getQuantity();
@@ -101,17 +91,13 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // 6. Check inventory
-            if (!inventoryService.hasEnoughStock(
-                    variant.getId(),
-                    quantity
-            )) {
+            if (!inventoryService.hasEnoughStock(variant.getId(), quantity)) {
                 throw new RuntimeException(
-                        "Not Enough Stock for product variant: "
-                                + variant.getId()
+                        "Not Enough Stock for product variant: " + variant.getId()
                 );
             }
 
-            // 7. Get the current product variant price
+            // 7. Get product variant price
             BigDecimal unitPrice = variant.getPrice();
 
             if (unitPrice == null) {
@@ -121,44 +107,30 @@ public class OrderServiceImpl implements OrderService {
             }
 
             // 8. Calculate promotion discount
-            BigDecimal promotionDiscount =
-                    promotionService.calculateDiscount(
-                            variant.getProduct().getId(),
-                            unitPrice
-                    );
+            BigDecimal promotionDiscount = promotionService.calculateDiscount(
+                    variant.getProduct().getId(),
+                    unitPrice
+            );
 
             if (promotionDiscount == null) {
                 promotionDiscount = BigDecimal.ZERO;
             }
 
-            // Prevent negative promotion discounts
-            if (promotionDiscount.compareTo(
-                    BigDecimal.ZERO
-            ) < 0) {
+            if (promotionDiscount.compareTo(BigDecimal.ZERO) < 0) {
                 promotionDiscount = BigDecimal.ZERO;
             }
 
-            // Prevent discount from exceeding product price
-            if (promotionDiscount.compareTo(
-                    unitPrice
-            ) > 0) {
+            if (promotionDiscount.compareTo(unitPrice) > 0) {
                 promotionDiscount = unitPrice;
             }
 
-            BigDecimal finalUnitPrice =
-                    unitPrice.subtract(
-                            promotionDiscount
-                    );
+            BigDecimal finalUnitPrice = unitPrice.subtract(promotionDiscount);
+            BigDecimal itemSubtotal = finalUnitPrice.multiply(
+                    BigDecimal.valueOf(quantity)
+            );
 
-            // 9. Calculate item subtotal
-            BigDecimal itemSubtotal =
-                    finalUnitPrice.multiply(
-                            BigDecimal.valueOf(quantity)
-                    );
-
-            // 10. Create order item
+            // 9. Create order item
             OrderItem orderItem = new OrderItem();
-
             orderItem.setOrder(order);
             orderItem.setProductVariant(variant);
             orderItem.setQuantity(quantity);
@@ -166,49 +138,39 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setSubTotal(itemSubtotal);
 
             orderItems.add(orderItem);
-
             subTotal = subTotal.add(itemSubtotal);
         }
 
-        // 11. Attach order items
+        // 10. Attach order items
         order.setOrderItems(orderItems);
         order.setSubTotal(subTotal);
 
-        // 12. Calculate coupon discount
+        // 11. Calculate coupon discount
         BigDecimal couponDiscount = BigDecimal.ZERO;
 
         if (dto.getCouponId() != null) {
-
-            couponDiscount =
-                    couponService.calculateDiscount(
-                            dto.getCouponId(),
-                            subTotal
-                    );
+            couponDiscount = couponService.calculateDiscount(
+                    dto.getCouponId(),
+                    subTotal
+            );
 
             if (couponDiscount == null) {
                 couponDiscount = BigDecimal.ZERO;
             }
         }
 
-        // Prevent negative coupon discounts
-        if (couponDiscount.compareTo(
-                BigDecimal.ZERO
-        ) < 0) {
+        if (couponDiscount.compareTo(BigDecimal.ZERO) < 0) {
             couponDiscount = BigDecimal.ZERO;
         }
 
-        // Prevent coupon discount from exceeding subtotal
         if (couponDiscount.compareTo(subTotal) > 0) {
             couponDiscount = subTotal;
         }
 
         order.setDiscountAmount(couponDiscount);
 
-        // 13. Calculate shipping fee
-        BigDecimal shippingFee =
-                shipmentService.calculateShipmentFee(
-                        subTotal
-                );
+        // 12. Calculate shipping fee
+        BigDecimal shippingFee = shipmentService.calculateShipmentFee(subTotal);
 
         if (shippingFee == null) {
             shippingFee = BigDecimal.ZERO;
@@ -216,23 +178,19 @@ public class OrderServiceImpl implements OrderService {
 
         order.setShippingFee(shippingFee);
 
-        // 14. Calculate final total
-        BigDecimal totalAmount =
-                subTotal
-                        .subtract(couponDiscount)
-                        .add(shippingFee);
+        // 13. Calculate final total
+        BigDecimal totalAmount = subTotal
+                .subtract(couponDiscount)
+                .add(shippingFee);
 
         order.setTotalAmount(totalAmount);
 
-        // 15. Save order
-        Order savedOrder =
-                orderRepository.save(order);
+        // 14. Save order
+        Order savedOrder = orderRepository.save(order);
 
-        // 16. Decrease inventory
+        // 15. Decrease inventory
         for (CartItem cartItem : cart.getCartItems()) {
-
-            ProductVariant variant =
-                    cartItem.getProductVariant();
+            ProductVariant variant = cartItem.getProductVariant();
 
             inventoryService.decreaseStock(
                     variant.getId(),
@@ -240,12 +198,30 @@ public class OrderServiceImpl implements OrderService {
             );
         }
 
-        // 17. Clear cart after successful order creation
+        // 16. Clear cart
         cart.getCartItems().clear();
 
-        // 18. Return order response
+        // 17. Publish the event after checkout operations succeed
+        eventPublisher.publishEvent(
+                new OrderCreateEvent(
+                        savedOrder.getOrderNumber(),
+                        savedOrder.getOrderDate(),
+                        user.getFirstName() + " " + user.getLastName(),
+                        user.getPhoneNumber(),
+                        user.getEmail(),
+                        savedOrder.getShippingAddress(),
+                        savedOrder.getSubTotal(),
+                        savedOrder.getDiscountAmount(),
+                        savedOrder.getShippingFee(),
+                        savedOrder.getTotalAmount(),
+                        savedOrder.getStatus().name()
+                )
+        );
+
+        // 18. Return response
         return OrderMapper.toResponse(savedOrder);
     }
+
 
     @Override
     @Transactional

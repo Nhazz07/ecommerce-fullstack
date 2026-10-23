@@ -3,6 +3,8 @@ package com.example.animeecommercebackend.Service.Impl;
 import com.example.animeecommercebackend.Client.TelegramClient;
 import com.example.animeecommercebackend.Service.TelegramNotificationService;
 
+import java.math.BigDecimal;
+
 public class TelegramNotificationServiceImpl implements TelegramNotificationService {
      private final TelegramClient telegramClient;
 
@@ -21,4 +23,44 @@ public class TelegramNotificationServiceImpl implements TelegramNotificationServ
         telegramClient.sendMessage(message);
 
     }
+
+    @Override
+    public void sendOrderNotification(
+            String orderNumber,
+            String customerName,
+            String customerPhone,
+            String deliveryAddress,
+            String items,
+            BigDecimal total,
+            String paymentMethod,
+            String status
+    ) {
+        String message = """
+             ANTEIKU — NEW ORDER
+
+            Order: %s
+            Customer: %s
+            Phone: %s
+            Delivery address: %s
+
+            Items:
+            %s
+
+            Total: $%s
+            Payment: %s
+            Status: %s
+            """.formatted(
+                orderNumber,
+                customerName,
+                customerPhone,
+                deliveryAddress,
+                items,
+                total,
+                paymentMethod,
+                status
+        );
+
+        telegramClient.sendMessage(message);
+    }
+
 }

@@ -18,6 +18,7 @@ public class TelegramClient {
         this.restClient = RestClient.create();
     }
 
+
     public void sendMessage(String message) {
 
         String url = "https://api.telegram.org/bot"
@@ -29,12 +30,19 @@ public class TelegramClient {
                 "text", message
         );
 
-        restClient.post()
+        Map<?, ?> response = restClient.post()
                 .uri(url)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(requestBody)
                 .retrieve()
-                .toBodilessEntity();
+                .body(Map.class);
+
+        if (response == null || !Boolean.TRUE.equals(response.get("ok"))) {
+            throw new IllegalStateException(
+                    "Telegram did not confirm message delivery."
+            );
+        }
     }
+
 }
 
