@@ -1,5 +1,5 @@
 
-import { Edit3, Eye, Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { Edit3, Eye, Plus, RefreshCw, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { adminApi, adminError } from "./api";
 
@@ -285,25 +285,60 @@ function Dialog({ title, children, close }) {
             .includes(query.toLowerCase())
     );
 
-    const save = async (form) => {
+    const save = async (form, newFiles = [], removedImageIds = [], setStatus) => {
       try {
         const payload = {
-          ...form,
+          productName: form.productName,
+          description: form.description,
+          sku: form.sku,
           price: Number(form.price),
+          status: form.status,
+          releaseDate: form.releaseDate || null,
           categoryId: Number(form.categoryId),
           brandId: Number(form.brandId),
           seriesId: Number(form.seriesId),
-          releaseDate: form.releaseDate || null,
         };
 
+        let productId = form.id;
         if (form.id) {
+          setStatus?.("Saving product details…");
           await adminApi.updateProduct(form.id, payload);
         } else {
-          await adminApi.createProduct(payload);
+          setStatus?.("Creating product…");
+          const created = await adminApi.createProduct(payload);
+          productId = created?.id;
+        }
+
+        if (removedImageIds.length > 0) {
+          setStatus?.("Deleting removed images…");
+          for (const imageId of removedImageIds) {
+            try {
+              await adminApi.deleteProductImage(imageId);
+            } catch (err) {
+              console.error(`Failed to delete image ${imageId}:`, err);
+            }
+          }
+        }
+
+        if (newFiles.length > 0 && productId) {
+          const existingCount = (form.productImages || []).filter(
+            (img) => !removedImageIds.includes(img.id)
+          ).length;
+
+          for (let i = 0; i < newFiles.length; i++) {
+            setStatus?.(`Uploading image ${i + 1} of ${newFiles.length}…`);
+            const file = newFiles[i];
+            const body = new FormData();
+            body.append("productId", productId);
+            body.append("file", file);
+            body.append("altText", form.productName || file.name);
+            body.append("displayOrder", existingCount + i);
+            await adminApi.uploadProductImage(body);
+          }
         }
 
         setEditing(null);
-        setFeedback("Product saved.");
+        setFeedback("Product saved successfully.");
         await products.load();
       } catch (error) {
         throw new Error(adminError(error), {cause: error});
@@ -387,6 +422,7 @@ function Dialog({ title, children, close }) {
                                 productName: item.name,
                                 price: item.price ?? "",
                                 releaseDate: item.releaseDate?.slice(0, 10) || "",
+                                productImages: item.productImages || [],
                               })
                           }
                       >
@@ -420,23 +456,87 @@ function Dialog({ title, children, close }) {
 
   function ProductDialog({product, lookups, save, close}) {
     const [form, setForm] = useState(product);
+    const [existingImages, setExistingImages] = useState(product.productImages || []);
+    const [removedImageIds, setRemovedImageIds] = useState([]);
+    const [newFiles, setNewFiles] = useState([]);
+    const [dragActive, setDragActive] = useState(false);
     const [error, setError] = useState("");
     const [busy, setBusy] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
 
     const set = (key, value) =>
         setForm((current) => ({...current, [key]: value}));
+
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const maxSizeBytes = 5 * 1024 * 1024; // 5 MB
+
+    const validateAndAddFiles = (fileList) => {
+      setError("");
+      const valid = [];
+      const errors = [];
+
+      Array.from(fileList).forEach((file) => {
+        if (!allowedTypes.includes(file.type.toLowerCase())) {
+          errors.push(`"${file.name}" is not a supported image format (JPG, PNG, WEBP).`);
+        } else if (file.size > maxSizeBytes) {
+          errors.push(`"${file.name}" exceeds the maximum allowed file size of 5MB.`);
+        } else {
+          valid.push(file);
+        }
+      });
+
+      if (errors.length > 0) {
+        setError(errors.join(" "));
+      }
+
+      if (valid.length > 0) {
+        setNewFiles((current) => [...current, ...valid]);
+      }
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(true);
+    };
+
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        validateAndAddFiles(e.dataTransfer.files);
+      }
+    };
+
+    const removeExistingImage = (imageId) => {
+      setRemovedImageIds((prev) => [...prev, imageId]);
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    };
+
+    const removeNewFile = (index) => {
+      setNewFiles((prev) => prev.filter((_, i) => i !== index));
+    };
 
     const submit = async (event) => {
       event.preventDefault();
       setBusy(true);
       setError("");
+      setStatusMessage("Saving product…");
 
       try {
-        await save(form);
+        await save(form, newFiles, removedImageIds, setStatusMessage);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Failed to save product.");
       } finally {
         setBusy(false);
+        setStatusMessage("");
       }
     };
 
@@ -447,6 +547,80 @@ function Dialog({ title, children, close }) {
         >
           <form className="admin-form" onSubmit={submit}>
             <Notice message={error}/>
+
+            {/* Product Image Upload Section */}
+            <div className="admin-image-upload-section">
+              <label>
+                Product images
+                <span style={{ fontWeight: "normal", color: "#666", fontSize: "11px", marginLeft: "4px" }}>
+                  (Formats: JPG, PNG, WEBP · Max 5MB per file)
+                </span>
+              </label>
+
+              <div
+                  className={`admin-dropzone ${dragActive ? "dragging" : ""}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => document.getElementById("admin-product-image-input")?.click()}
+              >
+                <Upload size={22} style={{ margin: "0 auto", color: "#8d1d28" }} />
+                <p>Drag & drop images here or click to browse</p>
+                <small>Select one or multiple images from your computer</small>
+                <input
+                    id="admin-product-image-input"
+                    type="file"
+                    multiple
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      if (e.target.files) validateAndAddFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                />
+              </div>
+
+              {/* Previews Grid */}
+              {(existingImages.length > 0 || newFiles.length > 0) && (
+                  <div className="admin-image-grid">
+                    {/* Existing Images */}
+                    {existingImages.map((img, idx) => (
+                        <div key={img.id || idx} className="admin-image-card">
+                          <span className="admin-image-tag">Existing</span>
+                          <img src={img.imageUrl} alt={img.altText || form.productName} />
+                          <button
+                              type="button"
+                              className="admin-image-card-remove"
+                              onClick={() => removeExistingImage(img.id)}
+                              title="Remove image"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
+                    ))}
+
+                    {/* New Selected Files */}
+                    {newFiles.map((file, idx) => {
+                      const objectUrl = URL.createObjectURL(file);
+                      return (
+                          <div key={idx} className="admin-image-card">
+                            <span className="admin-image-tag" style={{ background: "#286335" }}>New</span>
+                            <img src={objectUrl} alt={file.name} onLoad={() => URL.revokeObjectURL(objectUrl)} />
+                            <div className="admin-image-card-info">{file.name}</div>
+                            <button
+                                type="button"
+                                className="admin-image-card-remove"
+                                onClick={() => removeNewFile(idx)}
+                                title="Remove file"
+                            >
+                              <X size={13} />
+                            </button>
+                          </div>
+                      );
+                    })}
+                  </div>
+              )}
+            </div>
 
             <label>
               Name
@@ -548,7 +722,7 @@ function Dialog({ title, children, close }) {
                 Cancel
               </button>
               <button disabled={busy}>
-                {busy ? "Saving…" : "Save product"}
+                {busy ? (statusMessage || "Saving…") : "Save product"}
               </button>
             </div>
           </form>

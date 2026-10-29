@@ -28,6 +28,16 @@ export const adminApi = {
   createProduct: (payload) => adminClient.post("/api/product", payload).then(unwrap),
   updateProduct: (id, payload) => adminClient.put(`/api/product/${id}`, payload).then(unwrap),
   deleteProduct: (id) => adminClient.delete(`/api/product/${id}`).then(unwrap),
+  uploadProductImage: (formData) =>
+    adminClient
+      .post("/api/productImage", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then(unwrap),
+  getProductImages: (productId) =>
+    adminClient.get(`/api/productImage/productId/${productId}`).then(unwrap),
+  deleteProductImage: (id) =>
+    adminClient.delete(`/api/productImage/${id}`).then(unwrap),
   categories: () => adminClient.get("/api/category").then(unwrap),
   createCategory: (payload) => adminClient.post("/api/category", payload).then(unwrap),
   updateCategory: (id, payload) => adminClient.put(`/api/category/${id}`, payload).then(unwrap),
