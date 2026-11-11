@@ -53,6 +53,15 @@ public class Order {
     @Column(nullable = false, length = 30)
     private OrderStatus status;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean inventoryReserved;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean inventoryCommitted;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean inventoryReleased;
+
     @NotNull(message = "Total amount is required")
     @DecimalMin(value = "0.00", message = "Total amount cannot be negative")
     @Column(nullable = false, precision = 12, scale = 2)

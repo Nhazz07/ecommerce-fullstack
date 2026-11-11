@@ -13,7 +13,11 @@ public interface ProductService {
 
     ProductResponseDto getProductById(Long id);
 
+    ProductResponseDto getProductByIdForAdmin(Long id);
+
     Page<ProductResponseDto> getAllProduct(Pageable pageable);
+
+    Page<ProductResponseDto> getAllProductsForAdmin(Pageable pageable);
 
     List<ProductResponseDto> getProductByCategoryId(Long categoryId);
 
@@ -24,4 +28,8 @@ public interface ProductService {
     ProductResponseDto updateProduct(Long id, ProductRequestDto dto);
 
     void deleteProduct(Long id);
+
+    ProductResponseDto archiveProduct(Long id);
+
+    ProductResponseDto restoreProduct(Long id);
 }

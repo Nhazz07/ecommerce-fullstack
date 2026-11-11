@@ -1,4 +1,4 @@
 package com.example.animeecommercebackend.Service;
 
-public class PaywayService {
+public class PayWayService {
 }

@@ -5,12 +5,23 @@ import com.example.animeecommercebackend.Dto.Response.ProductResponseDto;
 import com.example.animeecommercebackend.Entity.Brand;
 import com.example.animeecommercebackend.Entity.Category;
 import com.example.animeecommercebackend.Entity.Product;
+import com.example.animeecommercebackend.Entity.ProductVariant;
+import com.example.animeecommercebackend.Entity.Enums.OrderStatus;
+import com.example.animeecommercebackend.Entity.Enums.ProductStatus;
+import com.example.animeecommercebackend.Entity.Wishlist;
+import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Entity.Series;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.ProductMapper;
 import com.example.animeecommercebackend.Repository.BrandRepository;
 import com.example.animeecommercebackend.Repository.CategoryRepository;
 import com.example.animeecommercebackend.Repository.ProductRepository;
+import com.example.animeecommercebackend.Repository.ProductVariantRepository;
+import com.example.animeecommercebackend.Repository.InventoryRepository;
+import com.example.animeecommercebackend.Repository.CartItemRepository;
+import com.example.animeecommercebackend.Repository.ProductImageRepository;
+import com.example.animeecommercebackend.Repository.ReviewRepository;
+import com.example.animeecommercebackend.Repository.WishlistRepository;
 import com.example.animeecommercebackend.Repository.SeriesRepository;
 import com.example.animeecommercebackend.Service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +39,12 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final SeriesRepository seriesRepository;
+    private final ProductVariantRepository productVariantRepository;
+    private final InventoryRepository inventoryRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductImageRepository productImageRepository;
+    private final ReviewRepository reviewRepository;
+    private final WishlistRepository wishlistRepository;
 
 
     @Override
@@ -71,13 +88,28 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product Not Found!"));
 
+        if (product.getStatus() == ProductStatus.ARCHIVED) {
+            throw new ResourceNotFoundException("Product Not Found!");
+        }
+        return ProductMapper.toResponse(product);
+    }
+
+    @Override
+    public ProductResponseDto getProductByIdForAdmin(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product Not Found!"));
         return ProductMapper.toResponse(product);
     }
 
     @Override
     public Page<ProductResponseDto> getAllProduct(Pageable pageable) {
-        Page<Product> products = productRepository.findAll(pageable);
+        Page<Product> products = productRepository.findByStatusNot(ProductStatus.ARCHIVED, pageable);
         return products.map(ProductMapper::toResponse);
+    }
+
+    @Override
+    public Page<ProductResponseDto> getAllProductsForAdmin(Pageable pageable) {
+        return productRepository.findAll(pageable).map(ProductMapper::toResponse);
     }
 
 
@@ -94,6 +126,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return products.stream()
+                .filter(product -> product.getStatus() != ProductStatus.ARCHIVED)
                 .map(ProductMapper::toResponse)
                 .toList();
     }
@@ -111,6 +144,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return products.stream()
+                .filter(product -> product.getStatus() != ProductStatus.ARCHIVED)
                 .map(ProductMapper::toResponse)
                 .toList();
     }
@@ -128,6 +162,7 @@ public class ProductServiceImpl implements ProductService {
         }
 
         return products.stream()
+                .filter(product -> product.getStatus() != ProductStatus.ARCHIVED)
                 .map(ProductMapper::toResponse)
                 .toList();
     }
@@ -181,12 +216,57 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void deleteProduct(Long id) {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product Not Found"));
 
+        boolean hasHistoricalOrders = productRepository.existsHistoricalOrderReference(
+                id, List.of(OrderStatus.values())
+        );
+        if (hasHistoricalOrders) {
+            throw new BusinessConflictException(
+                    "Product has historical order references and must be archived instead of deleted."
+            );
+        }
+
+        for (Wishlist wishlist : wishlistRepository.findByProductsId(id)) {
+            wishlist.getProducts().remove(product);
+        }
+
+        product.getPromotions().clear();
+        reviewRepository.deleteByProductId(id);
+        productImageRepository.deleteByProductId(id);
+
+        for (ProductVariant variant : productVariantRepository.findByProductId(id)) {
+            cartItemRepository.deleteByProductVariantId(variant.getId());
+            inventoryRepository.deleteByProductVariantId(variant.getId());
+            productVariantRepository.delete(variant);
+        }
+
         productRepository.delete(product);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public ProductResponseDto archiveProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product Not Found"));
+        product.setStatus(ProductStatus.ARCHIVED);
+        return ProductMapper.toResponse(productRepository.save(product));
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public ProductResponseDto restoreProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product Not Found"));
+        if (product.getStatus() != ProductStatus.ARCHIVED) {
+            throw new BusinessConflictException("Product is not archived.");
+        }
+        product.setStatus(ProductStatus.ACTIVE);
+        return ProductMapper.toResponse(productRepository.save(product));
     }
 }

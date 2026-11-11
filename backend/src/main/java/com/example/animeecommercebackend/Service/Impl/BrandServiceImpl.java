@@ -6,6 +6,7 @@ import com.example.animeecommercebackend.Dto.Response.CloudinaryUploadResponseDt
 import com.example.animeecommercebackend.Entity.Brand;
 import com.example.animeecommercebackend.Entity.Product;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
+import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Mapper.BrandMapper;
 import com.example.animeecommercebackend.Repository.BrandRepository;
 import com.example.animeecommercebackend.Repository.ProductRepository;
@@ -82,8 +83,15 @@ public class BrandServiceImpl implements BrandService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void deleteBrand(Long id) {
        Brand brand = brandRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Brand Not Found!!"));
+       long productCount = productRepository.countByBrandId(id);
+       if (productCount > 0) {
+           throw new BusinessConflictException(
+                   "Cannot delete brand because " + productCount + " products are associated with it."
+           );
+       }
        brandRepository.delete(brand);
     }
 }

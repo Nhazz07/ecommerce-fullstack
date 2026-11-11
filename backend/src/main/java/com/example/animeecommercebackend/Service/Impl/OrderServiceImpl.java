@@ -9,6 +9,8 @@ import com.example.animeecommercebackend.Entity.OrderItem;
 import com.example.animeecommercebackend.Entity.ProductVariant;
 import com.example.animeecommercebackend.Entity.User;
 import com.example.animeecommercebackend.Entity.Enums.OrderStatus;
+import com.example.animeecommercebackend.Entity.Enums.ProductStatus;
+import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.OrderMapper;
 import com.example.animeecommercebackend.Repository.CartRepository;
@@ -84,20 +86,20 @@ public class OrderServiceImpl implements OrderService {
 
             int quantity = cartItem.getQuantity();
 
+            if (variant.getProduct() == null
+                    || variant.getProduct().getStatus() != ProductStatus.ACTIVE) {
+                throw new BusinessConflictException(
+                        "Product variant " + variant.getId() + " is not available for purchase."
+                );
+            }
+
             if (quantity <= 0) {
                 throw new IllegalArgumentException(
                         "Cart item quantity must be greater than zero!"
                 );
             }
 
-            // 6. Check inventory
-            if (!inventoryService.hasEnoughStock(variant.getId(), quantity)) {
-                throw new RuntimeException(
-                        "Not Enough Stock for product variant: " + variant.getId()
-                );
-            }
-
-            // 7. Get product variant price
+            // Get the authoritative product variant price from the database.
             BigDecimal unitPrice = variant.getPrice();
 
             if (unitPrice == null) {
@@ -106,7 +108,7 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
-            // 8. Calculate promotion discount
+            // Calculate promotion discount
             BigDecimal promotionDiscount = promotionService.calculateDiscount(
                     variant.getProduct().getId(),
                     unitPrice
@@ -188,15 +190,9 @@ public class OrderServiceImpl implements OrderService {
         // 14. Save order
         Order savedOrder = orderRepository.save(order);
 
-        // 15. Decrease inventory
-        for (CartItem cartItem : cart.getCartItems()) {
-            ProductVariant variant = cartItem.getProductVariant();
-
-            inventoryService.decreaseStock(
-                    variant.getId(),
-                    cartItem.getQuantity()
-            );
-        }
+        // Reserve all inventory under row locks. Any failure rolls back the order.
+        inventoryService.reserveOrderStock(savedOrder);
+        orderRepository.save(savedOrder);
 
         // 16. Clear cart
         cart.getCartItems().clear();
@@ -381,6 +377,12 @@ public class OrderServiceImpl implements OrderService {
                                 )
                         );
 
+        if (status == OrderStatus.PAID) {
+            throw new BusinessConflictException(
+                    "Orders can only become PAID after verified payment confirmation."
+            );
+        }
+
         if (!isValidStatusTransition(
                 order.getStatus(),
                 status
@@ -388,6 +390,14 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException(
                     "Invalid order status transition"
             );
+        }
+
+        if (status == OrderStatus.CANCELED) {
+            if (order.isInventoryCommitted()) {
+                inventoryService.restockOrderStock(order);
+            } else {
+                inventoryService.releaseOrderStock(order);
+            }
         }
 
         order.setStatus(status);
@@ -414,7 +424,8 @@ public class OrderServiceImpl implements OrderService {
                             || status == OrderStatus.CANCELED;
 
             case PAID ->
-                    status == OrderStatus.PROCESSING;
+                    status == OrderStatus.PROCESSING
+                            || status == OrderStatus.CANCELED;
 
             case PROCESSING ->
                     status == OrderStatus.SHIPPED;

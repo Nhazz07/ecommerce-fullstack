@@ -52,6 +52,20 @@ public class ProductController {
 
     // PUBLIC: GET ALL PRODUCTS
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponseDto<Page<ProductResponseDto>>> getAllProductsForAdmin(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size) {
+        Page<ProductResponseDto> products = productServiceImpl.getAllProductsForAdmin(
+                PageRequest.of(page, size)
+        );
+        return ResponseEntity.ok(new ApiResponseDto<>(
+                true, "Products Retrieved Successfully", products
+        ));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponseDto<Page<ProductResponseDto>>> getAllProduct(
             @RequestParam(defaultValue = "0") int page,
@@ -73,6 +87,16 @@ public class ProductController {
     }
 
     // PUBLIC: GET PRODUCT BY ID
+
+    @GetMapping("/admin/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> getProductByIdForAdmin(
+            @PathVariable @Positive Long id) {
+        return ResponseEntity.ok(new ApiResponseDto<>(
+                true, "Product Retrieved Successfully", productServiceImpl.getProductByIdForAdmin(id)
+        ));
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponseDto<ProductResponseDto>> getProductById(
@@ -187,5 +211,27 @@ public class ProductController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/archive")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> archiveProduct(
+            @PathVariable @Positive Long id) {
+        ProductResponseDto product = productServiceImpl.archiveProduct(id);
+        return ResponseEntity.ok(new ApiResponseDto<>(
+                true, "Product Archived Successfully", product
+        ));
+    }
+
+    @PutMapping("/{id}/restore")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponseDto<ProductResponseDto>> restoreProduct(
+            @PathVariable @Positive Long id) {
+        ProductResponseDto product = productServiceImpl.restoreProduct(id);
+        return ResponseEntity.ok(new ApiResponseDto<>(
+                true, "Product Restored Successfully", product
+        ));
     }
 }

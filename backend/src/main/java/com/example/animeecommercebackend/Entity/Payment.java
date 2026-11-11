@@ -35,6 +35,12 @@ public class Payment {
     @Column(nullable = false, unique = true, length = 150)
     private String transactionId;
 
+    @Column(length = 150, unique = true)
+    private String providerTransactionId;
+
+    @Column(nullable = false, length = 3, columnDefinition = "varchar(3) default 'USD'")
+    private String currency = "USD";
+
     @NotNull(message = "Payment method is required")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

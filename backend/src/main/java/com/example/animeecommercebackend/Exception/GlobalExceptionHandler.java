@@ -16,6 +16,14 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BusinessConflictException.class)
+    public ResponseEntity<ApiResponseDto<Void>> handleBusinessConflict(
+            BusinessConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                new ApiResponseDto<>(false, ex.getMessage(), null)
+        );
+    }
+
     // Handle Resource Not Found 404
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponseDto<Void>> handleResourceNotFound(
@@ -47,7 +55,7 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(HttpStatus.CONFLICT)
                 .body(response);
     }
 
@@ -134,11 +142,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponseDto<Void>> handleGeneralException(
             Exception ex) {
 
-        ex.printStackTrace();
+        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
+                .error("Unhandled request failure", ex);
 
         ApiResponseDto<Void> response = new ApiResponseDto<>(
                 false,
-                ex.getMessage(),
+                "An unexpected server error occurred.",
                 null
         );
 

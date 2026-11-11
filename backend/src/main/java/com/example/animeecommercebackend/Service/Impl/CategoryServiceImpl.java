@@ -5,6 +5,7 @@ import com.example.animeecommercebackend.Dto.Response.CategoryResponseDto;
 import com.example.animeecommercebackend.Entity.Category;
 import com.example.animeecommercebackend.Entity.Product;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
+import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Mapper.CategoryMapper;
 import com.example.animeecommercebackend.Repository.CategoryRepository;
 import com.example.animeecommercebackend.Repository.ProductRepository;
@@ -63,9 +64,17 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id).orElseThrow(() ->
                 new ResourceNotFoundException("Category Id Not Found!"));
+        long productCount = productRepository.countByCategoryId(id);
+        if (productCount > 0) {
+            throw new BusinessConflictException(
+                    "Cannot delete category because " + productCount
+                            + " products are associated with it. Reassign the products before deleting this category."
+            );
+        }
         categoryRepository.delete(category);
     }
 }
