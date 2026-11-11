@@ -357,6 +357,23 @@ function Dialog({ title, children, close }) {
       }
     };
 
+    const changeArchiveState = async (item) => {
+      const archived = item.status === "ARCHIVED";
+      if (!window.confirm(`${archived ? "Restore" : "Archive"} this product?`)) return;
+
+      try {
+        if (archived) {
+          await adminApi.restoreProduct(item.id);
+        } else {
+          await adminApi.archiveProduct(item.id);
+        }
+        setFeedback(`Product ${archived ? "restored" : "archived"}.`);
+        await products.load();
+      } catch (error) {
+        setFeedback(adminError(error));
+      }
+    };
+
     return (
         <>
           <Header
@@ -372,7 +389,7 @@ function Dialog({ title, children, close }) {
           <Notice
               message={feedback}
               type={
-                feedback.includes("saved") || feedback.includes("deleted")
+                /saved|deleted|archived|restored/.test(feedback)
                     ? "success"
                     : "error"
               }
@@ -427,6 +444,12 @@ function Dialog({ title, children, close }) {
                           }
                       >
                         <Edit3 size={15}/> Edit
+                      </button>
+
+                      <button
+                          onClick={() => changeArchiveState(item)}
+                      >
+                        {item.status === "ARCHIVED" ? "Restore" : "Archive"}
                       </button>
 
                       <button

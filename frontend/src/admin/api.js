@@ -23,11 +23,13 @@ export const adminError = (error) => error.response?.data?.message || error.mess
 export const adminApi = {
   login: (payload) => adminClient.post("/api/auth/login", payload).then(unwrap),
   users: () => adminClient.get("/api/users").then(unwrap),
-  products: (page = 0, size = 100) => adminClient.get("/api/product", { params: { page, size } }).then(unwrap),
-  product: (id) => adminClient.get(`/api/product/${id}`).then(unwrap),
+  products: (page = 0, size = 100) => adminClient.get("/api/product/admin", { params: { page, size } }).then(unwrap),
+  product: (id) => adminClient.get(`/api/product/admin/${id}`).then(unwrap),
   createProduct: (payload) => adminClient.post("/api/product", payload).then(unwrap),
   updateProduct: (id, payload) => adminClient.put(`/api/product/${id}`, payload).then(unwrap),
   deleteProduct: (id) => adminClient.delete(`/api/product/${id}`).then(unwrap),
+  archiveProduct: (id) => adminClient.put(`/api/product/${id}/archive`).then(unwrap),
+  restoreProduct: (id) => adminClient.put(`/api/product/${id}/restore`).then(unwrap),
   uploadProductImage: (formData) =>
     adminClient
       .post("/api/productImage", formData, {
