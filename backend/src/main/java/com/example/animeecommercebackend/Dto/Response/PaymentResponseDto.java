@@ -25,4 +25,7 @@ public class PaymentResponseDto {
     private Long orderId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    private String qrCode;
+    private LocalDateTime expiresAt;
 }
