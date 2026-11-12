@@ -20,6 +20,7 @@ public class PaymentResponseDto {
     private String transactionId;
     private PaymentMethod paymentMethod;
     private BigDecimal amount;
+    private String currency;
     private PaymentStatus status;
     private LocalDateTime paidAt;
     private Long orderId;

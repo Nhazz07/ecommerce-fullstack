@@ -1,6 +1,5 @@
 package com.example.animeecommercebackend.Config;
 
-import com.cloudinary.Api;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;

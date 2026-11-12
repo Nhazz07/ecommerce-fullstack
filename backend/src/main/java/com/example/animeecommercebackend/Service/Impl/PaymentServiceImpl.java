@@ -18,11 +18,12 @@ import com.example.animeecommercebackend.Service.PaymentService;
 import com.example.animeecommercebackend.Service.InventoryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
 import kh.gov.nbc.bakong_khqr.model.KHQRData;
 import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
-
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,6 +32,13 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
+
+    @Value("${payment.khqr.static-payload}")
+    private String staticKhqrPayload;
+
+    @Value("${payment.exchange-rate.usd-to-khr}")
+    private BigDecimal usdToKhrRate;
+
     private final PaymentRepository paymentRepository;
     private final CurrentUserService currentUserService;
     private final OrderRepository orderRepository;
@@ -41,55 +49,75 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public PaymentResponseDto creatPayment(PaymentRequestDto dto) {
 
+        // 1. Find the order
         Order order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Order Not Found!")
+                );
 
+        // 2. Get current user
         Long currentUserId = currentUserService.getCurrentUser().getId();
 
+        // 3. Verify order ownership
         if (!order.getUser().getId().equals(currentUserId)) {
             throw new ResourceNotFoundException("Order Not Found!");
         }
 
+        // 4. Prevent duplicate payments
         if (order.getPayment() != null) {
-            throw new BusinessConflictException("Order already has a payment!");
-        }
-
-        BigDecimal amount = order.getTotalAmount();
-
-        Payment payment = new Payment();
-        payment.setTransactionId(UUID.randomUUID().toString());
-        payment.setPaymentMethod(dto.getPaymentMethod());
-        payment.setAmount(amount);
-        payment.setStatus(PaymentStatus.PENDING);
-        payment.setOrder(order);
-
-        if (dto.getPaymentMethod() == PaymentMethod.KHQR) {
-
-            KHQRCurrency currency = KHQRCurrency.USD;
-
-            KHQRResponse<KHQRData> response =
-                    bakongService.generateMerchantKhqr(
-                            payment.getTransactionId(),
-                            amount.doubleValue(),
-                            currency
-                    );
-
-            if (response == null || response.getData() == null
-                    || response.getKHQRStatus() == null
-                    || response.getKHQRStatus().getCode() != 0) {
-                throw new BusinessConflictException("Failed to generate KHQR!");
-            }
-
-            payment.setQrCode(response.getData().getQr());
-            payment.setCurrency(currency.name());
-            payment.setExpiresAt(
-                    LocalDateTime.now().plusMinutes(10)
+            throw new BusinessConflictException(
+                    "Order already has a payment!"
             );
         }
 
-        Payment saved = paymentRepository.save(payment);
+        // 5. Get the actual order total (never trust client amount)
+        BigDecimal orderAmount = order.getTotalAmount();
 
-        return PaymentMapper.toResponse(saved);
+        // 6. Create payment
+        Payment payment = new Payment();
+
+        payment.setTransactionId(UUID.randomUUID().toString());
+        payment.setPaymentMethod(dto.getPaymentMethod());
+        payment.setStatus(PaymentStatus.PENDING);
+        payment.setOrder(order);
+
+        // 7. Handle KHQR payment using personal static QR
+        if (dto.getPaymentMethod() == PaymentMethod.KHQR) {
+
+            if (staticKhqrPayload == null || staticKhqrPayload.isBlank()) {
+                throw new BusinessConflictException(
+                        "Personal KHQR payload is not configured!"
+                );
+            }
+
+            if (usdToKhrRate == null || usdToKhrRate.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BusinessConflictException(
+                        "Invalid USD to KHR exchange rate!"
+                );
+            }
+
+            // Convert USD order total to KHR
+            BigDecimal khrAmount = orderAmount
+                    .multiply(usdToKhrRate)
+                    .setScale(0, RoundingMode.HALF_UP);
+
+            payment.setAmount(khrAmount);
+            payment.setCurrency("KHR");
+            payment.setQrCode(staticKhqrPayload);
+            payment.setExpiresAt(null);
+
+        } else {
+
+            // Other payment methods retain the USD order amount
+            payment.setAmount(orderAmount);
+            payment.setCurrency("USD");
+        }
+
+        // 8. Save payment
+        Payment savedPayment = paymentRepository.save(payment);
+
+        // 9. Return payment response
+        return PaymentMapper.toResponse(savedPayment);
     }
 
 
