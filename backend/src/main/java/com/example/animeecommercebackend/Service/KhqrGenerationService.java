@@ -1,4 +1,4 @@
 package com.example.animeecommercebackend.Service;
 
-public class PayWayService {
+public interface KhqrGenerationService {
 }
