@@ -7,7 +7,9 @@ import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
 import kh.gov.nbc.bakong_khqr.model.KHQRData;
 import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
 import kh.gov.nbc.bakong_khqr.model.MerchantInfo;
+import org.springframework.stereotype.Service;
 
+@Service
 public class BakongKhqrServiceImpl implements BakongService {
 
     private final BakongConfig bakongConfig;
@@ -43,8 +45,24 @@ public class BakongKhqrServiceImpl implements BakongService {
 
         KHQRResponse<KHQRData> response = BakongKHQR.generateMerchant(merchantInfo);
 
-        if(response == null || response.getData() == null){
-            throw new IllegalArgumentException("Failed to generate Bakong KHQR");
+        if (response == null) {
+            throw new IllegalArgumentException(
+                    "Bakong SDK returned a null response"
+            );
+        }
+
+        if (response.getData() == null) {
+            var status = response.getKHQRStatus();
+
+            String errorDetails = status == null
+                    ? "No status information returned"
+                    : "Code: " + status.getCode()
+                    + ", Error: " + status.getErrorCode()
+                    + ", Message: " + status.getMessage();
+
+            throw new IllegalArgumentException(
+                    "Bakong KHQR generation failed: " + errorDetails
+            );
         }
         return response;
     }

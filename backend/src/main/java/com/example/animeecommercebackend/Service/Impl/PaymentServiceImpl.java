@@ -3,6 +3,7 @@ package com.example.animeecommercebackend.Service.Impl;
 import com.example.animeecommercebackend.Dto.Request.PaymentRequestDto;
 import com.example.animeecommercebackend.Dto.Response.PaymentResponseDto;
 import com.example.animeecommercebackend.Entity.Enums.OrderStatus;
+import com.example.animeecommercebackend.Entity.Enums.PaymentMethod;
 import com.example.animeecommercebackend.Entity.Enums.PaymentStatus;
 import com.example.animeecommercebackend.Entity.Order;
 import com.example.animeecommercebackend.Entity.Payment;
@@ -11,13 +12,16 @@ import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Mapper.PaymentMapper;
 import com.example.animeecommercebackend.Repository.OrderRepository;
 import com.example.animeecommercebackend.Repository.PaymentRepository;
+import com.example.animeecommercebackend.Service.BakongService;
 import com.example.animeecommercebackend.Service.CurrentUserService;
 import com.example.animeecommercebackend.Service.PaymentService;
 import com.example.animeecommercebackend.Service.InventoryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.aot.hint.annotation.RegisterReflection;
 import org.springframework.stereotype.Service;
+import kh.gov.nbc.bakong_khqr.model.KHQRCurrency;
+import kh.gov.nbc.bakong_khqr.model.KHQRData;
+import kh.gov.nbc.bakong_khqr.model.KHQRResponse;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
@@ -31,8 +35,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final CurrentUserService currentUserService;
     private final OrderRepository orderRepository;
     private final InventoryService inventoryService;
+    private final BakongService bakongService;
 
     @Override
+    @Transactional
     public PaymentResponseDto creatPayment(PaymentRequestDto dto) {
 
         Order order = orderRepository.findById(dto.getOrderId())
@@ -40,27 +46,52 @@ public class PaymentServiceImpl implements PaymentService {
 
         Long currentUserId = currentUserService.getCurrentUser().getId();
 
-        if(!order.getUser().getId().equals(currentUserId)){
-            throw new ResourceNotFoundException("Order Not Found!!");
-        }
-        if(order.getPayment() != null){
-            throw new RuntimeException("Order has already been paid");
+        if (!order.getUser().getId().equals(currentUserId)) {
+            throw new ResourceNotFoundException("Order Not Found!");
         }
 
-        if(dto.getAmount().compareTo(order.getTotalAmount()) != 0){
-            throw new RuntimeException("Payment amount must match order total!");
+        if (order.getPayment() != null) {
+            throw new BusinessConflictException("Order already has a payment!");
         }
+
+        BigDecimal amount = order.getTotalAmount();
+
         Payment payment = new Payment();
-
         payment.setTransactionId(UUID.randomUUID().toString());
         payment.setPaymentMethod(dto.getPaymentMethod());
-        payment.setAmount(order.getTotalAmount());
+        payment.setAmount(amount);
         payment.setStatus(PaymentStatus.PENDING);
         payment.setOrder(order);
 
+        if (dto.getPaymentMethod() == PaymentMethod.KHQR) {
+
+            KHQRCurrency currency = KHQRCurrency.USD;
+
+            KHQRResponse<KHQRData> response =
+                    bakongService.generateMerchantKhqr(
+                            payment.getTransactionId(),
+                            amount.doubleValue(),
+                            currency
+                    );
+
+            if (response == null || response.getData() == null
+                    || response.getKHQRStatus() == null
+                    || response.getKHQRStatus().getCode() != 0) {
+                throw new BusinessConflictException("Failed to generate KHQR!");
+            }
+
+            payment.setQrCode(response.getData().getQr());
+            payment.setCurrency(currency.name());
+            payment.setExpiresAt(
+                    LocalDateTime.now().plusMinutes(10)
+            );
+        }
+
         Payment saved = paymentRepository.save(payment);
+
         return PaymentMapper.toResponse(saved);
     }
+
 
     @Override
     public PaymentResponseDto getPaymentById(Long id) {
