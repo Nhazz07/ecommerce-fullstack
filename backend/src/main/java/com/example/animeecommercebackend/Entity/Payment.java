@@ -59,6 +59,11 @@ public class Payment {
     @Column(nullable = false, length = 30)
     private PaymentStatus status;
 
+    @Column(name = "qr_code", columnDefinition = "TEXT")
+    private String qrCode;
+
+    private LocalDateTime expiresAt;
+
     private LocalDateTime paidAt;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)

@@ -30,6 +30,8 @@ public class PaymentMapper {
         dto.setPaidAt(payment.getPaidAt());
         dto.setCreatedAt(payment.getCreatedAt());
         dto.setUpdatedAt(payment.getUpdatedAt());
+        dto.setQrCode(payment.getQrCode());
+        dto.setExpiresAt(payment.getExpiresAt());
         if(payment.getOrder() != null){
             dto.setOrderId(payment.getOrder().getId());
         }
