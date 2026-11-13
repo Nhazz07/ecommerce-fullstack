@@ -2,8 +2,6 @@ package com.example.animeecommercebackend.Service.Impl;
 
 import com.example.animeecommercebackend.Dto.Request.OrderRequestDto;
 import com.example.animeecommercebackend.Dto.Response.OrderResponseDto;
-import com.example.animeecommercebackend.Entity.Cart;
-import com.example.animeecommercebackend.Entity.CartItem;
 import com.example.animeecommercebackend.Entity.Order;
 import com.example.animeecommercebackend.Entity.OrderItem;
 import com.example.animeecommercebackend.Entity.ProductVariant;
@@ -26,6 +24,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import com.example.animeecommercebackend.Event.OrderCreateEvent;
+import com.example.animeecommercebackend.Dto.Request.OrderItemRequestDto;
+import com.example.animeecommercebackend.Repository.ProductVariantRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -44,62 +44,59 @@ public class OrderServiceImpl implements OrderService {
     private final CouponService couponService;
     private final ShipmentService shipmentService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProductVariantRepository productVariantRepository;
+
 
     @Override
     @Transactional
     public OrderResponseDto createOrder(OrderRequestDto dto) {
 
-        // 1. Get the currently authenticated user
+        // 1. Get authenticated user
         User user = currentUserService.getCurrentUser();
 
-        // 2. Find the user's cart
-        Cart cart = cartRepository
-                .findByUserId(user.getId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Cart Not Found!")
-                );
-
-        // 3. Check whether the cart contains items
-        if (cart.getCartItems() == null || cart.getCartItems().isEmpty()) {
-            throw new ResourceNotFoundException("Cart Is Empty!");
-        }
-
-        // 4. Create the order
+        // 2. Create order
         Order order = new Order();
+
         order.setUser(user);
         order.setStatus(OrderStatus.PENDING);
-        order.setOrderNumber((int) (Math.random() * 90000000) + 10000000);
+        order.setOrderNumber(
+                (int) (Math.random() * 90000000) + 10000000
+        );
         order.setOrderDate(LocalDateTime.now());
         order.setShippingAddress(dto.getShippingAddress());
 
         BigDecimal subTotal = BigDecimal.ZERO;
         List<OrderItem> orderItems = new ArrayList<>();
 
-        // 5. Validate stock and create order items
-        for (CartItem cartItem : cart.getCartItems()) {
+        // 3. Build order items from frontend request
+        for (OrderItemRequestDto itemDto : dto.getOrderItems()) {
 
-            ProductVariant variant = cartItem.getProductVariant();
+            ProductVariant variant = productVariantRepository
+                    .findById(itemDto.getProductVariantId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Product Variant Not Found!"
+                            )
+                    );
 
-            if (variant == null) {
-                throw new ResourceNotFoundException("Product Variant Not Found!");
-            }
-
-            int quantity = cartItem.getQuantity();
+            int quantity = itemDto.getQuantity();
 
             if (variant.getProduct() == null
                     || variant.getProduct().getStatus() != ProductStatus.ACTIVE) {
+
                 throw new BusinessConflictException(
-                        "Product variant " + variant.getId() + " is not available for purchase."
+                        "Product variant " + variant.getId()
+                                + " is not available for purchase."
                 );
             }
 
             if (quantity <= 0) {
                 throw new IllegalArgumentException(
-                        "Cart item quantity must be greater than zero!"
+                        "Quantity must be greater than zero!"
                 );
             }
 
-            // Get the authoritative product variant price from the database.
+            // 4. Get authoritative database price
             BigDecimal unitPrice = variant.getPrice();
 
             if (unitPrice == null) {
@@ -108,17 +105,15 @@ public class OrderServiceImpl implements OrderService {
                 );
             }
 
-            // Calculate promotion discount
-            BigDecimal promotionDiscount = promotionService.calculateDiscount(
-                    variant.getProduct().getId(),
-                    unitPrice
-            );
+            // 5. Calculate promotion discount
+            BigDecimal promotionDiscount =
+                    promotionService.calculateDiscount(
+                            variant.getProduct().getId(),
+                            unitPrice
+                    );
 
-            if (promotionDiscount == null) {
-                promotionDiscount = BigDecimal.ZERO;
-            }
-
-            if (promotionDiscount.compareTo(BigDecimal.ZERO) < 0) {
+            if (promotionDiscount == null
+                    || promotionDiscount.compareTo(BigDecimal.ZERO) < 0) {
                 promotionDiscount = BigDecimal.ZERO;
             }
 
@@ -126,13 +121,18 @@ public class OrderServiceImpl implements OrderService {
                 promotionDiscount = unitPrice;
             }
 
-            BigDecimal finalUnitPrice = unitPrice.subtract(promotionDiscount);
-            BigDecimal itemSubtotal = finalUnitPrice.multiply(
-                    BigDecimal.valueOf(quantity)
-            );
+            BigDecimal finalUnitPrice =
+                    unitPrice.subtract(promotionDiscount);
 
-            // 9. Create order item
+            // 6. Calculate item subtotal
+            BigDecimal itemSubtotal =
+                    finalUnitPrice.multiply(
+                            BigDecimal.valueOf(quantity)
+                    );
+
+            // 7. Create order item
             OrderItem orderItem = new OrderItem();
+
             orderItem.setOrder(order);
             orderItem.setProductVariant(variant);
             orderItem.setQuantity(quantity);
@@ -140,29 +140,28 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setSubTotal(itemSubtotal);
 
             orderItems.add(orderItem);
+
             subTotal = subTotal.add(itemSubtotal);
         }
 
-        // 10. Attach order items
+        // 8. Attach order items
         order.setOrderItems(orderItems);
         order.setSubTotal(subTotal);
 
-        // 11. Calculate coupon discount
+        // 9. Calculate coupon discount
         BigDecimal couponDiscount = BigDecimal.ZERO;
 
         if (dto.getCouponId() != null) {
+
             couponDiscount = couponService.calculateDiscount(
                     dto.getCouponId(),
                     subTotal
             );
 
-            if (couponDiscount == null) {
+            if (couponDiscount == null
+                    || couponDiscount.compareTo(BigDecimal.ZERO) < 0) {
                 couponDiscount = BigDecimal.ZERO;
             }
-        }
-
-        if (couponDiscount.compareTo(BigDecimal.ZERO) < 0) {
-            couponDiscount = BigDecimal.ZERO;
         }
 
         if (couponDiscount.compareTo(subTotal) > 0) {
@@ -171,8 +170,9 @@ public class OrderServiceImpl implements OrderService {
 
         order.setDiscountAmount(couponDiscount);
 
-        // 12. Calculate shipping fee
-        BigDecimal shippingFee = shipmentService.calculateShipmentFee(subTotal);
+        // 10. Calculate shipping
+        BigDecimal shippingFee =
+                shipmentService.calculateShipmentFee(subTotal);
 
         if (shippingFee == null) {
             shippingFee = BigDecimal.ZERO;
@@ -180,24 +180,26 @@ public class OrderServiceImpl implements OrderService {
 
         order.setShippingFee(shippingFee);
 
-        // 13. Calculate final total
+        // 11. Calculate final amount
         BigDecimal totalAmount = subTotal
                 .subtract(couponDiscount)
                 .add(shippingFee);
 
         order.setTotalAmount(totalAmount);
 
-        // 14. Save order
+        // 12. Save order
         Order savedOrder = orderRepository.save(order);
 
-        // Reserve all inventory under row locks. Any failure rolls back the order.
+        // 13. Reserve inventory
         inventoryService.reserveOrderStock(savedOrder);
+
         orderRepository.save(savedOrder);
 
-        // 16. Clear cart
-        cart.getCartItems().clear();
+        // 14. Clear existing database cart if one exists
+        cartRepository.findByUserId(user.getId())
+                .ifPresent(cart -> cart.getCartItems().clear());
 
-        // 17. Publish the event after checkout operations succeed
+        // 15. Publish order event
         eventPublisher.publishEvent(
                 new OrderCreateEvent(
                         savedOrder.getOrderNumber(),
@@ -214,9 +216,10 @@ public class OrderServiceImpl implements OrderService {
                 )
         );
 
-        // 18. Return response
+        // 16. Return response
         return OrderMapper.toResponse(savedOrder);
     }
+
 
 
     @Override
