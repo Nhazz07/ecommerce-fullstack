@@ -1,84 +1,1219 @@
-import { ArrowRight, Check, Minus, Plus, SlidersHorizontal, Trash2 } from "lucide-react";
+/* eslint-disable react-refresh/only-export-components */
+import {
+    AlertCircle,
+    ArrowRight,
+    Check,
+    Heart,
+    Info,
+    Minus,
+    Package,
+    Plus,
+    RotateCcw,
+    Search,
+    ShieldCheck,
+    ShoppingBag,
+    SlidersHorizontal,
+    Sparkles,
+    Star,
+    Trash2,
+    Truck,
+    X
+} from "lucide-react";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { accountApi, authApi, catalogueApi } from "../api/services";
 import { messageFrom } from "../api/client";
-import { StoreContext } from "../context/StoreContext";
-import { imageOf, ProductCard } from "../components/ProductCard";
+import { accountApi, authApi, catalogueApi } from "../api/services";
 import { money } from "../components/Layout";
+import { ANTEIKU_FALLBACK_IMAGE, imageOf, ProductCard, ProductCardSkeleton } from "../components/ProductCard";
+import { StoreContext } from "../context/StoreContext";
 import { visibleShopProducts } from "../utils/productPrice";
+import { QRCodeSVG } from "qrcode.react";
+export const Button = ({ className = "", variant = "primary", ...props }) => {
+  const base = "inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
+  const styles = {
+    primary: "border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] text-black hover:opacity-95 shadow-[0_0_15px_rgba(197,168,128,0.2)]",
+    secondary: "border border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-[#c5a880] hover:text-[#dfc79b]",
+    outline: "border border-zinc-800 bg-transparent text-zinc-300 hover:border-zinc-600 hover:text-white",
+    dark: "border border-zinc-800 bg-black text-white hover:bg-zinc-900 hover:border-zinc-700",
+  };
+  return <button className={`${base} ${styles[variant] || styles.primary} ${className}`} {...props} />;
+};
 
-const Button = ({ className = "", ...props }) => <button className={`inline-flex items-center justify-center gap-2 bg-black px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200 ${className}`} {...props}/>;
-const Page = ({ eyebrow, title, children }) => <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-10 sm:px-6 sm:py-14"><p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">{eyebrow}</p><h1 className="mt-3 break-words text-3xl font-bold tracking-tight sm:text-5xl">{title}</h1>{children}</section>;
-const Notice = ({ children, type = "error" }) => <p className={`mt-4 border px-4 py-3 text-sm ${type === "error" ? "border-red-200 bg-red-50 text-red-800 dark:border-red-950 dark:bg-red-950/30 dark:text-red-200" : "border-zinc-300 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900"}`}>{children}</p>;
-const Loading = () => <div className="py-20 text-center text-sm text-zinc-500">Loading…</div>;
+export const Page = ({ eyebrow, title, subtitle, children, actions }) => (
+  <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <div className="border-b border-zinc-800/80 pb-6 mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div>
+        {eyebrow && (
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c5a880]">
+            {eyebrow}
+          </p>
+        )}
+        <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight text-zinc-100 sm:text-4xl md:text-5xl">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="mt-2 text-xs text-zinc-400 font-sans max-w-2xl leading-relaxed">
+            {subtitle}
+          </p>
+        )}
+      </div>
+      {actions && <div className="shrink-0">{actions}</div>}
+    </div>
+    {children}
+  </section>
+);
 
-function useCatalogue() { const [state, setState] = useState({ loading: true, error: "", products: [], categories: [], brands: [] }); useEffect(() => { Promise.allSettled([catalogueApi.products(), catalogueApi.categories(), catalogueApi.brands()]).then(([products, categories, brands]) => { const failures = [products, categories, brands].filter((result) => result.status === "rejected"); setState({ loading: false, error: failures.map((result) => messageFrom(result.reason)).join(" "), products: products.status === "fulfilled" ? products.value.content || [] : [], categories: categories.status === "fulfilled" ? categories.value : [], brands: brands.status === "fulfilled" ? brands.value : [] }); }); }, []); return state; }
-const toCartItem = (product, variant) => ({ productId: product.id, variantId: variant.id, name: product.name, variantName: variant.name, price: Number(variant.price ?? product.price), image: imageOf(product), quantity: variant.selectedQuantity || 1 });
+export const Notice = ({ children, type = "error" }) => (
+  <div
+    role={type === "error" ? "alert" : "status"}
+    className={`my-4 flex items-start gap-3 border p-4 text-xs leading-relaxed ${
+      type === "error"
+        ? "border-red-900/60 bg-red-950/30 text-red-300"
+        : "border-[#c5a880]/40 bg-[#c5a880]/10 text-[#dfc79b]"
+    }`}
+  >
+    <div className="mt-0.5 shrink-0">
+      {type === "error" ? <AlertCircle size={15} /> : <Info size={15} />}
+    </div>
+    <div className="min-w-0 flex-1">{children}</div>
+  </div>
+);
 
-export function HomePage() { const { products, categories, loading, error } = useCatalogue(); const { addToCart } = useContext(StoreContext); if (loading) return <Loading/>; return <><section className="border-b border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900"><div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[1.15fr_.85fr] lg:py-24"><div className="self-center"><p className="text-xs font-bold uppercase tracking-[0.22em] text-zinc-500">Anime objects, selected with care</p><h1 className="mt-5 max-w-xl text-5xl font-black leading-[.95] tracking-tight sm:text-7xl">Stories worth keeping.</h1><p className="mt-6 max-w-md leading-7 text-zinc-600 dark:text-zinc-400">Figures, collectables and apparel from the worlds you return to again and again.</p><Link to="/shop" className="mt-8 inline-flex items-center gap-2 bg-black px-5 py-3 text-sm font-semibold text-white dark:bg-white dark:text-black">Shop collection <ArrowRight size={16}/></Link></div><div className="hidden aspect-[4/5] items-center justify-center bg-zinc-200 text-center text-xs font-bold tracking-[.25em] text-zinc-500 dark:bg-zinc-800 lg:flex">YOUR NEXT PIECE</div></div></section>{error && <div className="mx-auto max-w-7xl px-4 sm:px-6"><Notice>{error}</Notice></div>}<section className="mx-auto max-w-7xl px-4 py-14 sm:px-6"><div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-zinc-500">Explore</p><h2 className="mt-2 text-2xl font-bold">Shop by category</h2></div><Link to="/categories" className="text-sm underline underline-offset-4">All categories</Link></div><div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{categories.slice(0, 4).map((category) => <Link key={category.id} to={`/shop?category=${category.id}`} className="group border border-zinc-200 p-5 hover:border-black dark:border-zinc-800 dark:hover:border-white"><span className="block text-lg font-semibold">{category.name}</span><span className="mt-7 block text-xs text-zinc-500 group-hover:text-zinc-900 dark:group-hover:text-white">Explore collection →</span></Link>)}</div></section><section className="mx-auto max-w-7xl px-4 py-10 sm:px-6"><div className="flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-zinc-500">New arrivals</p><h2 className="mt-2 text-2xl font-bold">Recently added</h2></div><Link to="/shop" className="text-sm underline underline-offset-4">View all</Link></div><div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">{products.slice(0, 8).map((p) => <ProductCard key={p.id} product={p} onAdd={(product, variant) => addToCart(toCartItem(product, variant))}/>)}</div></section></>; }
+export const Loading = () => (
+  <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6">
+    <div className="inline-flex items-center gap-3 border border-zinc-800 bg-zinc-900/40 px-6 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#c5a880]">
+      <div className="h-2 w-2 animate-ping rounded-full bg-[#c5a880]" />
+      <span>Consulting the Anteiku Archive…</span>
+    </div>
+  </div>
+);
 
-export function SeriesPage() {
-  const [series, setSeries] = useState(null);
-  const [error, setError] = useState("");
+function useCatalogue() {
+  const [state, setState] = useState({
+    loading: true,
+    error: "",
+    products: [],
+    categories: [],
+    brands: [],
+  });
 
   useEffect(() => {
-    let active = true;
-    catalogueApi.allProducts()
-      .then((products) => {
-        const unique = new Map();
-        products.forEach((product) => {
-          if (product.seriesId != null && product.seriesName) {
-            const key = String(product.seriesId);
-            const entry = unique.get(key) || { id: product.seriesId, name: product.seriesName, count: 0 };
-            entry.count += 1;
-            unique.set(key, entry);
-          }
-        });
-        if (active) setSeries([...unique.values()].sort((a, b) => a.name.localeCompare(b.name)));
-      })
-      .catch((err) => { if (active) setError(messageFrom(err)); })
-      .finally(() => { if (active) setSeries((current) => current || []); });
-    return () => { active = false; };
+    Promise.allSettled([
+      catalogueApi.products(0, 100),
+      catalogueApi.categories(),
+      catalogueApi.brands(),
+    ]).then(([products, categories, brands]) => {
+      const failures = [products, categories, brands].filter((result) => result.status === "rejected");
+      setState({
+        loading: false,
+        error: failures.map((result) => messageFrom(result.reason)).join(" "),
+        products: products.status === "fulfilled" ? products.value.content || [] : [],
+        categories: categories.status === "fulfilled" ? categories.value : [],
+        brands: brands.status === "fulfilled" ? brands.value : [],
+      });
+    });
   }, []);
 
-  if (error) return <Page eyebrow="Discover" title="Anime series"><Notice>{error}</Notice></Page>;
-  if (!series) return <Loading/>;
-  return <Page eyebrow="Discover" title="Anime series">
-    <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-500">Browse series represented in the current product catalogue.</p>
-    {series.length ? <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{series.map((item) => <Link key={item.id} to={`/series/${item.id}`} state={{ seriesName: item.name }} className="group border border-zinc-200 p-5 hover:border-black dark:border-zinc-800 dark:hover:border-white"><h2 className="text-lg font-semibold">{item.name}</h2><p className="mt-5 text-sm text-zinc-500">{item.count} {item.count === 1 ? "product" : "products"}</p><span className="mt-5 block text-xs font-bold uppercase tracking-wider">Explore →</span></Link>)}</div> : <p className="mt-8 border-y border-zinc-200 py-10 text-sm text-zinc-500 dark:border-zinc-800">No series are currently listed in the product catalogue.</p>}
-  </Page>;
+  const series = useMemo(() => {
+    const map = new Map();
+    state.products.forEach((p) => {
+      if (p.seriesId != null && p.seriesName) {
+        const key = String(p.seriesId);
+        const cur = map.get(key) || { id: p.seriesId, name: p.seriesName, count: 0 };
+        cur.count += 1;
+        map.set(key, cur);
+      }
+    });
+    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [state.products]);
+
+  return { ...state, series };
 }
 
-export function SeriesDetailPage() {
-  const { id } = useParams();
-  const location = useLocation();
+const toCartItem = (product, variant) => ({
+  productId: product.id,
+  variantId: variant.id,
+  name: product.name,
+  variantName: variant.name,
+  price: Number(variant.price ?? product.price),
+  image: imageOf(product),
+  quantity: variant.selectedQuantity || 1,
+});
+
+/* =========================================================================
+   1. HOME PAGE
+   ========================================================================= */
+export function HomePage() {
+  const { products, categories, series, loading, error } = useCatalogue();
   const { addToCart } = useContext(StoreContext);
-  const [state, setState] = useState({ loading: true, products: [], name: location.state?.seriesName || "", error: "" });
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const featuredPiece = products[0];
+
+  return (
+    <div className="space-y-20 sm:space-y-28">
+      {/* Hero Editorial Section */}
+      <section className="relative overflow-hidden border-b border-zinc-800 bg-gradient-to-b from-black via-zinc-950 to-zinc-950 py-16 sm:py-24 lg:py-32">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(197,168,128,0.12),transparent_50%)]" />
+
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:gap-16">
+          <div className="space-y-6">
+            <div className="inline-flex items-center gap-2 border border-[#c5a880]/40 bg-[#c5a880]/10 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#dfc79b]">
+              <Sparkles size={12} />
+              <span>Tokyo Ghoul & Fine Japanese Collectables</span>
+            </div>
+
+            <h1 className="font-serif text-4xl font-normal leading-[1.05] tracking-tight text-zinc-100 sm:text-6xl lg:text-7xl">
+              Stories Worth <br />
+              <span className="font-light italic text-[#dfc79b]">Preserving.</span>
+            </h1>
+
+            <p className="max-w-lg text-xs leading-relaxed text-zinc-400 sm:text-sm">
+              ANTEIKU is an independent Tokyo archive curated for the discerning anime connoisseur.
+              Museum-grade statues, limited artisan apparel, and authenticated imports.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 pt-2">
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2.5 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-black hover:opacity-95 shadow-[0_0_20px_rgba(197,168,128,0.25)] transition-all"
+              >
+                <span>Explore The Archive</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                to="/series"
+                className="inline-flex items-center gap-2 border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-zinc-300 hover:border-[#c5a880] hover:text-[#dfc79b] transition-all"
+              >
+                <span>Anime Series</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* Hero Feature Piece Card */}
+          {featuredPiece && (
+            <div className="relative mx-auto w-full max-w-md lg:max-w-none">
+              <div className="relative aspect-[4/5] overflow-hidden border border-zinc-800 bg-zinc-900/80 shadow-2xl">
+                <img
+                  src={imageOf(featuredPiece)}
+                  alt={featuredPiece.name}
+                  className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  onError={(e) => {
+                    e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                <div className="absolute inset-x-6 bottom-6 space-y-2">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#dfc79b]">
+                    Archival Acquisition 01
+                  </span>
+                  <h3 className="font-serif text-xl font-medium text-white line-clamp-1">
+                    {featuredPiece.name}
+                  </h3>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-sans text-sm font-semibold text-zinc-200">
+                      {money(featuredPiece.price)}
+                    </span>
+                    <Link
+                      to={`/product/${featuredPiece.id}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline underline-offset-4"
+                    >
+                      <span>Inspect Piece</span>
+                      <ArrowRight size={13} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Brand Pillars / Value Guarantee */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              icon: Sparkles,
+              title: "100% Japanese Authenticity",
+              desc: "Verified through licensed official Japanese studios and distributors in Tokyo.",
+            },
+            {
+              icon: Package,
+              title: "Archival Double-Boxing",
+              desc: "Every statue and collectable arrives in custom reinforced collector packaging.",
+            },
+            {
+              icon: Truck,
+              title: "Complimentary Express",
+              desc: "Insured express worldwide shipping with real-time tracking on orders over $150.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Connoisseur Sanctuary",
+              desc: "Dedicated white-glove client support for private collectors and display enthusiasts.",
+            },
+          ].map(({ icon: Icon, title, desc }) => (
+            <div
+              key={title}
+              className="border border-zinc-800/80 bg-zinc-950/60 p-6 transition-colors duration-200 hover:border-[#c5a880]/50"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#c5a880]/30 bg-[#c5a880]/10 text-[#dfc79b]">
+                <Icon size={18} strokeWidth={1.5} />
+              </div>
+              <h3 className="mt-4 font-serif text-sm font-medium tracking-wide text-zinc-100">
+                {title}
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-zinc-400 font-sans">
+                {desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Explore by Category */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-800 pb-5">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c5a880]">
+              Curated Mediums
+            </p>
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-medium text-zinc-100">
+              Browse Categories
+            </h2>
+          </div>
+          <Link
+            to="/categories"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-[#dfc79b] transition-colors"
+          >
+            <span>All Categories ({categories.length})</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {categories.slice(0, 4).map((cat) => (
+            <Link
+              key={cat.id}
+              to={`/shop?category=${cat.id}`}
+              className="group relative flex flex-col justify-between border border-zinc-800 bg-zinc-950 p-6 transition-all duration-300 hover:border-[#c5a880]/60 hover:bg-zinc-900/50"
+            >
+              <div>
+                <span className="text-[10px] font-mono tracking-widest text-zinc-500">
+                  ARCHIVE // 0{cat.id || 1}
+                </span>
+                <h3 className="mt-3 font-serif text-lg font-medium text-zinc-100 group-hover:text-[#dfc79b] transition-colors">
+                  {cat.name}
+                </h3>
+                <p className="mt-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                  {cat.description || "Official licensed artefacts and figures."}
+                </p>
+              </div>
+              <span className="mt-8 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-widest text-[#c5a880] group-hover:translate-x-1 transition-transform">
+                <span>View Pieces</span>
+                <span>→</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Curated Acquisitions (Recent Products) */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-800 pb-5">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c5a880]">
+              Latest Arrivals
+            </p>
+            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-medium text-zinc-100">
+              Recent Acquisitions
+            </h2>
+          </div>
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-[#dfc79b] transition-colors"
+          >
+            <span>View Full Archive</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        {error && <Notice>{error}</Notice>}
+
+        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
+          {products.slice(0, 8).map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              onAdd={(prod, variant) => addToCart(toCartItem(prod, variant))}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Anteiku Sanctuary Philosophy Quote */}
+      <section className="border-y border-zinc-900 bg-black/60 py-16 text-center">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 space-y-4">
+          <p className="font-serif text-xl sm:text-2xl font-light italic leading-relaxed text-zinc-300">
+            “Anteiku was a sanctuary where beings found quietude and understanding.
+            We treat every artefact with that same solemn reverence.”
+          </p>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <span className="h-[1px] w-8 bg-[#c5a880]" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a880]">
+              The 20th Ward Philosophy
+            </span>
+            <span className="h-[1px] w-8 bg-[#c5a880]" />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* =========================================================================
+   2. SHOP PAGE (Comprehensive Filters, Search, Series, Price Range, Sorting)
+   ========================================================================= */
+export function ShopPage() {
+  const { products, categories, brands, series, loading, error } = useCatalogue();
+  const { addToCart } = useContext(StoreContext);
+  const [params, setParams] = useSearchParams();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const q = params.get("q") || "";
+  const category = params.get("category") || "";
+  const brand = params.get("brand") || "";
+  const seriesParam = params.get("series") || "";
+  const minPrice = params.get("minPrice") || "";
+  const maxPrice = params.get("maxPrice") || "";
+  const inStock = params.get("inStock") === "true";
+  const sort = params.get("sort") || "featured";
+
+  const update = (key, value) => {
+    const next = new URLSearchParams(params);
+    if (value !== "" && value !== null && value !== undefined && value !== false) {
+      next.set(key, String(value));
+    } else {
+      next.delete(key);
+    }
+    setParams(next);
+  };
+
+  const removeFilter = (...keys) => {
+    const next = new URLSearchParams(params);
+    keys.forEach((k) => next.delete(k));
+    setParams(next);
+  };
+
+  const clearAllFilters = () => {
+    setParams({});
+  };
+
+  const activeFiltersCount = [
+    Boolean(q),
+    Boolean(category),
+    Boolean(brand),
+    Boolean(seriesParam),
+    Boolean(minPrice || maxPrice),
+    Boolean(inStock),
+  ].filter(Boolean).length;
+
+  const shown = useMemo(
+    () =>
+      visibleShopProducts(products, {
+        query: q,
+        category,
+        brand,
+        series: seriesParam,
+        minPrice,
+        maxPrice,
+        inStockOnly: inStock,
+        sort,
+      }),
+    [products, q, category, brand, seriesParam, minPrice, maxPrice, inStock, sort]
+  );
+
+  const categoryName = categories.find((c) => String(c.id) === category)?.name;
+  const brandName = brands.find((b) => String(b.id) === brand)?.name;
+  const seriesName = series.find((s) => String(s.id) === seriesParam)?.name;
+
+  const filterSidebar = (
+    <aside className="space-y-8 text-xs font-sans">
+      {/* Search Filter */}
+      <div className="space-y-2">
+        <label htmlFor="shop-search-input" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+          Search Artefacts
+        </label>
+        <div className="relative">
+          <input
+            id="shop-search-input"
+            type="text"
+            value={q}
+            onChange={(e) => update("q", e.target.value)}
+            placeholder="Search characters, series, titles..."
+            className="field pr-8 text-xs"
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => update("q", "")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Category Filter */}
+      <div className="space-y-2 border-t border-zinc-800/80 pt-6">
+        <label htmlFor="shop-category-select" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+          Category
+        </label>
+        <select
+          id="shop-category-select"
+          value={category}
+          onChange={(e) => update("category", e.target.value)}
+          className="field text-xs bg-zinc-950"
+        >
+          <option value="">All Categories ({categories.length})</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Brand / Studio Filter */}
+      <div className="space-y-2 border-t border-zinc-800/80 pt-6">
+        <label htmlFor="shop-brand-select" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+          Studio / Brand
+        </label>
+        <select
+          id="shop-brand-select"
+          value={brand}
+          onChange={(e) => update("brand", e.target.value)}
+          className="field text-xs bg-zinc-950"
+        >
+          <option value="">All Brands ({brands.length})</option>
+          {brands.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Series Filter */}
+      {series.length > 0 && (
+        <div className="space-y-2 border-t border-zinc-800/80 pt-6">
+          <label htmlFor="shop-series-select" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+            Anime Series
+          </label>
+          <select
+            id="shop-series-select"
+            value={seriesParam}
+            onChange={(e) => update("series", e.target.value)}
+            className="field text-xs bg-zinc-950"
+          >
+            <option value="">All Anime Series ({series.length})</option>
+            {series.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} ({s.count})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Price Range Filter */}
+      <div className="space-y-3 border-t border-zinc-800/80 pt-6">
+        <span className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+          Price Range (USD)
+        </span>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="sr-only">Minimum price</span>
+            <input
+              type="number"
+              min="0"
+              placeholder="Min ($)"
+              value={minPrice}
+              onChange={(e) => update("minPrice", e.target.value)}
+              className="field text-xs"
+            />
+          </label>
+          <label className="block">
+            <span className="sr-only">Maximum price</span>
+            <input
+              type="number"
+              min="0"
+              placeholder="Max ($)"
+              value={maxPrice}
+              onChange={(e) => update("maxPrice", e.target.value)}
+              className="field text-xs"
+            />
+          </label>
+        </div>
+
+        {/* Quick price presets */}
+        <div className="flex flex-wrap gap-1.5 pt-1">
+          {[
+            { label: "Under $50", max: "50", min: "" },
+            { label: "$50 – $150", min: "50", max: "150" },
+            { label: "$150 – $300", min: "150", max: "300" },
+            { label: "$300+", min: "300", max: "" },
+          ].map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => {
+                const next = new URLSearchParams(params);
+                if (preset.min) next.set("minPrice", preset.min);
+                else next.delete("minPrice");
+                if (preset.max) next.set("maxPrice", preset.max);
+                else next.delete("maxPrice");
+                setParams(next);
+              }}
+              className="border border-zinc-800 bg-zinc-900/60 px-2.5 py-1 text-[10px] text-zinc-400 hover:border-[#c5a880] hover:text-[#dfc79b] transition-colors"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* In-Stock Only Toggle */}
+      <div className="border-t border-zinc-800/80 pt-6">
+        <label className="flex items-center gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={inStock}
+            onChange={(e) => update("inStock", e.target.checked)}
+            className="accent-[#c5a880] h-4 w-4"
+          />
+          <span className="text-xs text-zinc-300 font-medium">In-Stock Only</span>
+        </label>
+      </div>
+
+      {/* Clear Filters Button */}
+      {activeFiltersCount > 0 && (
+        <button
+          type="button"
+          onClick={clearAllFilters}
+          className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline underline-offset-4 pt-2"
+        >
+          <RotateCcw size={13} />
+          <span>Reset All Filters</span>
+        </button>
+      )}
+    </aside>
+  );
+
+  return (
+    <Page
+      eyebrow="The Archive"
+      title="Complete Collection"
+      subtitle="Curated Japanese anime artefacts, figures, and apparel from the 20th Ward and Tokyo studios."
+    >
+      {/* Top Filter and Sort Controls Bar */}
+      <div className="flex flex-col gap-4 border-b border-zinc-800 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="font-mono text-xs tracking-wider text-zinc-400">
+            {loading ? "Counting pieces..." : `Showing ${shown.length} pieces`}
+          </span>
+
+          {activeFiltersCount > 0 && (
+            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest bg-[#c5a880]/15 text-[#dfc79b] border border-[#c5a880]/40">
+              {activeFiltersCount} Active {activeFiltersCount === 1 ? "Filter" : "Filters"}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Mobile Filter Toggle */}
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen(true)}
+            className="flex items-center gap-2 border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-200 lg:hidden hover:border-[#c5a880]"
+          >
+            <SlidersHorizontal size={14} className="text-[#c5a880]" />
+            <span>Filter</span>
+            {activeFiltersCount > 0 && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#c5a880] text-[10px] font-bold text-black">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+
+          {/* Sort Selector */}
+          <div className="flex items-center gap-2">
+            <label htmlFor="shop-sort-select" className="text-xs text-zinc-400 hidden sm:inline">
+              Sort by:
+            </label>
+            <select
+              id="shop-sort-select"
+              value={sort}
+              onChange={(e) => update("sort", e.target.value)}
+              className="border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 outline-none focus:border-[#c5a880]"
+            >
+              <option value="featured">Featured Archive</option>
+              <option value="newest">Newest Acquisitions</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="name">Title: A – Z</option>
+              <option value="name-desc">Title: Z – A</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Filter Chips */}
+      {activeFiltersCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2 py-4 border-b border-zinc-800/60">
+          <span className="text-[10px] uppercase tracking-widest text-zinc-500 mr-1">
+            Active:
+          </span>
+
+          {q && (
+            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+              <span>Query: “{q}”</span>
+              <button
+                type="button"
+                onClick={() => removeFilter("q")}
+                className="text-zinc-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+
+          {category && (
+            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+              <span>Category: {categoryName || category}</span>
+              <button
+                type="button"
+                onClick={() => removeFilter("category")}
+                className="text-zinc-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+
+          {brand && (
+            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+              <span>Brand: {brandName || brand}</span>
+              <button
+                type="button"
+                onClick={() => removeFilter("brand")}
+                className="text-zinc-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+
+          {seriesParam && (
+            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+              <span>Series: {seriesName || seriesParam}</span>
+              <button
+                type="button"
+                onClick={() => removeFilter("series")}
+                className="text-zinc-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+
+          {(minPrice || maxPrice) && (
+            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+              <span>
+                Price: {minPrice ? `$${minPrice}` : "$0"} – {maxPrice ? `$${maxPrice}` : "∞"}
+              </span>
+              <button
+                type="button"
+                onClick={() => removeFilter("minPrice", "maxPrice")}
+                className="text-zinc-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+
+          {inStock && (
+            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+              <span>In-Stock Only</span>
+              <button
+                type="button"
+                onClick={() => removeFilter("inStock")}
+                className="text-zinc-500 hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </span>
+          )}
+
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-[11px] text-[#dfc79b] hover:underline underline-offset-4 ml-2"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {error && <Notice>{error}</Notice>}
+
+      {/* Mobile Filters Slide-over / Modal */}
+      {mobileFiltersOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            onClick={() => setMobileFiltersOpen(false)}
+          />
+          <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
+            <div className="w-screen max-w-xs border-l border-zinc-800 bg-zinc-950 p-6 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
+                  <h3 className="font-serif text-lg font-medium text-zinc-100">
+                    Filter Archive
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setMobileFiltersOpen(false)}
+                    className="text-zinc-400 hover:text-white p-1"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                {filterSidebar}
+              </div>
+
+              <div className="pt-6 border-t border-zinc-800 mt-6 space-y-2">
+                <Button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="w-full"
+                >
+                  Apply Filters ({shown.length})
+                </Button>
+                {activeFiltersCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="w-full text-center text-xs text-zinc-400 hover:text-white py-2"
+                  >
+                    Reset All Filters
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Grid Section */}
+      <div className="mt-8 grid gap-10 lg:grid-cols-[240px_1fr]">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block border-r border-zinc-800/80 pr-8">
+          {filterSidebar}
+        </div>
+
+        {/* Product Grid */}
+        <div>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : shown.length ? (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">
+              {shown.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  onAdd={(prod, variant) => addToCart(toCartItem(prod, variant))}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center border border-zinc-800 bg-zinc-950/60 p-12 text-center my-8">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/40 text-[#c5a880]">
+                <Search size={24} />
+              </div>
+              <h3 className="mt-4 font-serif text-lg font-medium text-zinc-200">
+                No Archive Pieces Found
+              </h3>
+              <p className="mt-2 max-w-sm text-xs leading-relaxed text-zinc-400 font-sans">
+                No items match your active filters or search terms. Try broadening your criteria or resetting filters.
+              </p>
+              <button
+                type="button"
+                onClick={clearAllFilters}
+                className="mt-6 inline-flex items-center gap-2 border border-[#c5a880]/60 bg-[#c5a880]/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-[#dfc79b] hover:bg-[#c5a880] hover:text-black transition-colors"
+              >
+                Reset All Filters
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </Page>
+  );
+}
+
+/* =========================================================================
+   3. PRODUCT DETAIL PAGE (Gallery, Accordions, Reviews)
+   ========================================================================= */
+export function ProductPage() {
+  const { id } = useParams();
+  const { addToCart, user, wishlists, isWishlisted, addWishlistProduct, removeWishlistProduct, showToast } =
+    useContext(StoreContext);
+  const navigate = useNavigate();
+
+  const [product, setProduct] = useState(null);
+  const [error, setError] = useState("");
+  const [wishMessage, setWishMessage] = useState("");
+  const [wishBusy, setWishBusy] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [index, setIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    let active = true;
-    catalogueApi.productsForSeries(id).then(async (products) => {
-      let name = products.find((product) => product.seriesName)?.seriesName || location.state?.seriesName || "";
-      if (!name) {
-        const catalogue = await catalogueApi.allProducts();
-        name = catalogue.find((product) => String(product.seriesId) === String(id))?.seriesName || "";
-      }
-      if (active) setState({ loading: false, products, name, error: "" });
-    }).catch((err) => {
-      if (active) setState({ loading: false, products: [], name: location.state?.seriesName || "", error: messageFrom(err) });
-    });
-    return () => { active = false; };
-  }, [id, location.state?.seriesName]);
+    catalogueApi
+      .product(id)
+      .then((result) => {
+        setProduct(result);
+        setSelected(result.productVariants?.[0] || null);
+        setIndex(0);
+      })
+      .catch((loadError) => setError(messageFrom(loadError)));
+  }, [id]);
 
-  if (state.loading) return <Loading/>;
-  if (state.error) return <Page eyebrow="Series" title={state.name || "Series details"}><Notice>{state.error}</Notice><Link to="/series" className="mt-5 inline-block text-sm underline underline-offset-4">Back to series</Link></Page>;
-  return <Page eyebrow="Series" title={state.name || "Series details"}>
-    <Link to="/series" className="mt-4 inline-block text-sm text-zinc-500 underline underline-offset-4">← All series</Link>
-    {state.products.length ? <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">{state.products.map((product) => <ProductCard key={product.id} product={product} onAdd={(item, variant) => addToCart(toCartItem(item, variant))}/>)}</div> : <p className="mt-8 border-y border-zinc-200 py-10 text-sm text-zinc-500 dark:border-zinc-800">No products are currently listed for this series.</p>}
-  </Page>;
+  if (error) {
+    return (
+      <Page eyebrow="Archive" title="Acquisition Error">
+        <Notice>{error}</Notice>
+        <Link to="/shop" className="mt-4 inline-block text-xs uppercase tracking-wider text-[#dfc79b] underline underline-offset-4">
+          ← Return to Archive
+        </Link>
+      </Page>
+    );
+  }
+
+  if (!product) return <Loading />;
+
+  const wished = isWishlisted(product.id);
+
+  const save = async () => {
+    if (!user) {
+      navigate(`/login?returnTo=${encodeURIComponent(`/product/${id}`)}`, {
+        state: { notice: "Sign in to save products to your wishlist." },
+      });
+      return;
+    }
+    if (wishBusy) return;
+    setWishBusy(true);
+    setWishMessage("");
+    try {
+      if (wished) {
+        const list = wishlists?.find((entry) =>
+          (entry.productIds || []).some((productId) => String(productId) === String(product.id))
+        );
+        if (!list) throw new Error("Your wishlist is still loading. Please try again shortly.");
+        await removeWishlistProduct(list.id, product.id);
+        const msg = "Removed from your wishlist.";
+        setWishMessage(msg);
+        showToast(product.name, "info", "Removed from Wishlist");
+      } else {
+        const result = await addWishlistProduct(product.id);
+        const msg = result.alreadySaved ? "Already in your wishlist." : "Saved to your wishlist.";
+        setWishMessage(msg);
+        showToast(product.name, "success", result.alreadySaved ? "Already in Wishlist" : "Saved to Wishlist");
+      }
+    } catch (saveError) {
+      setWishMessage(messageFrom(saveError));
+    } finally {
+      setWishBusy(false);
+    }
+  };
+
+  const images = product.productImages?.length
+    ? product.productImages
+    : [{ imageUrl: imageOf(product), altText: product.name }];
+
+  const unavailable = product.status !== "ACTIVE" || (product.productVariants || []).length === 0;
+
+  const handleAdd = () => {
+    if (!selected || unavailable) return;
+    addToCart({
+      productId: product.id,
+      variantId: selected.id,
+      name: product.name,
+      variantName: selected.name,
+      price: Number(selected.price ?? product.price),
+      image: imageOf(product),
+      quantity,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-14 lg:px-8">
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-[11px] text-zinc-500 font-mono tracking-wider">
+        <Link to="/" className="hover:text-zinc-300 transition-colors">
+          HOME
+        </Link>
+        <span>/</span>
+        <Link to="/shop" className="hover:text-zinc-300 transition-colors">
+          ARCHIVE
+        </Link>
+        {product.categoryName && (
+          <>
+            <span>/</span>
+            <Link
+              to={`/shop?category=${product.categoryId}`}
+              className="hover:text-zinc-300 transition-colors uppercase"
+            >
+              {product.categoryName}
+            </Link>
+          </>
+        )}
+        <span>/</span>
+        <span className="truncate max-w-[200px] text-[#c5a880]">{product.name}</span>
+      </nav>
+
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-start">
+        {/* Gallery Column */}
+        <div className="space-y-4">
+          <div className="relative aspect-[4/5] w-full overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl">
+            <img
+              className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+              src={images[index]?.imageUrl || ANTEIKU_FALLBACK_IMAGE}
+              alt={images[index]?.altText || product.name}
+              onError={(event) => {
+                event.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
+              }}
+            />
+          </div>
+
+          {images.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {images.map((img, i) => (
+                <button
+                  key={img.id || i}
+                  type="button"
+                  onClick={() => setIndex(i)}
+                  className={`h-20 w-16 shrink-0 overflow-hidden border transition-all duration-200 ${
+                    i === index
+                      ? "border-[#c5a880] ring-1 ring-[#c5a880]"
+                      : "border-zinc-800 opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img
+                    className="h-full w-full object-cover"
+                    src={img.imageUrl}
+                    alt=""
+                    onError={(event) => {
+                      event.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
+                    }}
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product Information Column */}
+        <div className="space-y-6">
+          <div className="space-y-2 border-b border-zinc-800 pb-6">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a880]">
+                {product.brandName || "ANTEIKU ARCHIVE"}
+              </span>
+              {product.seriesName && (
+                <span className="text-[10px] uppercase tracking-widest text-zinc-400">
+                  {product.seriesName}
+                </span>
+              )}
+            </div>
+
+            <h1 className="font-serif text-3xl font-medium tracking-tight text-zinc-100 sm:text-4xl lg:text-5xl">
+              {product.name}
+            </h1>
+
+            <div className="flex items-baseline gap-4 pt-2">
+              <span className="font-sans text-2xl font-semibold tracking-tight text-zinc-100">
+                {money(selected?.price ?? product.price)}
+              </span>
+              <span className="text-[10px] font-medium uppercase tracking-widest text-emerald-400 border border-emerald-900/60 bg-emerald-950/40 px-2 py-0.5">
+                In Stock · Direct Tokyo Dispatch
+              </span>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="text-xs leading-relaxed text-zinc-300 font-sans space-y-3">
+            <p className="whitespace-pre-line">
+              {product.description ||
+                "Acquired directly from verified Tokyo creators and licensed Japanese workshops. Hand-inspected prior to archival dispatch."}
+            </p>
+          </div>
+
+          {/* Variant Selection */}
+          {product.productVariants?.length > 0 && (
+            <div className="space-y-3 pt-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+                Select Option / Edition
+              </span>
+              <div className="flex flex-wrap gap-2.5">
+                {product.productVariants.map((variant) => (
+                  <button
+                    key={variant.id}
+                    type="button"
+                    onClick={() => setSelected(variant)}
+                    className={`border px-4 py-2.5 text-xs font-medium transition-all ${
+                      selected?.id === variant.id
+                        ? "border-[#c5a880] bg-[#c5a880]/15 text-[#dfc79b]"
+                        : "border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white"
+                    }`}
+                  >
+                    {variant.name || [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Stepper + Action Buttons */}
+          <div className="space-y-3 pt-4">
+            <div className="flex items-center gap-3">
+              {/* Stepper */}
+              <div className="flex h-12 items-center border border-zinc-800 bg-zinc-900/60">
+                <button
+                  type="button"
+                  aria-label="Decrease quantity"
+                  disabled={quantity === 1}
+                  onClick={() => setQuantity((v) => Math.max(1, v - 1))}
+                  className="px-3.5 h-full flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-30"
+                >
+                  <Minus size={14} />
+                </button>
+                <span className="w-8 text-center text-xs font-mono tabular-nums text-zinc-200">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Increase quantity"
+                  onClick={() => setQuantity((v) => v + 1)}
+                  className="px-3.5 h-full flex items-center justify-center text-zinc-400 hover:text-white"
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+
+              {/* Add to Bag Button */}
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={unavailable || !selected}
+                className={`flex-1 h-12 flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-widest transition-all ${
+                  added
+                    ? "border-[#c5a880] bg-[#c5a880]/20 text-[#dfc79b]"
+                    : "border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] text-black hover:opacity-95 shadow-[0_0_15px_rgba(197,168,128,0.2)]"
+                }`}
+              >
+                {added ? (
+                  <>
+                    <Check size={16} className="text-[#dfc79b]" />
+                    <span>Added to Bag</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag size={15} />
+                    <span>Add to Bag</span>
+                  </>
+                )}
+              </button>
+
+              {/* Wishlist Heart Button */}
+              <button
+                type="button"
+                disabled={wishBusy}
+                aria-pressed={wished}
+                onClick={save}
+                aria-label={wished ? "Remove from wishlist" : "Save to wishlist"}
+                className={`h-12 w-12 flex items-center justify-center border transition-all ${
+                  wished
+                    ? "border-[#c5a880] bg-[#c5a880]/15 text-[#dfc79b]"
+                    : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-[#c5a880] hover:text-white"
+                }`}
+              >
+                <Heart size={18} fill={wished ? "currentColor" : "none"} />
+              </button>
+            </div>
+
+            {wishMessage && (
+              <p role="status" className="text-xs text-[#dfc79b] pt-1">
+                {wishMessage}
+              </p>
+            )}
+          </div>
+
+          {/* Archival Specifications DL */}
+          <dl className="mt-8 grid grid-cols-2 gap-y-3 border-t border-zinc-800 pt-6 text-xs font-mono">
+            <dt className="text-zinc-500 uppercase tracking-widest">Category</dt>
+            <dd className="text-zinc-200">{product.categoryName || "—"}</dd>
+
+            <dt className="text-zinc-500 uppercase tracking-widest">Series</dt>
+            <dd className="text-zinc-200">{product.seriesName || "—"}</dd>
+
+            <dt className="text-zinc-500 uppercase tracking-widest">Studio / Brand</dt>
+            <dd className="text-zinc-200">{product.brandName || "ANTEIKU"}</dd>
+
+            <dt className="text-zinc-500 uppercase tracking-widest">Archive SKU</dt>
+            <dd className="text-zinc-200">{selected?.sku || product.sku || "—"}</dd>
+          </dl>
+
+          {/* Guarantee Badges */}
+          <div className="border-t border-zinc-800/80 pt-6 grid grid-cols-2 gap-4 text-[11px] text-zinc-400">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={16} className="text-[#c5a880]" />
+              <span>Official License Certificate</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Truck size={16} className="text-[#c5a880]" />
+              <span>Double-Boxed Archival Shipping</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
+/* =========================================================================
+   4. PRODUCT REVIEWS PAGE
+   ========================================================================= */
 export function ProductReviewsPage() {
   const { id } = useParams();
   const { user } = useContext(StoreContext);
@@ -95,18 +1230,21 @@ export function ProductReviewsPage() {
     let active = true;
     if (!user) return () => { active = false; };
     const requestKey = `${id}:${user.id}`;
-    accountApi.productReviews(id).then((items) => {
-      if (active) {
-        setReviews(Array.isArray(items) ? items : []);
-        setError("");
+    accountApi
+      .productReviews(id)
+      .then((items) => {
+        if (active) {
+          setReviews(Array.isArray(items) ? items : []);
+          setError("");
+          setLoadedFor(requestKey);
+        }
+      })
+      .catch((err) => {
+        if (!active) return;
+        if (err.response?.status === 404) setReviews([]);
+        else setError(messageFrom(err));
         setLoadedFor(requestKey);
-      }
-    }).catch((err) => {
-      if (!active) return;
-      if (err.response?.status === 404) setReviews([]);
-      else setError(messageFrom(err));
-      setLoadedFor(requestKey);
-    });
+      });
     return () => { active = false; };
   }, [id, user]);
 
@@ -119,11 +1257,18 @@ export function ProductReviewsPage() {
     setFeedback("");
     setError("");
     try {
-      const created = await accountApi.createReview({ rating: Number(rating), comment: comment.trim(), userId: user.id, productId: Number(id) });
-      if (!created || created.id == null) throw new Error("The review endpoint did not confirm a saved review. Please try again.");
+      const created = await accountApi.createReview({
+        rating: Number(rating),
+        comment: comment.trim(),
+        userId: user.id,
+        productId: Number(id),
+      });
+      if (!created || created.id == null) {
+        throw new Error("The review endpoint did not confirm a saved review. Please try again.");
+      }
       setReviews((current) => [created, ...current]);
       setComment("");
-      setFeedback("Your review was submitted.");
+      setFeedback("Your verified collector review has been submitted.");
     } catch (err) {
       setError(messageFrom(err));
     } finally {
@@ -131,87 +1276,479 @@ export function ProductReviewsPage() {
     }
   };
 
-  return <section className="mx-auto w-full min-w-0 max-w-7xl px-4 pb-10 sm:px-6">
-    <div className="max-w-3xl border-t border-zinc-200 pt-8 dark:border-zinc-800">
-      <h2 className="text-xl font-bold">Customer reviews</h2>
-      {!user ? <div className="mt-4 border-y border-zinc-200 py-5 text-sm text-zinc-500 dark:border-zinc-800"><p>Sign in to view or write reviews for this product.</p><Link to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`} state={{ notice: "Sign in to view and write product reviews." }} className="mt-3 inline-block font-semibold text-zinc-950 underline underline-offset-4 dark:text-white">Sign in</Link></div> : loading ? <p className="mt-4 text-sm text-zinc-500">Loading reviews…</p> : <>
-        {error && <Notice>{error}</Notice>}
-        {feedback && <Notice type="info">{feedback}</Notice>}
-        {!error && reviews.length === 0 && <p className="mt-4 border-y border-zinc-200 py-5 text-sm text-zinc-500 dark:border-zinc-800">No reviews yet.</p>}
-        {reviews.length > 0 && <div className="mt-4 divide-y divide-zinc-200 border-y border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">{reviews.map((review) => <article key={review.id} className="py-4"><div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{review.userName || "Customer"}</p><p className="text-xs text-zinc-500">{review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Date unavailable"}</p></div><p className="mt-1 text-sm" aria-label={`${review.rating} out of 5 stars`}>{review.rating} / 5</p><p className="mt-2 whitespace-pre-line text-sm leading-6 text-zinc-600 dark:text-zinc-400">{review.comment}</p></article>)}</div>}
-        <form onSubmit={submit} className="mt-7 space-y-4">
-          <h3 className="font-semibold">Write a review</h3>
-          <label className="block text-sm font-medium">Rating<select value={rating} onChange={(event) => setRating(event.target.value)} className="field mt-2"><option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Average</option><option value="2">2 — Below average</option><option value="1">1 — Poor</option></select></label>
-          <label className="block text-sm font-medium">Review<textarea required maxLength={1000} rows="4" value={comment} onChange={(event) => setComment(event.target.value)} className="field mt-2 resize-y" placeholder="Share your experience with this product."/><span className="mt-1 block text-xs font-normal text-zinc-500">Up to 1,000 characters.</span></label>
-          <Button disabled={submitting || !comment.trim()}>{submitting ? "Submitting…" : "Submit review"}</Button>
-        </form>
-      </>}
-    </div>
-  </section>;
+  return (
+    <section className="mx-auto w-full min-w-0 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
+      <div className="border-t border-zinc-800 pt-12">
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c5a880]">
+              Collector Feedback
+            </p>
+            <h2 className="mt-1 font-serif text-2xl font-medium text-zinc-100">
+              Verified Acquisitions & Reviews
+            </h2>
+          </div>
+          <span className="text-xs font-mono text-zinc-500">
+            {reviews.length} {reviews.length === 1 ? "Review" : "Reviews"}
+          </span>
+        </div>
+
+        {!user ? (
+          <div className="mt-6 border border-zinc-800 bg-zinc-950 p-6 text-center text-xs text-zinc-400">
+            <p>Sign in to read client reviews and share your impressions of this piece.</p>
+            <Link
+              to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+              state={{ notice: "Sign in to view and write product reviews." }}
+              className="mt-3 inline-block font-semibold uppercase tracking-wider text-[#dfc79b] underline underline-offset-4"
+            >
+              Sign In to Your Account
+            </Link>
+          </div>
+        ) : loading ? (
+          <p className="mt-6 text-xs text-zinc-500">Consulting collector archives…</p>
+        ) : (
+          <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
+            {/* Reviews List */}
+            <div className="space-y-4">
+              {error && <Notice>{error}</Notice>}
+              {feedback && <Notice type="info">{feedback}</Notice>}
+
+              {reviews.length === 0 ? (
+                <div className="border border-zinc-800/80 bg-zinc-950/60 p-8 text-center text-xs text-zinc-500">
+                  No collector reviews have been registered for this piece yet.
+                </div>
+              ) : (
+                <div className="divide-y divide-zinc-800/80 border border-zinc-800 bg-zinc-950">
+                  {reviews.map((review) => (
+                    <article key={review.id} className="p-5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-serif text-sm font-medium text-zinc-200">
+                            {review.userName || "Verified Collector"}
+                          </span>
+                          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 border border-emerald-900/60">
+                            Verified
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-zinc-500">
+                          {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Date unavailable"}
+                        </span>
+                      </div>
+
+                      {/* Stars */}
+                      <div className="flex items-center gap-1 text-[#dfc79b]">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            size={12}
+                            fill={i < (review.rating || 5) ? "currentColor" : "none"}
+                            className={i < (review.rating || 5) ? "text-[#dfc79b]" : "text-zinc-700"}
+                          />
+                        ))}
+                      </div>
+
+                      <p className="text-xs leading-relaxed text-zinc-300 font-sans whitespace-pre-line pt-1">
+                        {review.comment}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Submit Review Form */}
+            <div className="border border-zinc-800 bg-zinc-950 p-6 h-fit space-y-4">
+              <h3 className="font-serif text-base font-medium text-zinc-100">
+                Write a Review
+              </h3>
+
+              <form onSubmit={submit} className="space-y-4 text-xs font-sans">
+                <label className="block space-y-1.5">
+                  <span className="font-semibold uppercase tracking-wider text-zinc-300">
+                    Rating
+                  </span>
+                  <select
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
+                    className="field text-xs bg-zinc-900"
+                  >
+                    <option value="5">★★★★★ — 5 (Museum Quality)</option>
+                    <option value="4">★★★★☆ — 4 (Excellent)</option>
+                    <option value="3">★★★☆☆ — 3 (Satisfactory)</option>
+                    <option value="2">★★☆☆☆ — 2 (Below Standard)</option>
+                    <option value="1">★☆☆☆☆ — 1 (Poor)</option>
+                  </select>
+                </label>
+
+                <label className="block space-y-1.5">
+                  <span className="font-semibold uppercase tracking-wider text-zinc-300">
+                    Review Impression
+                  </span>
+                  <textarea
+                    required
+                    maxLength={1000}
+                    rows="4"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="field text-xs resize-y"
+                    placeholder="Describe craftsmanship, detail, packaging, and display quality..."
+                  />
+                  <span className="block text-[10px] text-zinc-500">
+                    Maximum 1,000 characters.
+                  </span>
+                </label>
+
+                <Button disabled={submitting || !comment.trim()} className="w-full">
+                  {submitting ? "Submitting…" : "Publish Review"}
+                </Button>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
-export function ShopPage() { const { products, categories, brands, loading, error } = useCatalogue(); const { addToCart } = useContext(StoreContext); const [params, setParams] = useSearchParams(); const [showFilters, setShowFilters] = useState(false); const q = params.get("q") || ""; const category = params.get("category") || ""; const brand = params.get("brand") || ""; const sort = params.get("sort") || "featured"; const update = (key, value) => { const next = new URLSearchParams(params); value ? next.set(key, value) : next.delete(key); setParams(next); }; const shown = useMemo(() => visibleShopProducts(products, { query: q, category, brand, sort }), [products, q, category, brand, sort]); if (loading) return <Loading/>; const filter = <aside className="space-y-7 text-sm"><label className="block font-semibold">Search<input value={q} onChange={(e) => update("q", e.target.value)} className="field mt-2" placeholder="Search products"/></label><label className="block font-semibold">Category<select value={category} onChange={(e) => update("category", e.target.value)} className="field mt-2"><option value="">All categories</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><label className="block font-semibold">Brand<select value={brand} onChange={(e) => update("brand", e.target.value)} className="field mt-2"><option value="">All brands</option>{brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label><button onClick={() => setParams({})} className="text-zinc-500 underline underline-offset-4">Clear filters</button></aside>; return <Page eyebrow="The collection" title="Shop all"><div className="mt-10 flex flex-col gap-5 border-y border-zinc-200 py-4 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between"><span className="text-sm text-zinc-500">{shown.length} pieces</span><div className="flex gap-3"><button onClick={() => setShowFilters(!showFilters)} className="inline-flex items-center gap-2 border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 lg:hidden"><SlidersHorizontal size={16}/> Filter</button><select value={sort} onChange={(e) => update("sort", e.target.value)} className="border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A–Z</option></select></div></div>{showFilters && <div className="border-b border-zinc-200 py-5 dark:border-zinc-800 lg:hidden">{filter}</div>}{error && <Notice>{error}</Notice>}<div className="mt-8 grid gap-8 lg:grid-cols-[210px_1fr]"><div className="hidden lg:block">{filter}</div><div>{shown.length ? <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">{shown.map((p) => <ProductCard key={p.id} product={p} onAdd={(product, variant) => addToCart(toCartItem(product, variant))}/>)}</div> : <div className="py-20 text-center text-zinc-500">No products match these filters.</div>}</div></div></Page>; }
-
-export function ProductPage() {
-  const { id } = useParams();
-  const { addToCart, user, wishlists, isWishlisted, addWishlistProduct, removeWishlistProduct } = useContext(StoreContext);
+/* =========================================================================
+   5. CART PAGE
+   ========================================================================= */
+export function CartPage() {
+  const { cart, updateQuantity, removeFromCart, user } = useContext(StoreContext);
   const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <Page
+      eyebrow="Sanctuary Bag"
+      title="Shopping Bag"
+      subtitle="Review selected anime merchandise and fine statues before proceeding to dispatch."
+    >
+      {cart.length === 0 ? (
+        <div className="flex flex-col items-center justify-center border border-zinc-800 bg-zinc-950 p-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/60 text-[#c5a880]">
+            <ShoppingBag size={26} strokeWidth={1.5} />
+          </div>
+          <h2 className="mt-4 font-serif text-xl font-medium text-zinc-200">
+            Your shopping bag is empty
+          </h2>
+          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-400">
+            Discover curated Tokyo Ghoul figurines, collector apparel, and art pieces.
+          </p>
+          <Link
+            to="/shop"
+            className="mt-6 inline-flex items-center gap-2 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black hover:opacity-95 transition-opacity"
+          >
+            <span>Explore The Collection</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      ) : (
+        <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
+          {/* Items List */}
+          <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-800">
+            {cart.map((item) => (
+              <div key={item.variantId} className="flex gap-5 p-5 sm:p-6">
+                <img
+                  src={item.image || ANTEIKU_FALLBACK_IMAGE}
+                  alt=""
+                  className="h-28 w-24 shrink-0 border border-zinc-800 bg-zinc-900 object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
+                  }}
+                />
+
+                <div className="flex flex-1 flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        to={`/product/${item.productId}`}
+                        className="font-serif text-base font-medium text-zinc-100 hover:text-[#dfc79b] transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${item.name}`}
+                        onClick={() => removeFromCart(item.variantId)}
+                        className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+
+                    {item.variantName && (
+                      <p className="text-xs text-zinc-400 mt-1">
+                        {item.variantName}
+                      </p>
+                    )}
+                    <p className="text-xs font-semibold text-[#dfc79b] mt-1 font-sans">
+                      {money(item.price)} each
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-3">
+                    {/* Stepper */}
+                    <div className="flex items-center border border-zinc-800 bg-zinc-900/60">
+                      <button
+                        type="button"
+                        aria-label="Decrease quantity"
+                        onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                        className="px-2.5 py-1 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <span className="w-8 text-center text-xs font-mono tabular-nums text-zinc-200">
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Increase quantity"
+                        onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                        className="px-2.5 py-1 text-zinc-400 hover:text-white transition-colors"
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+
+                    <span className="text-sm font-semibold text-zinc-100 font-sans">
+                      {money(item.price * item.quantity)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Summary Sidebar */}
+          <aside className="border border-zinc-800 bg-zinc-950 p-6 h-fit space-y-5">
+            <h2 className="font-serif text-lg font-medium text-zinc-100 border-b border-zinc-800 pb-3">
+              Order Summary
+            </h2>
+
+            <div className="space-y-3 text-xs font-sans">
+              <div className="flex justify-between text-zinc-400">
+                <span>Items Subtotal</span>
+                <span className="font-semibold text-zinc-200">{money(total)}</span>
+              </div>
+              <div className="flex justify-between text-zinc-400">
+                <span>Shipping & Insurance</span>
+                <span>Calculated at checkout</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold text-zinc-100 border-t border-zinc-800 pt-3">
+                <span className="font-serif">Subtotal</span>
+                <span className="text-[#dfc79b]">{money(total)}</span>
+              </div>
+            </div>
+
+            <Button
+              onClick={() =>
+                navigate(user ? "/checkout" : "/login?returnTo=/checkout", {
+                  state: { notice: "Sign in or create an account to continue to checkout." },
+                })
+              }
+              className="w-full"
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight size={14} />
+            </Button>
+
+            {!user && (
+              <p className="text-[11px] leading-relaxed text-zinc-500 text-center font-sans">
+                You can browse as a guest. An account is required to complete dispatch and track your order.
+              </p>
+            )}
+          </aside>
+        </div>
+      )}
+    </Page>
+  );
+}
+
+/* =========================================================================
+   6. AUTHENTICATION PAGES (Login & Register)
+   ========================================================================= */
+function AuthPage({ register = false }) {
+  const { user, signIn, syncCart } = useContext(StoreContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const returnTo = params.get("returnTo") || "/account";
+
+  const [form, setForm] = useState(
+    register
+      ? {
+          username: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          firstName: "",
+          lastName: "",
+          phoneNumber: "",
+          status: "ACTIVE",
+        }
+      : { email: "", password: "" }
+  );
+
   const [error, setError] = useState("");
-  const [wishMessage, setWishMessage] = useState("");
-  const [wishBusy, setWishBusy] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [index, setIndex] = useState(0);
-  useEffect(() => {
-    catalogueApi.product(id).then((result) => { setProduct(result); setSelected(result.productVariants?.[0] || null); }).catch((loadError) => setError(messageFrom(loadError)));
-  }, [id]);
-  if (error) return <Page eyebrow="Product" title="Could not load product"><Notice>{error}</Notice></Page>;
-  if (!product) return <Loading/>;
-  const wished = isWishlisted(product.id);
-  const save = async () => {
-    if (!user) {
-      navigate(`/login?returnTo=${encodeURIComponent(`/product/${id}`)}`, { state: { notice: "Sign in to save products to your wishlist." } });
-      return;
-    }
-    if (wishBusy) return;
-    setWishBusy(true);
-    setWishMessage("");
+  const [busy, setBusy] = useState(false);
+
+  if (user) return <Navigate to={returnTo} replace />;
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
     try {
-      if (wished) {
-        const list = wishlists?.find((entry) => (entry.productIds || []).some((productId) => String(productId) === String(product.id)));
-        if (!list) throw new Error("Your wishlist is still loading. Please try again shortly.");
-        await removeWishlistProduct(list.id, product.id);
-        setWishMessage("Removed from your wishlist.");
-      } else {
-        const result = await addWishlistProduct(product.id);
-        setWishMessage(result.alreadySaved ? "Already in your wishlist." : "Saved to your wishlist.");
-      }
-    } catch (saveError) {
-      setWishMessage(messageFrom(saveError));
+      if (register) await authApi.register(form);
+      await signIn({ email: form.email, password: form.password });
+      await syncCart().catch(() => {});
+      navigate(returnTo, { replace: true });
+    } catch (e) {
+      setError(messageFrom(e));
     } finally {
-      setWishBusy(false);
+      setBusy(false);
     }
   };
-  const images = product.productImages?.length ? product.productImages : [{ imageUrl: imageOf(product), altText: product.name }];
-  return <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12"><Link to="/shop" className="text-sm text-zinc-500 underline underline-offset-4">← Back to shop</Link><div className="mt-7 grid gap-10 lg:grid-cols-2 lg:gap-16"><div><div className="overflow-hidden bg-zinc-100 dark:bg-zinc-900"><img className="aspect-[4/5] w-full object-cover" src={images[index]?.imageUrl} alt={images[index]?.altText || product.name} onError={(event) => { event.currentTarget.src = imageOf({}); }}/></div>{images.length > 1 && <div className="mt-3 flex gap-2">{images.map((img, i) => <button key={img.id || i} onClick={() => setIndex(i)} className={`h-16 w-14 overflow-hidden border ${i === index ? "border-black dark:border-white" : "border-transparent"}`}><img className="h-full w-full object-cover" src={img.imageUrl} alt="" onError={(event) => { event.currentTarget.src = imageOf({}); }}/></button>)}</div>}</div><div className="lg:pt-7"><p className="text-xs font-bold uppercase tracking-[.2em] text-zinc-500">{product.brandName || "ANTEIKU"}</p><h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">{product.name}</h1><p className="mt-5 text-2xl">{money(selected?.price ?? product.price)}</p><p className="mt-7 max-w-xl whitespace-pre-line leading-7 text-zinc-600 dark:text-zinc-400">{product.description || "Details for this item will be available soon."}</p>{product.productVariants?.length > 0 && <div className="mt-8"><p className="text-sm font-semibold">Choose an option</p><div className="mt-3 flex flex-wrap gap-2">{product.productVariants.map((variant) => <button key={variant.id} onClick={() => setSelected(variant)} className={`border px-4 py-2 text-sm ${selected?.id === variant.id ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black" : "border-zinc-300 dark:border-zinc-700"}`}>{variant.name || [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}</button>)}</div></div>}<div className="mt-8 flex flex-wrap gap-3"><Button disabled={!selected} onClick={() => addToCart(toCartItem(product, selected))}>Add to cart</Button><button type="button" disabled={wishBusy} aria-pressed={wished} onClick={save} className="border border-zinc-300 px-5 py-3 text-sm font-semibold disabled:opacity-50 dark:border-zinc-700">{wishBusy ? "Updating…" : wished ? "Remove from wishlist" : "Save to wishlist"}</button></div>{wishMessage && <p role="status" className="mt-3 text-sm text-zinc-500">{wishMessage}</p>}<dl className="mt-10 grid grid-cols-2 gap-y-3 border-t border-zinc-200 pt-5 text-sm dark:border-zinc-800"><dt className="text-zinc-500">Category</dt><dd>{product.categoryName || "—"}</dd><dt className="text-zinc-500">Series</dt><dd>{product.seriesName || "—"}</dd><dt className="text-zinc-500">SKU</dt><dd>{selected?.sku || product.sku || "—"}</dd></dl></div></div></section>;
+
+  return (
+    <section className="mx-auto max-w-md px-4 py-16 sm:py-24">
+      <div className="border border-zinc-800 bg-zinc-950 p-8 sm:p-10 shadow-2xl">
+        <div className="text-center space-y-1">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a880]">
+            Anteiku Client Access
+          </p>
+          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-zinc-100">
+            {register ? "Create Account" : "Sign In"}
+          </h1>
+        </div>
+
+        {location.state?.notice && <Notice type="info">{location.state.notice}</Notice>}
+
+        <form onSubmit={submit} className="mt-8 space-y-4 text-xs font-sans">
+          {register && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="First name"
+                value={form.firstName}
+                onChange={(v) => setForm({ ...form, firstName: v })}
+              />
+              <Input
+                label="Last name"
+                value={form.lastName}
+                onChange={(v) => setForm({ ...form, lastName: v })}
+              />
+              <Input
+                label="Username"
+                value={form.username}
+                onChange={(v) => setForm({ ...form, username: v })}
+              />
+              <Input
+                label="Phone number"
+                value={form.phoneNumber}
+                onChange={(v) => setForm({ ...form, phoneNumber: v })}
+              />
+            </div>
+          )}
+
+          <Input
+            label="Email Address"
+            type="email"
+            value={form.email}
+            onChange={(v) => setForm({ ...form, email: v })}
+          />
+          <Input
+            label="Password"
+            type="password"
+            value={form.password}
+            onChange={(v) => setForm({ ...form, password: v })}
+          />
+
+          {register && (
+            <Input
+              label="Confirm Password"
+              type="password"
+              value={form.confirmPassword}
+              onChange={(v) => setForm({ ...form, confirmPassword: v })}
+            />
+          )}
+
+          {error && <Notice>{error}</Notice>}
+
+          <Button disabled={busy} className="mt-4 w-full">
+            {busy ? "Authenticating…" : register ? "Create Collector Account" : "Sign In"}
+          </Button>
+        </form>
+
+        <p className="mt-6 text-center text-xs text-zinc-400">
+          {register ? "Already registered with Anteiku?" : "New to the Archive?"}{" "}
+          <Link
+            to={`${register ? "/login" : "/register"}?returnTo=${encodeURIComponent(returnTo)}`}
+            className="text-[#dfc79b] underline underline-offset-4 font-semibold"
+          >
+            {register ? "Sign In" : "Create Account"}
+          </Link>
+        </p>
+      </div>
+    </section>
+  );
 }
 
-export function CartPage() { const { cart, updateQuantity, removeFromCart, user } = useContext(StoreContext); const navigate = useNavigate(); const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0); return <Page eyebrow="Your bag" title="Shopping cart">{cart.length === 0 ? <div className="mt-10 border-y border-zinc-200 py-16 text-center dark:border-zinc-800"><p className="text-zinc-500">Your cart is waiting for something special.</p><Link to="/shop" className="mt-5 inline-block underline underline-offset-4">Browse the collection</Link></div> : <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_340px]"><div className="divide-y divide-zinc-200 border-y border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">{cart.map((item) => <div className="flex gap-4 py-5" key={item.variantId}><img src={item.image} alt="" className="h-28 w-20 bg-zinc-100 object-cover dark:bg-zinc-900"/><div className="min-w-0 flex-1"><p className="font-semibold">{item.name}</p><p className="mt-1 text-sm text-zinc-500">{item.variantName}</p><p className="mt-2 text-sm">{money(item.price)}</p><div className="mt-4 flex items-center justify-between"><div className="flex items-center border border-zinc-300 dark:border-zinc-700"><button aria-label="Decrease quantity" onClick={() => updateQuantity(item.variantId, item.quantity - 1)} className="p-2"><Minus size={14}/></button><span className="w-8 text-center text-sm">{item.quantity}</span><button aria-label="Increase quantity" onClick={() => updateQuantity(item.variantId, item.quantity + 1)} className="p-2"><Plus size={14}/></button></div><button aria-label={`Remove ${item.name}`} onClick={() => removeFromCart(item.variantId)} className="p-2 text-zinc-500 hover:text-black dark:hover:text-white"><Trash2 size={17}/></button></div></div></div>)}</div><aside className="h-fit bg-zinc-100 p-6 dark:bg-zinc-900"><h2 className="font-bold">Order summary</h2><div className="mt-5 flex justify-between text-sm"><span className="text-zinc-500">Subtotal</span><span>{money(total)}</span></div><div className="mt-3 flex justify-between border-b border-zinc-300 pb-5 text-sm dark:border-zinc-700"><span className="text-zinc-500">Shipping</span><span>At checkout</span></div><div className="mt-5 flex justify-between font-bold"><span>Total</span><span>{money(total)}</span></div><Button onClick={() => navigate(user ? "/checkout" : "/login?returnTo=/checkout", { state: { notice: "Sign in or create an account to continue to checkout." } })} className="mt-6 w-full">Proceed to checkout <ArrowRight size={16}/></Button>{!user && <p className="mt-3 text-xs leading-5 text-zinc-500">You can keep shopping as a guest. Sign in is only required to place an order.</p>}</aside></div>}</Page>; }
+const Input = ({ label, type = "text", value, onChange }) => (
+  <label className="block space-y-1.5">
+    <span className="font-semibold uppercase tracking-wider text-zinc-300">
+      {label}
+    </span>
+    <input
+      type={type}
+      required
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="field text-xs"
+    />
+  </label>
+);
 
-function AuthPage({ register = false }) { const { user, signIn, syncCart } = useContext(StoreContext); const navigate = useNavigate(); const location = useLocation(); const [params] = useSearchParams(); const returnTo = params.get("returnTo") || "/account"; const [form, setForm] = useState(register ? { username: "", email: "", password: "", confirmPassword: "", firstName: "", lastName: "", phoneNumber: "", status: "ACTIVE" } : { email: "", password: "" }); const [error, setError] = useState(""); const [busy, setBusy] = useState(false); if (user) return <Navigate to={returnTo} replace/>; const submit = async (event) => { event.preventDefault(); setBusy(true); setError(""); try { if (register) await authApi.register(form); await signIn({ email: form.email, password: form.password }); await syncCart().catch(() => {}); navigate(returnTo, { replace: true }); } catch (e) { setError(messageFrom(e)); } finally { setBusy(false); } }; return <section className="mx-auto max-w-md px-4 py-14 sm:py-20"><p className="text-xs font-bold uppercase tracking-[.2em] text-zinc-500">Account</p><h1 className="mt-3 text-3xl font-bold">{register ? "Create your account" : "Welcome back"}</h1>{location.state?.notice && <Notice type="info">{location.state.notice}</Notice>}<form onSubmit={submit} className="mt-8 space-y-4">{register && <div className="grid gap-4 sm:grid-cols-2"><Input label="First name" value={form.firstName} onChange={(v) => setForm({ ...form, firstName: v })}/><Input label="Last name" value={form.lastName} onChange={(v) => setForm({ ...form, lastName: v })}/><Input label="Username" value={form.username} onChange={(v) => setForm({ ...form, username: v })}/><Input label="Phone number" value={form.phoneNumber} onChange={(v) => setForm({ ...form, phoneNumber: v })}/></div>}<Input label="Email" type="email" value={form.email} onChange={(v) => setForm({ ...form, email: v })}/><Input label="Password" type="password" value={form.password} onChange={(v) => setForm({ ...form, password: v })}/>{register && <Input label="Confirm password" type="password" value={form.confirmPassword} onChange={(v) => setForm({ ...form, confirmPassword: v })}/>} {error && <Notice>{error}</Notice>}<Button disabled={busy} className="mt-2 w-full">{busy ? "Please wait…" : register ? "Create account" : "Sign in"}</Button></form><p className="mt-6 text-center text-sm text-zinc-500">{register ? "Already have an account?" : "New to ANTEIKU?"} <Link to={`${register ? "/login" : "/register"}?returnTo=${encodeURIComponent(returnTo)}`} className="text-zinc-950 underline underline-offset-4 dark:text-white">{register ? "Sign in" : "Create one"}</Link></p></section>; }
-const Input = ({ label, type = "text", value, onChange }) => <label className="block text-sm font-medium">{label}<input type={type} required value={value || ""} onChange={(e) => onChange(e.target.value)} className="field mt-2"/></label>;
-export const LoginPage = () => <AuthPage/>; export const RegisterPage = () => <AuthPage register/>;
+export const LoginPage = () => <AuthPage />;
+export const RegisterPage = () => <AuthPage register />;
 
-const countries = ["Cambodia", "Australia", "Canada", "China", "France", "Germany", "Japan", "Singapore", "South Korea", "Thailand", "United Kingdom", "United States", "Vietnam"];
+/* =========================================================================
+   7. CHECKOUT PAGE
+   ========================================================================= */
+const countries = [
+  "Cambodia",
+  "Australia",
+  "Canada",
+  "China",
+  "France",
+  "Germany",
+  "Japan",
+  "Singapore",
+  "South Korea",
+  "Thailand",
+  "United Kingdom",
+  "United States",
+  "Vietnam",
+];
+
 const checkoutPaymentOptions = [
   { value: "CASH_ON_DELIVERY", label: "Cash on Delivery", available: true },
   { value: "CREDIT_CARD", label: "Credit / Debit Card", available: false },
   { value: "PAYPAL", label: "PayPal", available: false },
   { value: "ABA", label: "ABA PayWay", available: false },
   { value: "ACLEDA", label: "ACLEDA", available: false },
-  { value: "KHQR", label: "KHQR / Bakong", available: false },
+  { value: "KHQR", label: "KHQR / Bakong", available: true },
 ];
-const emptyShippingAddress = () => ({ street: "", city: "", state: "", postalCode: "", country: "" });
+
+const emptyShippingAddress = () => ({
+  street: "",
+  city: "",
+  state: "",
+  postalCode: "",
+  country: "",
+});
+
 const shippingFromAddress = (address) => ({
   street: address.street || "",
   city: address.city || "",
@@ -219,11 +1756,13 @@ const shippingFromAddress = (address) => ({
   postalCode: address.postalCode || "",
   country: address.country || "",
 });
-const formatShippingAddress = (shipping) => [
-  shipping.street.trim(),
-  `${shipping.city.trim()}, ${shipping.state.trim()} ${shipping.postalCode.trim()}`,
-  shipping.country.trim(),
-].join("\n");
+
+const formatShippingAddress = (shipping) =>
+  [
+    shipping.street.trim(),
+    `${shipping.city.trim()}, ${shipping.state.trim()} ${shipping.postalCode.trim()}`,
+    shipping.country.trim(),
+  ].join("\n");
 
 export function CheckoutPage() {
   const { user, cart, syncCart, syncing, removeFromCart } = useContext(StoreContext);
@@ -245,27 +1784,53 @@ export function CheckoutPage() {
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
-    accountApi.addresses().then((result) => {
-      if (!active) return;
-      const savedAddresses = Array.isArray(result) ? result : [];
-      setAddresses(savedAddresses);
-      setAddressError("");
-      const preferred = savedAddresses.find((address) => address.isDefault) || savedAddresses[0];
-      if (preferred) {
-        setSelectedAddressId(String(preferred.id));
-        setShipping((current) => Object.values(current).some(Boolean) ? current : shippingFromAddress(preferred));
-      }
-    }).catch((loadError) => {
-      if (active) setAddressError(messageFrom(loadError));
-    }).finally(() => {
-      if (active) setAddressesLoading(false);
-    });
+    accountApi
+      .addresses()
+      .then((result) => {
+        if (!active) return;
+        const savedAddresses = Array.isArray(result) ? result : [];
+        setAddresses(savedAddresses);
+        const defaultAddress =
+          savedAddresses.find((item) => item.isDefault) || savedAddresses[0];
+        if (defaultAddress) {
+          setSelectedAddressId(String(defaultAddress.id));
+          setShipping(shippingFromAddress(defaultAddress));
+        }
+      })
+      .catch((err) => {
+        if (active) setAddressError(messageFrom(err));
+      })
+      .finally(() => {
+        if (active) setAddressesLoading(false);
+      });
     return () => { active = false; };
   }, [user]);
 
-  if (!user) return <Navigate to="/login?returnTo=/checkout" replace/>;
+  const selectAddress = (address) => {
+    setSelectedAddressId(String(address.id));
+    setShipping(shippingFromAddress(address));
+    setFieldErrors({});
+  };
+
+  const updateShipping = (key, value) => {
+    setShipping((current) => ({ ...current, [key]: value }));
+    setSelectedAddressId("");
+    if (fieldErrors[key]) setFieldErrors((current) => ({ ...current, [key]: "" }));
+  };
+
+  const validate = () => {
+    const nextErrors = {};
+    if (!shipping.street.trim()) nextErrors.street = "Street address is required.";
+    if (!shipping.city.trim()) nextErrors.city = "City is required.";
+    if (!shipping.state.trim()) nextErrors.state = "State / Province is required.";
+    if (!shipping.postalCode.trim()) nextErrors.postalCode = "Postal code is required.";
+    if (!shipping.country.trim()) nextErrors.country = "Country selection is required.";
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   const applyCoupon = async () => {
     const code = couponCode.trim();
     if (!code || couponBusy || busy) return;
@@ -273,211 +1838,794 @@ export function CheckoutPage() {
     setCouponFeedback(null);
     try {
       const coupon = await accountApi.couponByCode(code);
-      if (coupon.active === false) {
-        setAppliedCoupon(null);
-        setCouponFeedback({ type: "error", message: "This coupon is inactive." });
-      } else {
-        const now = Date.now();
-        const startsAt = coupon.startDate ? new Date(coupon.startDate).getTime() : NaN;
-        const endsAt = coupon.endDate ? new Date(coupon.endDate).getTime() : NaN;
-        if (Number.isFinite(startsAt) && now < startsAt) {
-          setAppliedCoupon(null);
-          setCouponFeedback({ type: "error", message: "This coupon is not active yet." });
-        } else if (Number.isFinite(endsAt) && now > endsAt) {
-          setAppliedCoupon(null);
-          setCouponFeedback({ type: "error", message: "This coupon has expired." });
-        } else {
-          setAppliedCoupon(coupon);
-          setCouponFeedback({ type: "error", message: `Coupon ${coupon.code} is eligible, but coupon use cannot be recorded by the current order API. Remove it to place an order without a coupon.` });
-        }
+      if (!coupon || !coupon.id) throw new Error("Coupon response did not confirm a valid coupon.");
+      if (coupon.active === false) throw new Error(`Coupon ${coupon.code || code} is inactive.`);
+      if (coupon.expirationDate && new Date(coupon.expirationDate).getTime() < Date.now()) {
+        throw new Error(`Coupon ${coupon.code || code} expired.`);
       }
+      if (coupon.minimumOrderAmount != null && total < Number(coupon.minimumOrderAmount)) {
+        throw new Error(
+          `Coupon requires a minimum order of ${money(coupon.minimumOrderAmount)}. Current total is ${money(total)}.`
+        );
+      }
+      setAppliedCoupon(coupon);
+      setCouponFeedback({ type: "info", message: `Coupon applied: ${coupon.code || code}.` });
     } catch (err) {
-      setAppliedCoupon(null);
-      setCouponFeedback({ type: "error", message: err.response?.status === 404 ? "Coupon code not found." : messageFrom(err) });
+      setCouponFeedback({ type: "error", message: messageFrom(err) });
     } finally {
       setCouponBusy(false);
     }
   };
+
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponCode("");
-    setCouponFeedback({ type: "info", message: "Coupon removed. You can enter another code." });
+    setCouponFeedback(null);
   };
-  const updateShipping = (field, value) => {
-    setShipping((current) => ({ ...current, [field]: value }));
-    setSelectedAddressId("");
-    setFieldErrors((current) => ({ ...current, [field]: "" }));
-  };
-  const selectAddress = (address) => {
-    setSelectedAddressId(String(address.id));
-    setShipping(shippingFromAddress(address));
-    setFieldErrors({});
-  };
-  const validateShipping = () => {
-    const errors = Object.fromEntries(
-      Object.entries(shipping)
-        .filter(([, value]) => !value.trim())
-        .map(([field]) => [field, "This field is required."])
-    );
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+
   const submit = async (event) => {
-    event.preventDefault();
-    setError("");
-    if (couponBusy || busy || !validateShipping()) return;
-    if (appliedCoupon) {
-      setError("Remove the coupon before placing this order. The current order API cannot record coupon usage after a successful order.");
-      return;
-    }
-    if (!checkoutPaymentOptions.some((option) => option.available && option.value === paymentMethod)) {
-      setError("That payment method is not currently available.");
-      return;
+  event.preventDefault();
+
+  if (!validate() || busy || syncing || couponBusy) return;
+
+  setBusy(true);
+  setError("");
+
+  try {
+    const orderItems = cart.map((item) => ({
+      productVariantId: item.variantId,
+      quantity: item.quantity,
+    }));
+
+    const payload = {
+  shippingAddress: formatShippingAddress(shipping),
+  orderItems: cart.map((item) => ({
+    productVariantId: Number(item.variantId),
+    quantity: Number(item.quantity),
+  })),
+};
+
+const created = await accountApi.createOrder(payload);
+
+    if (paymentMethod === "KHQR") {
+      const payment = await accountApi.createPayment({
+        paymentMethod: "KHQR",
+        amount: created.totalAmount,
+        orderId: created.id,
+      });
+
+      setDone({
+        ...created,
+        payment,
+      });
+    } else {
+      setDone(created);
     }
 
-    setBusy(true);
-    try {
-      await syncCart();
-      const shippingAddress = formatShippingAddress(shipping);
-      const order = await accountApi.createOrder({ couponId: appliedCoupon?.id ?? null, shippingAddress, paymentMethod });
-      setDone(order);
-      cart.forEach((item) => removeFromCart(item.variantId));
-    } catch (err) {
-      setError(messageFrom(err));
-    } finally {
-      setBusy(false);
-    }
-  };
-  const field = (name, label, props = {}) => <label className="block text-sm font-semibold" htmlFor={`shipping-${name}`}>
-    {label}
-    <input
-      id={`shipping-${name}`}
-      name={name}
-      value={shipping[name]}
-      onChange={(event) => updateShipping(name, event.target.value)}
-      aria-invalid={Boolean(fieldErrors[name])}
-      aria-describedby={fieldErrors[name] ? `shipping-${name}-error` : undefined}
-      className={`field mt-2 ${fieldErrors[name] ? "field-error" : ""}`}
-      {...props}
-    />
-    {fieldErrors[name] && <span id={`shipping-${name}-error`} className="mt-1 block text-xs text-red-700 dark:text-red-300">{fieldErrors[name]}</span>}
-  </label>;
+    cart.forEach((item) => removeFromCart(item.variantId));
+  } catch (err) {
+    setError(messageFrom(err));
+  } finally {
+    setBusy(false);
+  }
+};
 
-  if (done) return <Page eyebrow="Order confirmation" title="Thank you for your order">
-    <div className="mt-8 max-w-3xl border border-zinc-200 p-5 dark:border-zinc-800 sm:p-8">
-      <div className="flex items-start gap-4 border-b border-zinc-200 pb-6 dark:border-zinc-800">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-zinc-100 dark:bg-zinc-800"><Check size={22}/></span>
-        <div className="min-w-0"><p className="text-lg font-bold">Order placed</p><p className="mt-1 text-sm text-zinc-500">{done.orderNumber != null ? `Order #${done.orderNumber}` : "Order number unavailable"}</p></div>
-        <OrderStatus status={done.status}/>
-      </div>
-      <div className="py-6">
-        <h2 className="text-sm font-bold uppercase tracking-wider">Purchased items</h2>
-        <OrderItems items={done.orderItems}/>
-      </div>
-      <dl className="space-y-2 border-t border-zinc-200 py-5 text-sm dark:border-zinc-800">
-        {[["Subtotal", done.subTotal], ["Shipping", done.shippingFee], ["Discount", done.discountAmount]].map(([label, amount]) => amount != null && <div key={label} className="flex justify-between gap-4"><dt className="text-zinc-500">{label}</dt><dd>{money(amount)}</dd></div>)}
-      </dl>
-      <div className="flex items-center justify-between border-t border-zinc-200 pt-5 text-lg font-bold dark:border-zinc-800"><span>Order total</span><span>{done.totalAmount != null ? money(done.totalAmount) : "Not provided"}</span></div>
-      <div className="mt-7 flex flex-wrap gap-3">
-        {done.id && <Link to={`/orders/${done.id}`} className="inline-flex min-h-11 items-center justify-center bg-black px-5 text-sm font-semibold text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-200">View order details</Link>}
-        <Link to="/orders" className="inline-flex min-h-11 items-center justify-center border border-zinc-300 px-5 text-sm font-semibold hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900">Order history</Link>
-        <Link to="/shop" className="inline-flex min-h-11 items-center justify-center px-4 text-sm font-semibold underline underline-offset-4">Continue shopping</Link>
-      </div>
+  const field = (name, label, props = {}) => (
+    <label className="block space-y-1.5 text-xs font-semibold" htmlFor={`shipping-${name}`}>
+      <span className="uppercase tracking-wider text-zinc-300">{label}</span>
+      <input
+        id={`shipping-${name}`}
+        name={name}
+        value={shipping[name]}
+        onChange={(event) => updateShipping(name, event.target.value)}
+        aria-invalid={Boolean(fieldErrors[name])}
+        className={`field text-xs ${fieldErrors[name] ? "field-error" : ""}`}
+        {...props}
+      />
+      {fieldErrors[name] && (
+        <span className="block text-[11px] text-red-400 font-normal">
+          {fieldErrors[name]}
+        </span>
+      )}
+    </label>
+  );
+
+  if (done) {
+    return (
+      <Page eyebrow="Confirmation" title="Dispatch Confirmed">
+        <div className="border border-zinc-800 bg-zinc-950 p-6 sm:p-10 max-w-3xl space-y-6">
+          <div className="flex items-start gap-4 border-b border-zinc-800 pb-6">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#c5a880]/40 bg-[#c5a880]/15 text-[#dfc79b]">
+              <Check size={24} />
+            </span>
+            <div className="min-w-0">
+              <h2 className="font-serif text-xl font-medium text-zinc-100">
+                Order Placed Successfully
+              </h2>
+              <p className="mt-1 text-xs text-zinc-400 font-mono">
+                {done.orderNumber != null ? `Order Reference: #${done.orderNumber}` : `Record ID: ${done.id}`}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+              Purchased Artefacts
+            </h3>
+            <OrderItems items={done.orderItems} />
+          </div>
+
+          <dl className="space-y-2 border-t border-zinc-800 py-4 text-xs">
+            {[
+              ["Subtotal", done.subTotal],
+              ["Shipping Fee", done.shippingFee],
+              ["Discount Applied", done.discountAmount],
+            ].map(
+              ([lbl, amt]) =>
+                amt != null && (
+                  <div key={lbl} className="flex justify-between text-zinc-400">
+                    <span>{lbl}</span>
+                    <span className="text-zinc-200">{money(amt)}</span>
+                  </div>
+                )
+            )}
+          </dl>
+
+          <div className="flex items-center justify-between border-t border-zinc-800 pt-4 text-sm font-semibold">
+            <span>Order Total</span>
+            <span className="text-[#dfc79b]">{money(done.totalAmount)}</span>
+          </div>
+
+          {done.payment?.qrCode && (
+  <div className="border border-[#c5a880]/30 bg-zinc-900 p-6 space-y-4">
+    <div className="text-center">
+      <h3 className="text-sm font-semibold uppercase tracking-widest text-[#dfc79b]">
+        Complete Your Payment
+      </h3>
+      <p className="mt-2 text-xs text-zinc-400">
+        Scan this KHQR code using Bakong or a supported banking app.
+      </p>
     </div>
-  </Page>;
-  if (!cart.length) return <Navigate to="/cart" replace/>;
 
-  return <Page eyebrow="Checkout" title="Complete your order">
-    {error && <Notice>{error}</Notice>}
-    <form onSubmit={submit} noValidate className="mt-10 grid gap-10 lg:grid-cols-[1fr_340px]">
-      <div className="space-y-6">
-        <fieldset className="space-y-4">
-          <legend className="text-base font-bold">Shipping address</legend>
-          {addressesLoading ? <p className="text-sm text-zinc-500">Loading saved addresses…</p> : addresses.length ? <div className="space-y-2 border-y border-zinc-200 py-4 dark:border-zinc-800">
-            <p className="text-sm font-semibold">Saved addresses</p>
-            {addresses.map((address) => <label key={address.id} className={`block cursor-pointer border p-3 text-sm ${String(address.id) === selectedAddressId ? "border-black dark:border-white" : "border-zinc-200 dark:border-zinc-800"}`}>
-              <span className="flex items-start gap-3"><input type="radio" name="saved-address" checked={String(address.id) === selectedAddressId} onChange={() => selectAddress(address)} className="mt-1 accent-black dark:accent-white"/><span>{address.street}<br/>{address.city}, {address.state} {address.postalCode}<br/>{address.country}{address.isDefault && <span className="mt-1 block text-xs text-zinc-500">Default address</span>}</span></span>
-            </label>)}
-          </div> : null}
-          {addressError && <p role="alert" className="text-sm text-red-700 dark:text-red-300">Saved addresses could not be loaded. You can still enter a shipping address below.</p>}
-          {field("street", "Street address", { autoComplete: "street-address", placeholder: "House number, street name, apartment or unit" })}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {field("city", "City", { autoComplete: "address-level2" })}
-            {field("state", "State / Province", { autoComplete: "address-level1" })}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {field("postalCode", "Postal code", { autoComplete: "postal-code" })}
-            <label className="block text-sm font-semibold" htmlFor="shipping-country">Country
-              <select id="shipping-country" name="country" value={shipping.country} onChange={(event) => updateShipping("country", event.target.value)} autoComplete="country-name" aria-invalid={Boolean(fieldErrors.country)} aria-describedby={fieldErrors.country ? "shipping-country-error" : undefined} className={`field mt-2 ${fieldErrors.country ? "field-error" : ""}`}>
-                <option value="">Select a country</option>
-                {countries.map((country) => <option key={country} value={country}>{country}</option>)}
-              </select>
-              {fieldErrors.country && <span id="shipping-country-error" className="mt-1 block text-xs text-red-700 dark:text-red-300">{fieldErrors.country}</span>}
-            </label>
-          </div>
-        </fieldset>
-        <fieldset className="space-y-3">
-          <legend className="text-base font-bold">Payment method</legend>
-          {checkoutPaymentOptions.map((option) => <label key={option.value} className={`flex items-start gap-3 border p-4 ${option.available ? "cursor-pointer border-zinc-400 dark:border-zinc-600" : "cursor-not-allowed border-zinc-200 opacity-60 dark:border-zinc-800"}`}>
-            <input type="radio" name="payment-method" value={option.value} checked={paymentMethod === option.value} disabled={!option.available || busy || syncing} onChange={() => option.available && setPaymentMethod(option.value)} className="mt-1 accent-black dark:accent-white"/>
-            <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold"><span>{option.label}</span><span className="text-xs font-medium text-zinc-500">{option.available ? "Available" : "Coming soon"}</span></span>{!option.available && <span className="mt-1 block text-xs leading-5 text-zinc-500">Not connected yet. This option cannot be selected or submitted.</span>}</span>
-          </label>)}
-          <p className="text-xs leading-5 text-zinc-500">No card or banking credentials are collected here. Cash on Delivery is the only selectable payment method. The current order API does not persist that selection or initiate payment processing.</p>
-        </fieldset>
-      </div>
-      <aside className="h-fit bg-zinc-100 p-6 dark:bg-zinc-900">
-        <h2 className="font-bold">Order summary</h2>
-        {cart.map((item) => <div key={item.variantId} className="mt-4 flex justify-between gap-4 text-sm"><span>{item.name} × {item.quantity}</span><span>{money(item.price * item.quantity)}</span></div>)}
-        <div className="mt-5 border-y border-zinc-300 py-5 dark:border-zinc-700">
-          <label htmlFor="coupon-code" className="block text-sm font-semibold">Coupon code</label>
-          <div className="mt-2 flex gap-2">
-            <input id="coupon-code" value={couponCode} disabled={Boolean(appliedCoupon) || couponBusy || busy} onChange={(event) => { setCouponCode(event.target.value); setCouponFeedback(null); }} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); applyCoupon(); } }} placeholder="Enter code" autoComplete="off" className="field min-w-0 flex-1"/>
-            {appliedCoupon ? <button type="button" disabled={couponBusy || busy} onClick={removeCoupon} className="min-h-11 border border-zinc-400 px-3 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-50 dark:border-zinc-600 dark:hover:bg-zinc-800">Remove</button> : <button type="button" disabled={!couponCode.trim() || couponBusy || busy} onClick={applyCoupon} className="min-h-11 bg-black px-4 text-sm font-semibold text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-zinc-200">{couponBusy ? "Checking…" : "Apply"}</button>}
-          </div>
-          {couponFeedback && <p role="status" className={`mt-2 text-xs leading-5 ${couponFeedback.type === "error" ? "text-red-700 dark:text-red-300" : "text-zinc-600 dark:text-zinc-400"}`}>{couponFeedback.message}</p>}
-          {appliedCoupon && <p className="mt-2 text-xs text-zinc-500">{appliedCoupon.minimumOrderAmount != null ? `Minimum order: ${money(appliedCoupon.minimumOrderAmount)}. ` : ""}Remove this coupon to place an order until coupon usage can be persisted with the order.</p>}
+    <div className="flex justify-center rounded-lg bg-white p-5">
+      <QRCodeSVG
+        value={done.payment.qrCode}
+        size={240}
+        level="M"
+        includeMargin
+      />
+    </div>
+
+    <div className="text-center space-y-2">
+      <p className="text-xs text-zinc-400">Amount to Pay</p>
+      <p className="text-2xl font-bold text-[#dfc79b]">
+       {new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+}).format(Number(done.payment.amount ?? 0))} ៛
+      </p>
+
+      <p className="text-xs text-amber-400">
+        Payment Status: {done.payment.status ?? "PENDING"}
+      </p>
+
+      {done.payment.expiresAt && (
+        <p className="text-xs text-zinc-500">
+          QR expires: {new Date(done.payment.expiresAt).toLocaleString()}
+        </p>
+      )}
+    </div>
+  </div>
+)}
         </div>
-        <div className="flex justify-between pt-5 text-sm"><span className="text-zinc-500">Items total</span><span>{money(total)}</span></div>
-        {appliedCoupon && <div className="mt-2 flex justify-between gap-3 text-sm"><span className="text-zinc-500">Coupon</span><span className="font-medium">{appliedCoupon.code}</span></div>}
-        <p className="mt-2 text-xs text-zinc-500">Shipping and final discount are calculated by the server.</p>
-        <Button disabled={busy || syncing || couponBusy} className="mt-6 w-full">{busy || syncing ? "Preparing order…" : couponBusy ? "Checking coupon…" : "Place order"}</Button>
-      </aside>
-    </form>
-  </Page>;
+      </Page>
+    );
+  }
+
+  if (!cart.length) return <Navigate to="/cart" replace />;
+
+  return (
+    <Page
+      eyebrow="Checkout"
+      title="Complete Acquisition"
+      subtitle="Enter your shipping coordinates and complete your Anteiku order."
+    >
+      {error && <Notice>{error}</Notice>}
+
+      <form onSubmit={submit} noValidate className="grid gap-10 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-8">
+          {/* Shipping Address */}
+          <fieldset className="border border-zinc-800 bg-zinc-950 p-6 space-y-5">
+            <legend className="font-serif text-base font-medium text-zinc-100 px-2">
+              Shipping Destination
+            </legend>
+
+            {addressesLoading ? (
+              <p className="text-xs text-zinc-500">Loading saved addresses…</p>
+            ) : addresses.length ? (
+              <div className="space-y-2 border-b border-zinc-800 pb-4">
+                <span className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                  Select Saved Address
+                </span>
+                <div className="grid gap-2">
+                  {addresses.map((address) => (
+                    <label
+                      key={address.id}
+                      className={`block cursor-pointer border p-3 text-xs transition-all ${
+                        String(address.id) === selectedAddressId
+                          ? "border-[#c5a880] bg-[#c5a880]/10 text-white"
+                          : "border-zinc-800 hover:border-zinc-700 text-zinc-300"
+                      }`}
+                    >
+                      <span className="flex items-start gap-3">
+                        <input
+                          type="radio"
+                          name="saved-address"
+                          checked={String(address.id) === selectedAddressId}
+                          onChange={() => selectAddress(address)}
+                          className="mt-0.5 accent-[#c5a880]"
+                        />
+                        <span>
+                          {address.street} · {address.city}, {address.state} {address.postalCode} · {address.country}
+                          {address.isDefault && (
+                            <span className="ml-2 inline-block text-[10px] text-[#dfc79b] font-mono">
+                              [DEFAULT]
+                            </span>
+                          )}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {addressError && (
+              <p className="text-xs text-red-400">
+                Saved addresses could not be loaded. Enter shipping destination below.
+              </p>
+            )}
+
+            {field("street", "Street Address", {
+              autoComplete: "street-address",
+              placeholder: "Street number, avenue, suite, or building name",
+            })}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field("city", "City", { autoComplete: "address-level2" })}
+              {field("state", "State / Province", { autoComplete: "address-level1" })}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field("postalCode", "Postal Code", { autoComplete: "postal-code" })}
+              <label className="block space-y-1.5 text-xs font-semibold">
+                <span className="uppercase tracking-wider text-zinc-300">Country</span>
+                <select
+                  id="shipping-country"
+                  name="country"
+                  value={shipping.country}
+                  onChange={(event) => updateShipping("country", event.target.value)}
+                  className={`field text-xs bg-zinc-950 ${fieldErrors.country ? "field-error" : ""}`}
+                >
+                  <option value="">Select country</option>
+                  {countries.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.country && (
+                  <span className="block text-[11px] text-red-400 font-normal">
+                    {fieldErrors.country}
+                  </span>
+                )}
+              </label>
+            </div>
+          </fieldset>
+
+          {/* Payment Method */}
+          <fieldset className="border border-zinc-800 bg-zinc-950 p-6 space-y-4">
+            <legend className="font-serif text-base font-medium text-zinc-100 px-2">
+              Payment Method
+            </legend>
+
+            <div className="space-y-2">
+              {checkoutPaymentOptions.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex items-start gap-3 border p-4 text-xs transition-all ${
+                    opt.available
+                      ? "cursor-pointer border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:border-[#c5a880]"
+                      : "cursor-not-allowed border-zinc-800/60 opacity-50 text-zinc-500"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value={opt.value}
+                    checked={paymentMethod === opt.value}
+                    disabled={!opt.available || busy || syncing}
+                    onChange={() => opt.available && setPaymentMethod(opt.value)}
+                    className="mt-0.5 accent-[#c5a880]"
+                  />
+                  <div className="flex-1 flex justify-between">
+                    <span className="font-semibold text-zinc-100">{opt.label}</span>
+                    <span className="text-[10px] uppercase font-mono tracking-wider text-[#dfc79b]">
+                      {opt.available ? "Active" : "Coming Soon"}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <p className="text-[11px] text-zinc-500 font-sans leading-relaxed">
+              Anteiku adheres to secure collector order processing. Cash on Delivery is currently selected for your region.
+            </p>
+          </fieldset>
+        </div>
+
+        {/* Order Summary Sidebar */}
+        <aside className="border border-zinc-800 bg-zinc-950 p-6 h-fit space-y-5">
+          <h2 className="font-serif text-base font-medium text-zinc-100 border-b border-zinc-800 pb-3">
+            Acquisition Summary
+          </h2>
+
+          <div className="space-y-3 divide-y divide-zinc-800/80 text-xs">
+            {cart.map((item) => (
+              <div key={item.variantId} className="flex justify-between pt-2">
+                <span className="text-zinc-300">
+                  {item.name} × {item.quantity}
+                </span>
+                <span className="font-mono text-zinc-100">
+                  {money(item.price * item.quantity)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Coupon Code Section */}
+          <div className="border-t border-zinc-800 pt-4 space-y-2">
+            <label htmlFor="coupon-code-checkout" className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              Archival Voucher
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="coupon-code-checkout"
+                value={couponCode}
+                disabled={Boolean(appliedCoupon) || couponBusy || busy}
+                onChange={(e) => {
+                  setCouponCode(e.target.value);
+                  setCouponFeedback(null);
+                }}
+                placeholder="Enter coupon code"
+                className="field text-xs flex-1"
+              />
+              {appliedCoupon ? (
+                <button
+                  type="button"
+                  onClick={removeCoupon}
+                  className="border border-zinc-700 px-3 text-xs font-semibold text-zinc-300 hover:text-white"
+                >
+                  Remove
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={applyCoupon}
+                  disabled={!couponCode.trim() || couponBusy || busy}
+                  className="border border-[#c5a880] bg-[#c5a880]/15 px-3 text-xs font-semibold text-[#dfc79b] hover:bg-[#c5a880] hover:text-black transition-colors"
+                >
+                  {couponBusy ? "Checking…" : "Apply"}
+                </button>
+              )}
+            </div>
+
+            {couponFeedback && (
+              <p
+                className={`text-[11px] ${
+                  couponFeedback.type === "error" ? "text-red-400" : "text-[#dfc79b]"
+                }`}
+              >
+                {couponFeedback.message}
+              </p>
+            )}
+          </div>
+
+          <div className="border-t border-zinc-800 pt-3 space-y-2 text-xs">
+            <div className="flex justify-between text-zinc-400">
+              <span>Items Total</span>
+              <span className="font-mono text-zinc-200">{money(total)}</span>
+            </div>
+            {appliedCoupon && (
+              <div className="flex justify-between text-[#dfc79b]">
+                <span>Coupon ({appliedCoupon.code})</span>
+                <span>Applied</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm font-semibold text-zinc-100 pt-2 border-t border-zinc-800">
+              <span className="font-serif">Total Due</span>
+              <span className="text-[#dfc79b] font-mono">{money(total)}</span>
+            </div>
+          </div>
+
+          <Button disabled={busy || syncing || couponBusy} className="w-full">
+            {busy || syncing ? "Processing Order…" : "Place Order"}
+          </Button>
+        </aside>
+      </form>
+    </Page>
+  );
 }
 
-export function AccountPage() { const { user } = useContext(StoreContext); const [profile, setProfile] = useState(null); const [addresses, setAddresses] = useState([]); const [error, setError] = useState(""); const [saved, setSaved] = useState(""); const [form, setForm] = useState({ street: "", city: "", state: "", postalCode: "", country: "", addressType: "Home", isDefault: false }); const load = () => Promise.all([accountApi.profile(), accountApi.addresses()]).then(([p, a]) => { setProfile(p); setAddresses(a); }).catch((e) => setError(messageFrom(e))); useEffect(() => { load(); }, []); if (!user) return <Navigate to="/login?returnTo=/account" replace/>; if (!profile && !error) return <Loading/>; const saveProfile = async (e) => { e.preventDefault(); setSaved(""); try { const p = await accountApi.updateProfile(profile); setProfile(p); setSaved("Profile saved."); } catch (err) { setError(messageFrom(err)); } }; const addAddress = async (e) => { e.preventDefault(); try { await accountApi.createAddress({ ...form, userId: user.id }); setForm({ street: "", city: "", state: "", postalCode: "", country: "", addressType: "Home", isDefault: false }); load(); } catch (err) { setError(messageFrom(err)); } }; return <Page eyebrow="Account" title="Your details">{error && <Notice>{error}</Notice>}{saved && <Notice type="info">{saved}</Notice>}<div className="mt-10 grid gap-12 lg:grid-cols-2"><form onSubmit={saveProfile} className="space-y-4"><h2 className="text-lg font-bold">Profile</h2>{profile && <><div className="grid gap-4 sm:grid-cols-2"><Input label="First name" value={profile.firstName} onChange={(v) => setProfile({ ...profile, firstName: v })}/><Input label="Last name" value={profile.lastName} onChange={(v) => setProfile({ ...profile, lastName: v })}/></div><Input label="Username" value={profile.username} onChange={(v) => setProfile({ ...profile, username: v })}/><Input label="Email" type="email" value={profile.email} onChange={(v) => setProfile({ ...profile, email: v })}/><Input label="Phone number" value={profile.phoneNumber} onChange={(v) => setProfile({ ...profile, phoneNumber: v })}/><Button>Save profile</Button></>}</form><div><h2 className="text-lg font-bold">Saved addresses</h2><div className="mt-4 space-y-3">{addresses.map((a) => <div key={a.id} className="border border-zinc-200 p-4 text-sm dark:border-zinc-800"><div className="flex justify-between"><p>{a.street}<br/>{a.city}, {a.state} {a.postalCode}<br/>{a.country}</p><button onClick={() => accountApi.deleteAddress(a.id).then(load).catch((e) => setError(messageFrom(e)))} className="text-zinc-500 underline">Remove</button></div>{a.isDefault ? <p className="mt-3 text-xs font-bold uppercase tracking-wider">Default</p> : <button onClick={() => accountApi.setDefaultAddress(a.id, user.id).then(load).catch((e) => setError(messageFrom(e)))} className="mt-3 text-xs underline">Set default</button>}</div>)}</div><form onSubmit={addAddress} className="mt-6 grid gap-3 border-t border-zinc-200 pt-6 dark:border-zinc-800"><Input label="Street" value={form.street} onChange={(v) => setForm({ ...form, street: v })}/><div className="grid gap-3 sm:grid-cols-2"><Input label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })}/><Input label="State" value={form.state} onChange={(v) => setForm({ ...form, state: v })}/><Input label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })}/><Input label="Country" value={form.country} onChange={(v) => setForm({ ...form, country: v })}/></div><label className="flex gap-2 text-sm"><input type="checkbox" checked={form.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked })}/> Set as default</label><Button className="w-fit">Add address</Button></form></div></div></Page>; }
+/* =========================================================================
+   8. SERIES & DISCOVER PAGES
+   ========================================================================= */
+export function SeriesPage() {
+  const [series, setSeries] = useState(null);
+  const [error, setError] = useState("");
 
-const orderDate = (value) => value ? new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "Date unavailable";
-const OrderStatus = ({ status }) => <span className="inline-flex rounded-full border border-zinc-300 px-3 py-1 text-xs font-semibold dark:border-zinc-700">{status ? status.replaceAll("_", " ") : "Status not provided"}</span>;
-const OrderItems = ({ items }) => items?.length ? <div className="mt-3 divide-y divide-zinc-200 dark:divide-zinc-800">{items.map((item, index) => <div key={item.id ?? index} className="flex min-w-0 items-center gap-4 py-4">
-  <img src={item.productImageUrl || imageOf(null)} alt={item.productName || ""} onError={(event) => { event.currentTarget.src = imageOf(null); }} className="h-16 w-14 shrink-0 bg-zinc-100 object-cover dark:bg-zinc-900"/>
-  <div className="min-w-0 flex-1"><p className="break-words font-semibold">{item.productName || "Product information unavailable"}</p>{(item.variantName || item.variantSku) && <p className="mt-1 break-words text-sm text-zinc-500">{item.variantName || item.variantSku}</p>}
-    <p className="mt-1 text-sm text-zinc-500">Quantity: {item.quantity ?? "Not provided"}{item.unitPrice != null && <> · {money(item.unitPrice)} each</>}</p>
-  </div>
-  <div className="shrink-0 text-right"><span className="block text-xs text-zinc-500">Line subtotal</span><span className="text-sm font-semibold">{item.subTotal != null ? money(item.subTotal) : "Not provided"}</span></div>
-</div>)}</div> : <p className="mt-3 text-sm text-zinc-500">No purchased items were included in this order response.</p>;
+  useEffect(() => {
+    let active = true;
+    catalogueApi
+      .allProducts()
+      .then((products) => {
+        const unique = new Map();
+        products.forEach((product) => {
+          if (product.seriesId != null && product.seriesName) {
+            const key = String(product.seriesId);
+            const entry = unique.get(key) || { id: product.seriesId, name: product.seriesName, count: 0 };
+            entry.count += 1;
+            unique.set(key, entry);
+          }
+        });
+        if (active) setSeries([...unique.values()].sort((a, b) => a.name.localeCompare(b.name)));
+      })
+      .catch((err) => {
+        if (active) setError(messageFrom(err));
+      })
+      .finally(() => {
+        if (active) setSeries((current) => current || []);
+      });
+    return () => { active = false; };
+  }, []);
+
+  if (error) {
+    return (
+      <Page eyebrow="Discover" title="Anime Series Archive">
+        <Notice>{error}</Notice>
+      </Page>
+    );
+  }
+  if (!series) return <Loading />;
+
+  return (
+    <Page
+      eyebrow="Chronicle"
+      title="Anime Series"
+      subtitle="Browse official collectables indexed across legendary Japanese animation titles."
+    >
+      {series.length ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {series.map((item) => (
+            <Link
+              key={item.id}
+              to={`/series/${item.id}`}
+              state={{ seriesName: item.name }}
+              className="group border border-zinc-800 bg-zinc-950 p-6 transition-all duration-300 hover:border-[#c5a880]/60 hover:bg-zinc-900/60"
+            >
+              <span className="text-[10px] font-mono tracking-widest text-[#c5a880]">
+                SERIES RECORD #{item.id}
+              </span>
+              <h2 className="mt-2 font-serif text-xl font-medium text-zinc-100 group-hover:text-[#dfc79b] transition-colors">
+                {item.name}
+              </h2>
+              <p className="mt-4 text-xs font-mono text-zinc-400">
+                {item.count} {item.count === 1 ? "artefact piece" : "artefact pieces"}
+              </p>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#dfc79b] group-hover:translate-x-1 transition-transform">
+                <span>Inspect Series</span>
+                <span>→</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="border border-zinc-800 bg-zinc-950 p-12 text-center text-xs text-zinc-500">
+          No series records are currently listed in the archive catalogue.
+        </p>
+      )}
+    </Page>
+  );
+}
+
+export function SeriesDetailPage() {
+  const { id } = useParams();
+  const location = useLocation();
+  const { addToCart } = useContext(StoreContext);
+  const [state, setState] = useState({
+    loading: true,
+    products: [],
+    name: location.state?.seriesName || "",
+    error: "",
+  });
+
+  useEffect(() => {
+    let active = true;
+    catalogueApi
+      .productsForSeries(id)
+      .then(async (products) => {
+        let name =
+          products.find((product) => product.seriesName)?.seriesName ||
+          location.state?.seriesName ||
+          "";
+        if (!name) {
+          const catalogue = await catalogueApi.allProducts();
+          name = catalogue.find((product) => String(product.seriesId) === String(id))?.seriesName || "";
+        }
+        if (active) setState({ loading: false, products, name, error: "" });
+      })
+      .catch((err) => {
+        if (active)
+          setState({
+            loading: false,
+            products: [],
+            name: location.state?.seriesName || "",
+            error: messageFrom(err),
+          });
+      });
+    return () => { active = false; };
+  }, [id, location.state?.seriesName]);
+
+  if (state.loading) return <Loading />;
+  if (state.error) {
+    return (
+      <Page eyebrow="Series" title={state.name || "Series Details"}>
+        <Notice>{state.error}</Notice>
+        <Link to="/series" className="mt-4 inline-block text-xs uppercase tracking-wider text-[#dfc79b]">
+          ← Back to series index
+        </Link>
+      </Page>
+    );
+  }
+
+  return (
+    <Page
+      eyebrow="Series Showcase"
+      title={state.name || "Series Details"}
+      subtitle={`Displaying all verified pieces registered under ${state.name}.`}
+      actions={
+        <Link
+          to="/series"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white"
+        >
+          <span>← All Series</span>
+        </Link>
+      }
+    >
+      {state.products.length ? (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
+          {state.products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={(item, variant) => addToCart(toCartItem(item, variant))}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="border border-zinc-800 bg-zinc-950 p-12 text-center text-xs text-zinc-500">
+          No products are currently listed for this series.
+        </p>
+      )}
+    </Page>
+  );
+}
+
+export function BrowsePage({ type }) {
+  const { categories, brands, loading, error } = useCatalogue();
+  const navigate = useNavigate();
+
+  if (loading) return <Loading />;
+
+  const items = type === "categories" ? categories : brands;
+  const label = type === "categories" ? "Categories" : "Brands & Studios";
+
+  return (
+    <Page
+      eyebrow="Index"
+      title={label}
+      subtitle={`Explore Anteiku's comprehensive catalog of ${label.toLowerCase()}.`}
+    >
+      {error && <Notice>{error}</Notice>}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() =>
+              navigate(`/shop?${type === "categories" ? "category" : "brand"}=${item.id}`)
+            }
+            className="group border border-zinc-800 bg-zinc-950 p-6 text-left transition-all duration-300 hover:border-[#c5a880]/60 hover:bg-zinc-900/60"
+          >
+            <p className="font-serif text-lg font-medium text-zinc-100 group-hover:text-[#dfc79b] transition-colors">
+              {item.name}
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+              {item.description || `Shop authentic items from ${item.name}.`}
+            </p>
+            <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#dfc79b]">
+              <span>Explore Collection →</span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {!items.length && (
+        <p className="border border-zinc-800 bg-zinc-950 p-12 text-center text-xs text-zinc-500">
+          No {label.toLowerCase()} are currently listed.
+        </p>
+      )}
+    </Page>
+  );
+}
+
+/* =========================================================================
+   9. ORDERS PAGES
+   ========================================================================= */
+const orderDate = (value) =>
+  value
+    ? new Date(value).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "Date unavailable";
+
+const OrderStatus = ({ status }) => (
+  <span className="inline-flex rounded-full border border-[#c5a880]/40 bg-[#c5a880]/10 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[#dfc79b]">
+    {status ? status.replaceAll("_", " ") : "Status unavailable"}
+  </span>
+);
+
+const OrderItems = ({ items }) =>
+  items?.length ? (
+    <div className="divide-y divide-zinc-800/80 border border-zinc-800 bg-zinc-950 mt-4">
+      {items.map((item, index) => (
+        <div key={item.id ?? index} className="flex items-center gap-4 p-4">
+          <img
+            src={item.productImageUrl || ANTEIKU_FALLBACK_IMAGE}
+            alt={item.productName || ""}
+            onError={(e) => {
+              e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
+            }}
+            className="h-16 w-14 shrink-0 border border-zinc-800 bg-zinc-900 object-cover"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-sm font-medium text-zinc-100 truncate">
+              {item.productName || "Product information unavailable"}
+            </p>
+            {(item.variantName || item.variantSku) && (
+              <p className="text-xs text-zinc-400 mt-0.5">
+                {item.variantName || item.variantSku}
+              </p>
+            )}
+            <p className="text-xs text-zinc-500 font-mono mt-0.5">
+              Qty: {item.quantity ?? 1} · {item.unitPrice != null && money(item.unitPrice)}
+            </p>
+          </div>
+          <div className="shrink-0 text-right">
+            <span className="text-xs font-semibold text-[#dfc79b] font-mono">
+              {item.subTotal != null ? money(item.subTotal) : "—"}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-xs text-zinc-500">No items listed in this order record.</p>
+  );
 
 export function OrdersPage() {
   const { user } = useContext(StoreContext);
   const location = useLocation();
   const [orders, setOrders] = useState(null);
   const [error, setError] = useState("");
+
   useEffect(() => {
-    if (user) accountApi.orders().then(setOrders).catch((err) => setError(messageFrom(err)));
+    if (user) {
+      accountApi.orders().then(setOrders).catch((err) => setError(messageFrom(err)));
+    }
   }, [user]);
-  if (!user) return <Navigate to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`} replace state={{ notice: "Sign in to view your orders." }}/>;
-  if (error) return <Page eyebrow="Account" title="Order history"><Notice>{error}</Notice></Page>;
-  if (!orders) return <Loading/>;
-  return <Page eyebrow="Account" title="Order history">
-    <div className="mt-8 flex flex-wrap items-end justify-between gap-3"><p className="text-sm text-zinc-500">Orders placed with your account</p><Link to="/shop" className="text-sm font-semibold underline underline-offset-4">Continue shopping</Link></div>
-    {orders.length ? <div className="mt-5 space-y-3">{orders.map((order) => <article key={order.id} className="border border-zinc-200 p-4 dark:border-zinc-800 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{orderDate(order.orderDate)}</p><h2 className="mt-1 text-lg font-bold">{order.orderNumber != null ? `Order #${order.orderNumber}` : "Order record"}</h2><p className="mt-1 text-sm text-zinc-500">Record ID: {order.id}</p></div>
-        <div className="flex flex-wrap items-center gap-4"><OrderStatus status={order.status}/><div className="sm:text-right"><p className="text-xs text-zinc-500">Total</p><p className="mt-1 font-bold">{order.totalAmount != null ? money(order.totalAmount) : "Not provided"}</p></div><Link to={`/orders/${order.id}`} className="inline-flex min-h-10 items-center justify-center border border-zinc-300 px-4 text-sm font-semibold hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900">View details</Link></div>
-      </div>
-    </article>)}</div> : <div className="mt-8 border-y border-zinc-200 py-12 text-center dark:border-zinc-800"><p className="font-semibold">No orders yet</p><p className="mt-2 text-sm text-zinc-500">Orders you place will appear here.</p><Link to="/shop" className="mt-5 inline-flex min-h-11 items-center bg-black px-5 text-sm font-semibold text-white dark:bg-white dark:text-black">Browse the collection</Link></div>}
-  </Page>;
+
+  if (!user) {
+    return (
+      <Navigate
+        to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+        replace
+        state={{ notice: "Sign in to view your orders." }}
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <Page eyebrow="Account" title="Order History">
+        <Notice>{error}</Notice>
+      </Page>
+    );
+  }
+  if (!orders) return <Loading />;
+
+  return (
+    <Page
+      eyebrow="Collector Portal"
+      title="Order History"
+      subtitle="Track your confirmed dispatches and historical acquisitions."
+      actions={
+        <Link
+          to="/shop"
+          className="text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline"
+        >
+          Explore Collection →
+        </Link>
+      }
+    >
+      {orders.length ? (
+        <div className="space-y-4">
+          {orders.map((order) => (
+            <article
+              key={order.id}
+              className="border border-zinc-800 bg-zinc-950 p-5 sm:p-6 transition-colors hover:border-[#c5a880]/50"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                    Placed {orderDate(order.orderDate)}
+                  </span>
+                  <h2 className="font-serif text-lg font-medium text-zinc-100 mt-1">
+                    {order.orderNumber != null ? `Order #${order.orderNumber}` : `Record #${order.id}`}
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <OrderStatus status={order.status} />
+                  <div className="sm:text-right">
+                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 block">
+                      Total
+                    </span>
+                    <span className="text-sm font-semibold text-[#dfc79b] font-mono">
+                      {order.totalAmount != null ? money(order.totalAmount) : "—"}
+                    </span>
+                  </div>
+                  <Link
+                    to={`/orders/${order.id}`}
+                    className="border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-200 hover:border-[#c5a880] hover:text-[#dfc79b]"
+                  >
+                    View Details
+                  </Link>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="border border-zinc-800 bg-zinc-950 p-16 text-center">
+          <p className="font-serif text-lg font-medium text-zinc-200">
+            No order records found
+          </p>
+          <p className="mt-1 text-xs text-zinc-400">
+            Acquisitions placed with your account will appear here.
+          </p>
+          <Link
+            to="/shop"
+            className="mt-6 inline-flex items-center gap-2 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black"
+          >
+            <span>Explore Archive</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+    </Page>
+  );
 }
 
 export function OrderPage() {
@@ -486,31 +2634,121 @@ export function OrderPage() {
   const location = useLocation();
   const [order, setOrder] = useState(null);
   const [error, setError] = useState("");
+
   useEffect(() => {
     let active = true;
-    if (user) accountApi.order(id).then((loadedOrder) => {
-      if (active) {
-        setError("");
-        setOrder(loadedOrder);
-      }
-    }).catch((err) => { if (active) setError(messageFrom(err)); });
+    if (user) {
+      accountApi
+        .order(id)
+        .then((loaded) => {
+          if (active) setOrder(loaded);
+        })
+        .catch((err) => {
+          if (active) setError(messageFrom(err));
+        });
+    }
     return () => { active = false; };
   }, [id, user]);
-  if (!user) return <Navigate to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`} replace state={{ notice: "Sign in to view this order." }}/>;
-  if (error) return <Page eyebrow="Account" title="Could not load order"><Notice>{error}</Notice><Link to="/orders" className="mt-5 inline-block text-sm font-semibold underline underline-offset-4">Back to orders</Link></Page>;
-  if (!order || String(order.id) !== String(id)) return <Loading/>;
-  const breakdown = [["Subtotal", order.subTotal], ["Shipping", order.shippingFee], ["Discount", order.discountAmount]];
-  return <Page eyebrow="Order details" title={order.orderNumber != null ? `Order #${order.orderNumber}` : "Order details"}>
-    <div className="mt-8 w-full min-w-0 max-w-3xl">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-y border-zinc-200 py-5 dark:border-zinc-800"><div><p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Placed {orderDate(order.orderDate)}</p><p className="mt-1 text-sm text-zinc-500">Record ID: {order.id}</p></div><OrderStatus status={order.status}/></div>
-      <section className="min-w-0 border-b border-zinc-200 py-6 dark:border-zinc-800"><h2 className="font-bold">Items</h2><OrderItems items={order.orderItems}/></section>
-      <section className="min-w-0 border-b border-zinc-200 py-6 dark:border-zinc-800"><h2 className="font-bold">Shipping address</h2><p className="mt-2 break-words [overflow-wrap:anywhere] whitespace-pre-line text-sm leading-6 text-zinc-600 dark:text-zinc-400">{order.shippingAddress || "Not provided"}</p></section>
-      <section className="py-6"><h2 className="font-bold">Order total</h2><dl className="mt-3 space-y-2 text-sm">{breakdown.map(([label, amount]) => amount != null && <div key={label} className="flex justify-between gap-4"><dt className="text-zinc-500">{label}</dt><dd>{money(amount)}</dd></div>)}<div className="flex justify-between gap-4 border-t border-zinc-200 pt-3 text-base font-bold dark:border-zinc-800"><dt>Total</dt><dd>{order.totalAmount != null ? money(order.totalAmount) : "Not provided"}</dd></div></dl></section>
-      <div className="mt-3 flex flex-wrap gap-3"><Link to="/orders" className="inline-flex min-h-11 items-center justify-center border border-zinc-300 px-5 text-sm font-semibold hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900">Back to order history</Link><Link to="/shop" className="inline-flex min-h-11 items-center px-4 text-sm font-semibold underline underline-offset-4">Continue shopping</Link></div>
-    </div>
-  </Page>;
+
+  if (!user) {
+    return (
+      <Navigate
+        to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
+        replace
+        state={{ notice: "Sign in to view this order." }}
+      />
+    );
+  }
+
+  if (error) {
+    return (
+      <Page eyebrow="Account" title="Order Record Error">
+        <Notice>{error}</Notice>
+        <Link to="/orders" className="text-xs uppercase tracking-wider text-[#dfc79b] underline">
+          ← Back to Orders
+        </Link>
+      </Page>
+    );
+  }
+
+  if (!order || String(order.id) !== String(id)) return <Loading />;
+
+  return (
+    <Page
+      eyebrow="Order Record"
+      title={order.orderNumber != null ? `Order #${order.orderNumber}` : "Order Details"}
+      subtitle={`Placed on ${orderDate(order.orderDate)}`}
+      actions={
+        <Link
+          to="/orders"
+          className="text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white"
+        >
+          ← Back to Orders
+        </Link>
+      }
+    >
+      <div className="border border-zinc-800 bg-zinc-950 p-6 sm:p-8 max-w-3xl space-y-6">
+        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+          <span className="text-xs font-mono text-zinc-400">
+            Internal ID: {order.id}
+          </span>
+          <OrderStatus status={order.status} />
+        </div>
+
+        <div>
+          <h3 className="font-serif text-sm font-medium text-zinc-200">
+            Purchased Pieces
+          </h3>
+          <OrderItems items={order.orderItems} />
+        </div>
+
+        <div className="border-t border-zinc-800 pt-4 space-y-1.5 text-xs">
+          <h3 className="font-serif text-sm font-medium text-zinc-200 pb-1">
+            Shipping Destination
+          </h3>
+          <p className="whitespace-pre-line text-zinc-400 font-sans leading-relaxed">
+            {order.shippingAddress || "Shipping coordinates not provided."}
+          </p>
+        </div>
+
+        <div className="border-t border-zinc-800 pt-4 space-y-2 text-xs font-mono">
+          <div className="flex justify-between text-zinc-400">
+            <span>Subtotal</span>
+            <span>{money(order.subTotal)}</span>
+          </div>
+          {order.shippingFee != null && (
+            <div className="flex justify-between text-zinc-400">
+              <span>Shipping Fee</span>
+              <span>{money(order.shippingFee)}</span>
+            </div>
+          )}
+          {order.discountAmount != null && (
+            <div className="flex justify-between text-[#dfc79b]">
+              <span>Discount</span>
+              <span>-{money(order.discountAmount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm font-semibold text-zinc-100 pt-2 border-t border-zinc-800">
+            <span className="font-serif">Total Amount</span>
+            <span className="text-[#dfc79b]">{money(order.totalAmount)}</span>
+          </div>
+        </div>
+      </div>
+    </Page>
+  );
 }
 
-export function BrowsePage({ type }) { const { categories, brands, loading, error } = useCatalogue(); const navigate = useNavigate(); if (loading) return <Loading/>; const items = type === "categories" ? categories : brands; const label = type === "categories" ? "Categories" : "Brands"; return <Page eyebrow="Discover" title={label}>{error && <Notice>{error}</Notice>}<div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{items.map((item) => <button key={item.id} onClick={() => navigate(`/shop?${type === "categories" ? "category" : "brand"}=${item.id}`)} className="group border border-zinc-200 p-6 text-left hover:border-black dark:border-zinc-800 dark:hover:border-white"><p className="text-xl font-semibold">{item.name}</p><p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-500">{item.description || `Shop ${item.name}`}</p><p className="mt-8 text-xs font-bold uppercase tracking-wider">Explore →</p></button>)}</div>{!items.length && <p className="mt-10 text-zinc-500">No {label.toLowerCase()} are available.</p>}</Page>; }
+/* =========================================================================
+   10. ACCOUNT & WISHLIST FALLBACK EXPORTS
+   ========================================================================= */
+export function AccountPage() {
+  const { user } = useContext(StoreContext);
+  if (!user) return <Navigate to="/login?returnTo=/account" replace />;
+  return <Navigate to="/account" replace />;
+}
 
-export function WishlistPage() { const [wishlists, setWishlists] = useState(null); const [products, setProducts] = useState([]); const [error, setError] = useState(""); const { user } = useContext(StoreContext); const load = () => accountApi.wishlists().then(async (lists) => { setWishlists(lists); const ids = [...new Set(lists.flatMap((list) => list.productIds || []))]; const loaded = await Promise.all(ids.map((id) => catalogueApi.product(id).catch(() => null))); setProducts(loaded.filter(Boolean)); }).catch((e) => setError(messageFrom(e))); useEffect(() => { if (user) load(); }, [user]); if (!user) return <Navigate to="/login?returnTo=/wishlist" replace/>; if (error) return <Page eyebrow="Account" title="Wishlist"><Notice>{error}</Notice><p className="mt-4 text-sm text-zinc-500">The backend requires at least one product when creating a wishlist. Add a product from the shop to start one.</p></Page>; if (!wishlists) return <Loading/>; return <Page eyebrow="Account" title="Wishlist">{products.length ? <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">{products.map((p) => <ProductCard key={p.id} product={p}/>)}</div> : <div className="mt-10 border-y border-zinc-200 py-16 text-center dark:border-zinc-800"><p className="text-zinc-500">Your wishlist is empty.</p><Link to="/shop" className="mt-5 inline-block underline underline-offset-4">Explore the collection</Link></div>}<p className="mt-8 text-xs text-zinc-500">The current API supports named wishlists; saving from product cards will be enabled when a default wishlist is present.</p></Page>; }
+export function WishlistPage() {
+  const { user } = useContext(StoreContext);
+  if (!user) return <Navigate to="/login?returnTo=/wishlist" replace />;
+  return <Navigate to="/wishlist" replace />;
+}

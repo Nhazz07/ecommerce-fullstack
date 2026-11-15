@@ -37,6 +37,9 @@ export const accountApi = {
   couponByCode: (code) => client.get(`/api/coupon/code/${encodeURIComponent(code)}`).then(data),
   productVariant: (id) => client.get(`/api/productVariant/${id}`).then(data),
   createOrder: (payload) => client.post("/api/order", payload).then(data),
+  
+  createPayment: (payload) => client.post("/api/payment", payload).then(data),
+
   wishlists: () => client.get("/api/wishlist/my").then(data).catch((error) => {
     // The backend uses 404 (rather than an empty array) when the customer has no wishlist yet.
     if (error.response?.status === 404) return [];

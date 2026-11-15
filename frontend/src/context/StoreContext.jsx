@@ -14,22 +14,47 @@ const read = (key, fallback) => {
 export function StoreProvider({ children }) {
   const [cart, setCart] = useState(() => read(CART_KEY, []));
   const [user, setUser] = useState(() => read(USER_KEY, null));
-  const [theme, setTheme] = useState(() => localStorage.getItem("anteiku_theme") || "light");
+  const [theme, setTheme] = useState(() => localStorage.getItem("anteiku_theme") || "dark");
   const [syncing, setSyncing] = useState(false);
   const [wishlists, setWishlists] = useState(null);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [wishlistError, setWishlistError] = useState("");
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
+  const [toasts, setToasts] = useState([]);
   const wishlistRequest = useRef(null);
   const wishlistMutations = useRef(new Map());
   const wishlistMutationQueue = useRef(Promise.resolve());
 
   useEffect(() => { localStorage.setItem(CART_KEY, JSON.stringify(cart)); }, [cart]);
-  useEffect(() => { localStorage.setItem("anteiku_theme", theme); document.documentElement.classList.toggle("dark", theme === "dark"); }, [theme]);
+  useEffect(() => {
+    localStorage.setItem("anteiku_theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
   useEffect(() => {
     const expireSession = () => { setUser(null); setWishlists(null); setWishlistError(""); wishlistRequest.current = null; wishlistMutations.current.clear(); wishlistMutationQueue.current = Promise.resolve(); };
     window.addEventListener("anteiku:session-expired", expireSession);
     return () => window.removeEventListener("anteiku:session-expired", expireSession);
   }, []);
+
+  const dismissToast = useCallback((id) => {
+    setToasts((current) => current.filter((t) => t.id !== id));
+  }, []);
+
+  const showToast = useCallback((message, type = "success", title = "") => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const newToast = { id, message, type, title };
+    setToasts((current) => [...current.slice(-4), newToast]);
+    setTimeout(() => {
+      dismissToast(id);
+    }, 4000);
+    return id;
+  }, [dismissToast]);
+
+  const openCartDrawer = useCallback(() => setIsCartDrawerOpen(true), []);
+  const closeCartDrawer = useCallback(() => setIsCartDrawerOpen(false), []);
+  const openQuickView = useCallback((product) => setQuickViewProduct(product), []);
+  const closeQuickView = useCallback(() => setQuickViewProduct(null), []);
 
   const loadWishlists = useCallback(() => {
     if (!user) return Promise.reject(new Error("Sign in to view your wishlist."));
@@ -61,10 +86,21 @@ export function StoreProvider({ children }) {
     loadWishlists().catch(() => {});
   }, [user, loadWishlists]);
 
-  const addToCart = useCallback((item) => setCart((current) => {
-    const existing = current.find((entry) => entry.variantId === item.variantId);
-    return existing ? current.map((entry) => entry.variantId === item.variantId ? { ...entry, quantity: entry.quantity + item.quantity } : entry) : [...current, item];
-  }), []);
+  const addToCart = useCallback((item, options = {}) => {
+    const { openDrawer = true, silent = false } = options;
+    setCart((current) => {
+      const existing = current.find((entry) => entry.variantId === item.variantId);
+      return existing
+        ? current.map((entry) => entry.variantId === item.variantId ? { ...entry, quantity: entry.quantity + item.quantity } : entry)
+        : [...current, item];
+    });
+    if (openDrawer) {
+      setIsCartDrawerOpen(true);
+    }
+    if (!silent) {
+      showToast(`${item.name}${item.variantName ? ` (${item.variantName})` : ""}`, "success", "Added to your bag");
+    }
+  }, [showToast]);
   const updateQuantity = useCallback((variantId, quantity) => setCart((current) => quantity < 1 ? current.filter((item) => item.variantId !== variantId) : current.map((item) => item.variantId === variantId ? { ...item, quantity } : item)), []);
   const removeFromCart = useCallback((variantId) => setCart((current) => current.filter((item) => item.variantId !== variantId)), []);
 
@@ -158,6 +194,62 @@ export function StoreProvider({ children }) {
 
   const isWishlisted = useCallback((productId) => (wishlists || []).some((list) => (list.productIds || []).some((id) => String(id) === String(productId))), [wishlists]);
 
-  const value = useMemo(() => ({ cart, user, theme, syncing, addToCart, updateQuantity, removeFromCart, syncCart, signIn, signOut, setTheme, wishlists, wishlistLoading, wishlistError, loadWishlists, addWishlistProduct, removeWishlistProduct, isWishlisted }), [cart, user, theme, syncing, addToCart, updateQuantity, removeFromCart, syncCart, signIn, signOut, wishlists, wishlistLoading, wishlistError, loadWishlists, addWishlistProduct, removeWishlistProduct, isWishlisted]);
+  const value = useMemo(() => ({
+    cart,
+    user,
+    theme,
+    syncing,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    syncCart,
+    signIn,
+    signOut,
+    setTheme,
+    wishlists,
+    wishlistLoading,
+    wishlistError,
+    loadWishlists,
+    addWishlistProduct,
+    removeWishlistProduct,
+    isWishlisted,
+    isCartDrawerOpen,
+    openCartDrawer,
+    closeCartDrawer,
+    quickViewProduct,
+    openQuickView,
+    closeQuickView,
+    toasts,
+    showToast,
+    dismissToast,
+  }), [
+    cart,
+    user,
+    theme,
+    syncing,
+    addToCart,
+    updateQuantity,
+    removeFromCart,
+    syncCart,
+    signIn,
+    signOut,
+    setTheme,
+    wishlists,
+    wishlistLoading,
+    wishlistError,
+    loadWishlists,
+    addWishlistProduct,
+    removeWishlistProduct,
+    isWishlisted,
+    isCartDrawerOpen,
+    openCartDrawer,
+    closeCartDrawer,
+    quickViewProduct,
+    openQuickView,
+    closeQuickView,
+    toasts,
+    showToast,
+    dismissToast,
+  ]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

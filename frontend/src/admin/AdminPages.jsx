@@ -1,6 +1,7 @@
 
-import { Edit3, Eye, Plus, RefreshCw, Trash2, Upload, X } from "lucide-react";
+import { Edit3, Eye, MoreHorizontal, Plus, RefreshCw, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { adminApi, adminError } from "./api";
 
 const money = (value) =>
@@ -67,8 +68,8 @@ function Header({ title, detail, action }) {
   );
 }
 
-function Status({ children }) {
-  return <span className="admin-status">{children || "—"}</span>;
+  function Status({ children, className = "" }) {
+    return <span className={`admin-status ${className}`}>{children || "—"}</span>;
 }
 
 function Dialog({ title, children, close }) {
@@ -276,8 +277,11 @@ function Dialog({ title, children, close }) {
     );
 
     const [editing, setEditing] = useState(null);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [detailsLoading, setDetailsLoading] = useState(false);
     const [feedback, setFeedback] = useState("");
     const [query, setQuery] = useState("");
+    const navigate = useNavigate();
 
     const records = (products.data?.content || []).filter((item) =>
         `${item.name} ${item.sku}`
@@ -374,6 +378,17 @@ function Dialog({ title, children, close }) {
       }
     };
 
+    const viewProduct = async (id) => {
+      setDetailsLoading(true);
+      try {
+        setSelectedProduct(await adminApi.product(id));
+      } catch (error) {
+        setFeedback(adminError(error));
+      } finally {
+        setDetailsLoading(false);
+      }
+    };
+
     return (
         <>
           <Header
@@ -433,6 +448,12 @@ function Dialog({ title, children, close }) {
                     </td>
                     <td className="admin-actions">
                       <button
+                          onClick={() => viewProduct(item.id)}
+                          aria-label={`View ${item.name}`}
+                      >
+                        <Eye size={15}/> View
+                      </button>
+                      <button
                           onClick={() =>
                               setEditing({
                                 ...item,
@@ -473,6 +494,18 @@ function Dialog({ title, children, close }) {
                   close={() => setEditing(null)}
               />
           )}
+
+          {selectedProduct && (
+              <ProductDetailsDialog
+                  product={selectedProduct}
+                  close={() => setSelectedProduct(null)}
+                  createVariant={() => navigate("/admin/product-variants", {
+                    state: {productId: selectedProduct.id},
+                  })}
+              />
+          )}
+
+          {detailsLoading && <div className="admin-loading-overlay">Loading product details…</div>}
         </>
     );
   }
@@ -753,6 +786,317 @@ function Dialog({ title, children, close }) {
     );
   }
 
+  function ProductDetailsDialog({product, close, createVariant}) {
+    const variants = product.productVariants || [];
+
+    return (
+        <Dialog title={`${product.name} details`} close={close}>
+          <div className="admin-detail">
+            <div className="admin-detail-grid">
+              <p><b>Product</b><span>{product.name}</span></p>
+              <p><b>SKU</b><span>{product.sku || "—"}</span></p>
+              <p><b>Status</b><Status>{product.status}</Status></p>
+              <p><b>Variants</b><span>{variants.length}</span></p>
+            </div>
+
+            <h4>Product variants</h4>
+            {variants.length ? (
+                <table className="admin-table">
+                  <thead>
+                  <tr><th>Variant</th><th>SKU</th><th>Attributes</th><th>Price</th></tr>
+                  </thead>
+                  <tbody>
+                  {variants.map((variant) => (
+                      <tr key={variant.id}>
+                        <td>{variant.name}</td>
+                        <td>{variant.sku}</td>
+                        <td>{variant.size} · {variant.color}</td>
+                        <td>{money(variant.price)}</td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
+            ) : (
+                <div className="admin-state">No variants have been created for this product.</div>
+            )}
+
+            <div className="admin-dialog-actions">
+              <button type="button" className="admin-secondary" onClick={close}>Close</button>
+              <button type="button" onClick={createVariant}><Plus size={15}/> Create variant</button>
+            </div>
+          </div>
+        </Dialog>
+    );
+  }
+
+  export function ProductVariantsPage() {
+    const location = useLocation();
+    const initialProductId = location.state?.productId ? String(location.state.productId) : "";
+    const loadProducts = useCallback(() => adminApi.products(0, 100), []);
+    const products = useLoad(loadProducts);
+    const variants = useLoad(adminApi.productVariants);
+    const inventories = useLoad(adminApi.inventory);
+    const [editing, setEditing] = useState(null);
+    const [selected, setSelected] = useState(null);
+    const [feedback, setFeedback] = useState("");
+    const [query, setQuery] = useState("");
+    const [productFilter, setProductFilter] = useState(initialProductId);
+    const [statusFilter, setStatusFilter] = useState("");
+
+    const productRecords = products.data?.content || [];
+    const productMap = new Map(productRecords.map((product) => [Number(product.id), product]));
+    const inventoryMap = new Map(
+        (inventories.data || []).map((inventory) => [Number(inventory.productVariantId), inventory])
+    );
+
+    const records = (variants.data || []).map((variant) => ({
+      ...variant,
+      product: productMap.get(Number(variant.productId)),
+      productStatus: productMap.get(Number(variant.productId))?.status || "—",
+      inventory: inventoryMap.get(Number(variant.id)),
+    }));
+
+    const filteredRecords = records.filter((variant) => {
+      const searchText = `${variant.productName || ""} ${variant.sku || ""} ${variant.name || ""} ${variant.size || ""} ${variant.color || ""}`.toLowerCase();
+      return searchText.includes(query.toLowerCase())
+          && (!productFilter || Number(variant.productId) === Number(productFilter))
+          && (!statusFilter || variant.productStatus === statusFilter);
+    });
+
+    const save = async (form) => {
+      const payload = {
+        productId: Number(form.productId),
+        sku: form.sku.trim(),
+        name: form.name.trim(),
+        price: Number(form.price),
+        size: form.size.trim(),
+        color: form.color.trim(),
+      };
+
+      try {
+        if (form.id) {
+          await adminApi.updateProductVariant(form.id, payload);
+        } else {
+          await adminApi.createProductVariant(payload);
+        }
+        setEditing(null);
+        setFeedback(form.id ? "Product variant updated." : "Product variant created successfully.");
+        await Promise.all([variants.load(), inventories.load()]);
+      } catch (error) {
+        setFeedback(adminError(error));
+        throw new Error(adminError(error), {cause: error});
+      }
+    };
+
+    const erase = async (variant) => {
+      if (variant.inventoryId || variant.inventory) {
+        setFeedback("Remove this variant's inventory record before deleting the variant.");
+        return;
+      }
+      if (!window.confirm(`Delete product variant ${variant.sku}? This cannot be undone.`)) return;
+
+      try {
+        await adminApi.deleteProductVariant(variant.id);
+        setSelected(null);
+        setFeedback("Product variant deleted.");
+        await variants.load();
+      } catch (error) {
+        setFeedback(adminError(error));
+      }
+    };
+
+    const openCreate = () => setEditing({
+      productId: productFilter,
+      sku: "",
+      name: "",
+      price: "",
+      size: "",
+      color: "",
+    });
+
+    const loading = variants.loading || products.loading || inventories.loading;
+    const error = variants.error || products.error || inventories.error;
+
+    return (
+        <>
+          <Header
+              title="Product Variants"
+              detail="Manage the sellable options connected to each catalogue product."
+              action={<button onClick={openCreate}><Plus size={16}/> Create product variant</button>}
+          />
+
+          <Notice
+              message={feedback}
+              type={/created|updated|deleted/.test(feedback) ? "success" : "error"}
+          />
+
+          <div className="admin-toolbar admin-variant-toolbar">
+            <input
+                placeholder="Search product, variant, or SKU"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+            />
+            <select value={productFilter} onChange={(event) => setProductFilter(event.target.value)}>
+              <option value="">All products</option>
+              {productRecords.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}
+            </select>
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option value="">All statuses</option>
+              {["ACTIVE", "INACTIVE", "OUT_OF_STOCK", "DISCONTINUED", "ARCHIVED"].map((status) => (
+                  <option key={status}>{status}</option>
+              ))}
+            </select>
+            <span>{filteredRecords.length} variants</span>
+          </div>
+
+          <State loading={loading} error={error} empty={!filteredRecords.length}>
+            <table className="admin-table">
+              <thead>
+              <tr>
+                <th>ID</th><th>Product</th><th>SKU</th><th>Variant</th><th>Price</th>
+                <th>Attributes</th><th>Status</th><th>Inventory availability</th><th>Actions</th>
+              </tr>
+              </thead>
+              <tbody>
+              {filteredRecords.map((variant) => (
+                  <tr key={variant.id}>
+                    <td>#{variant.id}</td>
+                    <td><b>{variant.productName || variant.product?.name || "Unknown product"}</b><small>Product #{variant.productId}</small></td>
+                    <td>{variant.sku}</td>
+                    <td>{variant.name}</td>
+                    <td>{money(variant.price)}</td>
+                    <td>{variant.size} · {variant.color}</td>
+                    <td><Status>{variant.productStatus}</Status><small>Inherited from product</small></td>
+                    <td>{variant.inventory ? `${variant.inventory.availableQuantity} available` : "Not configured"}</td>
+                    <td className="admin-actions">
+                      <button className="admin-icon" onClick={() => setSelected(variant)} aria-label="View variant"><Eye size={15}/></button>
+                      <button onClick={() => setEditing(variant)}><Edit3 size={15}/> Edit</button>
+                      <button className="danger" onClick={() => erase(variant)}><Trash2 size={15}/> Delete</button>
+                    </td>
+                  </tr>
+              ))}
+              </tbody>
+            </table>
+          </State>
+
+          {editing && (
+              <ProductVariantDialog
+                  variant={editing}
+                  products={productRecords}
+                  existingVariants={variants.data || []}
+                  save={save}
+                  close={() => setEditing(null)}
+              />
+          )}
+          {selected && (
+              <ProductVariantDetailsDialog
+                  variant={selected}
+                  close={() => setSelected(null)}
+                  edit={() => { setSelected(null); setEditing(selected); }}
+              />
+          )}
+        </>
+    );
+  }
+
+  function ProductVariantDialog({variant, products, existingVariants, save, close}) {
+    const isNew = !variant.id;
+    const [form, setForm] = useState(variant);
+    const [productQuery, setProductQuery] = useState("");
+    const [error, setError] = useState("");
+    const [busy, setBusy] = useState(false);
+    const set = (key, value) => setForm((current) => ({...current, [key]: value}));
+    const productOptions = products.filter((product) =>
+        `${product.name} ${product.sku}`.toLowerCase().includes(productQuery.toLowerCase())
+    );
+
+    const validate = () => {
+      if (!form.productId) return "Parent product is required.";
+      if (!form.sku?.trim()) return "SKU is required.";
+      if (existingVariants.some((existing) =>
+          existing.id !== form.id && existing.sku?.trim().toLowerCase() === form.sku.trim().toLowerCase()
+      )) return "SKU is already used by another product variant.";
+      if (!form.name?.trim()) return "Variant name is required.";
+      if (!form.size?.trim()) return "Size is required.";
+      if (!form.color?.trim()) return "Color is required.";
+      if (!Number.isFinite(Number(form.price)) || Number(form.price) < 0.01) return "Price must be greater than zero.";
+      return "";
+    };
+
+    const submit = async (event) => {
+      event.preventDefault();
+      const validationError = validate();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+      setBusy(true);
+      setError("");
+      try {
+        await save(form);
+      } catch (saveError) {
+        setError(saveError.message || "Could not save product variant.");
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    return (
+        <Dialog title={isNew ? "Create product variant" : "Edit product variant"} close={close}>
+          <form className="admin-form" onSubmit={submit}>
+            <Notice message={error}/>
+            {isNew && (
+                <label>
+                  Parent product
+                  <input type="search" placeholder="Search product name or SKU" value={productQuery} onChange={(event) => setProductQuery(event.target.value)}/>
+                  <select required value={form.productId || ""} onChange={(event) => set("productId", event.target.value)}>
+                    <option value="">{products.length ? "Select parent product" : "Loading products…"}</option>
+                    {productOptions.map((product) => <option key={product.id} value={product.id}>{product.name} · {product.sku}</option>)}
+                  </select>
+                </label>
+            )}
+            {!isNew && <p><b>Parent product</b><br/>{variant.productName || `Product #${variant.productId}`}<small>Parent product cannot be changed by the existing update endpoint.</small></p>}
+
+            <div className="admin-form-grid">
+              <label>SKU<input required value={form.sku || ""} onChange={(event) => set("sku", event.target.value)}/></label>
+              <label>Variant name / label<input required value={form.name || ""} onChange={(event) => set("name", event.target.value)}/></label>
+              <label>Price<input required type="number" min="0.01" step="0.01" value={form.price ?? ""} onChange={(event) => set("price", event.target.value)}/></label>
+              <label>Size<input required value={form.size || ""} onChange={(event) => set("size", event.target.value)}/></label>
+              <label>Color<input required value={form.color || ""} onChange={(event) => set("color", event.target.value)}/></label>
+            </div>
+
+            <div className="admin-form-note"><b>Status</b><span>Inherited from the parent product: {products.find((product) => Number(product.id) === Number(form.productId))?.status || "—"}</span></div>
+            <div className="admin-dialog-actions">
+              <button type="button" className="admin-secondary" onClick={close}>Cancel</button>
+              <button disabled={busy}>{busy ? "Saving…" : isNew ? "Create variant" : "Save changes"}</button>
+            </div>
+          </form>
+        </Dialog>
+    );
+  }
+
+  function ProductVariantDetailsDialog({variant, close, edit}) {
+    return (
+        <Dialog title={`Variant #${variant.id}`} close={close}>
+          <div className="admin-detail">
+            <div className="admin-detail-grid">
+              <p><b>Product</b><span>{variant.productName || `Product #${variant.productId}`}</span></p>
+              <p><b>SKU</b><span>{variant.sku}</span></p>
+              <p><b>Variant</b><span>{variant.name}</span></p>
+              <p><b>Price</b><span>{money(variant.price)}</span></p>
+              <p><b>Size</b><span>{variant.size}</span></p>
+              <p><b>Color</b><span>{variant.color}</span></p>
+              <p><b>Inventory</b><span>{variant.inventory ? `${variant.inventory.availableQuantity} available` : "Not configured"}</span></p>
+            </div>
+            <div className="admin-dialog-actions">
+              <button type="button" className="admin-secondary" onClick={close}>Close</button>
+              <button type="button" onClick={edit}><Edit3 size={15}/> Edit variant</button>
+            </div>
+          </div>
+        </Dialog>
+    );
+  }
+
   function Lookup({label, value, set, items, required}) {
     return (
         <label>
@@ -919,51 +1263,202 @@ function Dialog({ title, children, close }) {
   }
 
   export function CustomersPage() {
-    const users = useLoad(() => adminApi.users());
+    const users = useLoad(adminApi.users);
+    const [query, setQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("");
+    const [sortDirection, setSortDirection] = useState("newest");
+    const [page, setPage] = useState(0);
+    const [menuId, setMenuId] = useState(null);
+    const [selected, setSelected] = useState(null);
+    const [pendingStatus, setPendingStatus] = useState(null);
+    const [statusBusy, setStatusBusy] = useState(false);
+    const [feedback, setFeedback] = useState("");
+    const pageSize = 10;
+
+    const customers = (users.data || []).filter((user) => user.role !== "ADMIN");
+    const filtered = customers
+        .filter((user) => {
+          const name = `${user.firstName || ""} ${user.lastName || ""}`;
+          return `${name} ${user.username || ""} ${user.email || ""}`
+              .toLowerCase()
+              .includes(query.toLowerCase())
+              && (!statusFilter || user.status === statusFilter);
+        })
+        .sort((a, b) => {
+          const difference = new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+          return sortDirection === "newest" ? -difference : difference;
+        });
+    const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const visibleCustomers = filtered.slice(page * pageSize, (page + 1) * pageSize);
+
+    const actionsFor = (user) => {
+      switch (user.status) {
+        case "ACTIVE":
+          return [["Deactivate Account", "INACTIVE"], ["Suspend Account", "SUSPENDED"]];
+        case "INACTIVE":
+          return [["Activate Account", "ACTIVE"], ["Suspend Account", "SUSPENDED"]];
+        case "SUSPENDED":
+          return [["Reactivate Account", "ACTIVE"], ["Deactivate Account", "INACTIVE"]];
+        default:
+          return [];
+      }
+    };
+
+    const changeStatus = async () => {
+      if (!pendingStatus) return;
+      setStatusBusy(true);
+      try {
+        await adminApi.updateUserStatus(pendingStatus.user.id, pendingStatus.status);
+        setFeedback(`${pendingStatus.user.username} is now ${pendingStatus.status}.`);
+        setPendingStatus(null);
+        setMenuId(null);
+        await users.load();
+      } catch (error) {
+        setFeedback(adminError(error));
+      } finally {
+        setStatusBusy(false);
+      }
+    };
 
     return (
         <>
           <Header
               title="Customers"
-              detail="Customer records exposed by the administrator API."
+              detail="Search customer accounts, review activity, and manage access status."
+              action={<button onClick={users.load}><RefreshCw size={15}/> Refresh</button>}
           />
 
-          <State
-              loading={users.loading}
-              error={users.error}
-              empty={!users.data?.length}
-          >
+          <Notice message={feedback} type={feedback.includes(" is now ") ? "success" : "error"}/>
+
+          <div className="admin-toolbar admin-customer-toolbar">
+            <input placeholder="Search name, username, or email" value={query} onChange={(event) => { setPage(0); setQuery(event.target.value); }}/>
+            <select value={statusFilter} onChange={(event) => { setPage(0); setStatusFilter(event.target.value); }}>
+              <option value="">All statuses</option>
+              {["ACTIVE", "INACTIVE", "SUSPENDED", "BANNED"].map((status) => <option key={status}>{status}</option>)}
+            </select>
+            <select value={sortDirection} onChange={(event) => { setPage(0); setSortDirection(event.target.value); }}>
+              <option value="newest">Registration: newest</option>
+              <option value="oldest">Registration: oldest</option>
+            </select>
+            <span>{filtered.length} customers</span>
+          </div>
+
+          <State loading={users.loading} error={users.error} empty={!filtered.length}>
             <table className="admin-table">
               <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Joined</th>
-              </tr>
+              <tr><th>Customer</th><th>Username</th><th>Email</th><th>Phone</th><th>Status</th><th>Registered</th><th>Actions</th></tr>
               </thead>
               <tbody>
-              {users.data?.map((user) => (
+              {visibleCustomers.map((user) => (
                   <tr key={user.id}>
-                    <td>
-                      <b>
-                        {user.firstName} {user.lastName}
-                      </b>
-                      <small>{user.username}</small>
-                    </td>
+                    <td><b>{user.firstName} {user.lastName}</b></td>
+                    <td>{user.username}</td>
                     <td>{user.email}</td>
                     <td>{user.phoneNumber}</td>
-                    <td>
-                      <Status>{user.status}</Status>
-                    </td>
+                    <td><Status className={`admin-status-${user.status?.toLowerCase()}`}>{user.status}</Status></td>
                     <td>{date(user.createdAt)}</td>
+                    <td className="admin-customer-actions">
+                      <button className="admin-icon" onClick={() => setMenuId(menuId === user.id ? null : user.id)} aria-label={`Actions for ${user.username}`}><MoreHorizontal size={17}/></button>
+                      {menuId === user.id && (
+                          <div className="admin-row-menu">
+                            <button type="button" onClick={() => { setSelected(user); setMenuId(null); }}>View Customer Details</button>
+                            {actionsFor(user).map(([label, status]) => (
+                                <button key={status} type="button" onClick={() => { setPendingStatus({user, status, label}); setMenuId(null); }}>{label}</button>
+                            ))}
+                          </div>
+                      )}
+                    </td>
                   </tr>
               ))}
               </tbody>
             </table>
+            <div className="admin-pagination">
+              <span>Page {page + 1} of {pageCount}</span>
+              <div>
+                <button className="admin-secondary" disabled={page === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>Previous</button>
+                <button className="admin-secondary" disabled={page >= pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>Next</button>
+              </div>
+            </div>
           </State>
+
+          {selected && (
+              <CustomerDetailsDialog
+                  customer={selected}
+                  close={() => setSelected(null)}
+              />
+          )}
+          {pendingStatus && (
+              <StatusConfirmationDialog
+                  pending={pendingStatus}
+                  busy={statusBusy}
+                  close={() => !statusBusy && setPendingStatus(null)}
+                  confirm={changeStatus}
+              />
+          )}
         </>
+    );
+  }
+
+  function StatusConfirmationDialog({pending, busy, close, confirm}) {
+    return (
+        <Dialog title="Confirm account status change" close={close}>
+          <div className="admin-detail">
+            <p>This will change the customer account status and affect future authentication.</p>
+            <div className="admin-line"><span>Username</span><b>{pending.user.username}</b></div>
+            <div className="admin-line"><span>Current status</span><Status>{pending.user.status}</Status></div>
+            <div className="admin-line"><span>New status</span><Status className={`admin-status-${pending.status.toLowerCase()}`}>{pending.status}</Status></div>
+            <div className="admin-dialog-actions">
+              <button type="button" className="admin-secondary" disabled={busy} onClick={close}>Cancel</button>
+              <button type="button" disabled={busy} onClick={confirm}>{busy ? "Updating…" : pending.label}</button>
+            </div>
+          </div>
+        </Dialog>
+    );
+  }
+
+  function CustomerDetailsDialog({customer, close}) {
+    const loadActivity = useCallback(() => Promise.all([adminApi.orders(), adminApi.payments()]), []);
+    const activity = useLoad(loadActivity);
+    const [orders, payments] = activity.data || [[], []];
+    const customerOrders = (orders || [])
+        .filter((order) => Number(order.userId) === Number(customer.id))
+        .sort((a, b) => new Date(b.orderDate || 0) - new Date(a.orderDate || 0));
+    const paymentByOrder = new Map((payments || []).map((payment) => [Number(payment.orderId), payment]));
+    const totalSpending = customerOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+
+    return (
+        <Dialog title={`${customer.firstName} ${customer.lastName}`} close={close}>
+          <div className="admin-detail">
+            <div className="admin-detail-grid">
+              <p><b>Full name</b><span>{customer.firstName} {customer.lastName}</span></p>
+              <p><b>Username</b><span>{customer.username}</span></p>
+              <p><b>Email</b><span>{customer.email}</span></p>
+              <p><b>Phone</b><span>{customer.phoneNumber}</span></p>
+              <p><b>Status</b><Status className={`admin-status-${customer.status?.toLowerCase()}`}>{customer.status}</Status></p>
+              <p><b>Registered</b><span>{date(customer.createdAt)}</span></p>
+            </div>
+
+            <div className="admin-stats admin-customer-stats">
+              <Stat label="Total orders" value={activity.loading ? "…" : customerOrders.length}/>
+              <Stat label="Total spending" value={activity.loading ? "…" : money(totalSpending)}/>
+              <Stat label="Most recent order" value={activity.loading ? "…" : customerOrders[0] ? `#${customerOrders[0].orderNumber || customerOrders[0].id}` : "—"}/>
+            </div>
+
+            <h4>Order history</h4>
+            {activity.loading ? <div className="admin-state">Loading customer activity…</div> : activity.error ? <Notice message={activity.error}/> : customerOrders.length ? (
+                <table className="admin-table">
+                  <thead><tr><th>Order</th><th>Date</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+                  <tbody>{customerOrders.map((order) => <tr key={order.id}>
+                    <td>#{order.orderNumber || order.id}</td>
+                    <td>{date(order.orderDate)}</td>
+                    <td>{money(order.totalAmount)}</td>
+                    <td>{paymentByOrder.get(Number(order.id))?.status || (order.paymentId ? "Recorded" : "—")}</td>
+                    <td><Status>{order.status}</Status></td>
+                  </tr>)}</tbody>
+                </table>
+            ) : <div className="admin-state">No orders have been recorded for this customer.</div>}
+          </div>
+        </Dialog>
     );
   }
 
@@ -1190,18 +1685,25 @@ function Dialog({ title, children, close }) {
 
     const save = async (form) => {
       try {
-        await adminApi.updateInventory(form.id, {
+        const payload = {
           quantity: Number(form.quantity),
           reservedQuantity: Number(form.reservedQuantity),
           reorderLevel: Number(form.reorderLevel),
           productVariantId: Number(form.productVariantId),
-        });
+        };
+
+        if (form.id) {
+          await adminApi.updateInventory(form.id, payload);
+        } else {
+          await adminApi.createInventory(payload);
+        }
 
         setEditing(null);
-        setFeedback("Inventory updated.");
+        setFeedback(form.id ? "Inventory updated." : "Inventory created successfully.");
         await inventory.load();
       } catch (error) {
         setFeedback(adminError(error));
+        throw new Error(adminError(error), {cause: error});
       }
     };
 
@@ -1210,11 +1712,16 @@ function Dialog({ title, children, close }) {
           <Header
               title="Inventory"
               detail="Stock levels are managed through the existing inventory service."
+              action={
+                <button onClick={() => setEditing({})}>
+                  <Plus size={16}/> Add inventory
+                </button>
+              }
           />
 
           <Notice
               message={feedback}
-              type={feedback.includes("updated") ? "success" : "error"}
+              type={/created|updated successfully|updated\./i.test(feedback) ? "success" : "error"}
           />
 
           <State
@@ -1261,6 +1768,7 @@ function Dialog({ title, children, close }) {
           {editing && (
               <InventoryDialog
                   item={editing}
+                  existingInventory={inventory.data || []}
                   save={save}
                   close={() => setEditing(null)}
               />
@@ -1269,40 +1777,141 @@ function Dialog({ title, children, close }) {
     );
   }
 
-  function InventoryDialog({item, save, close}) {
-    const [form, setForm] = useState(item);
+  function InventoryDialog({item, existingInventory, save, close}) {
+    const isNew = !item.id;
+    const [form, setForm] = useState(
+        isNew
+            ? {productVariantId: "", quantity: 0, reservedQuantity: 0, reorderLevel: 5}
+            : item
+    );
     const [busy, setBusy] = useState(false);
+    const [error, setError] = useState("");
+    const [variantQuery, setVariantQuery] = useState("");
+    const loadVariants = useCallback(() => adminApi.productVariants(), []);
+    const variants = useLoad(loadVariants);
+
+    const existingVariantIds = new Set(
+        existingInventory.map((inventoryItem) => Number(inventoryItem.productVariantId))
+    );
+    const availableVariants = (variants.data || []).filter((variant) => {
+      if (!isNew && Number(variant.id) === Number(form.productVariantId)) return true;
+      if (variant.inventoryId || existingVariantIds.has(Number(variant.id))) return false;
+
+      const searchText = `${variant.productName || ""} ${variant.name || ""} ${variant.sku || ""} ${variant.size || ""} ${variant.color || ""}`.toLowerCase();
+      return searchText.includes(variantQuery.toLowerCase());
+    });
+
+    const quantity = Number(form.quantity);
+    const reservedQuantity = Number(form.reservedQuantity);
+    const availableQuantity = Number.isFinite(quantity) && Number.isFinite(reservedQuantity)
+        ? quantity - reservedQuantity
+        : 0;
+
+    const set = (key, value) => setForm((current) => ({...current, [key]: value}));
+
+    const validate = () => {
+      if (isNew && !form.productVariantId) return "Please select a product variant.";
+
+      for (const [label, value] of [
+        ["Initial stock quantity", form.quantity],
+        ["Reserved quantity", form.reservedQuantity],
+        ["Reorder level", form.reorderLevel],
+      ]) {
+        const number = Number(value);
+        if (!Number.isInteger(number) || number < 0) {
+          return `${label} must be a whole number greater than or equal to zero.`;
+        }
+      }
+
+      if (Number(form.reservedQuantity) > Number(form.quantity)) {
+        return "Reserved quantity cannot exceed total quantity.";
+      }
+
+      return "";
+    };
 
     const submit = async (event) => {
       event.preventDefault();
+
+      const validationError = validate();
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
+
       setBusy(true);
+      setError("");
 
       try {
         await save(form);
+      } catch (saveError) {
+        setError(saveError.message || "Could not save inventory.");
       } finally {
         setBusy(false);
       }
     };
 
     return (
-        <Dialog title="Update inventory" close={close}>
+        <Dialog title={isNew ? "Add new inventory" : "Update inventory"} close={close}>
           <form className="admin-form" onSubmit={submit}>
-            <p>Variant #{form.productVariantId}</p>
+            <Notice message={error}/>
+
+            {isNew ? (
+                <div className="admin-variant-picker">
+                  <label>
+                    Product variant
+                    <input
+                        type="search"
+                        placeholder="Search product, variant, or SKU"
+                        value={variantQuery}
+                        onChange={(event) => setVariantQuery(event.target.value)}
+                    />
+                    <select
+                        required
+                        value={form.productVariantId}
+                        onChange={(event) => set("productVariantId", event.target.value)}
+                    >
+                      <option value="">
+                        {variants.loading ? "Loading variants…" : "Select a product variant"}
+                      </option>
+                      {availableVariants.map((variant) => (
+                          <option key={variant.id} value={variant.id}>
+                            {variant.productName || "Product"} · {variant.name || "Variant"} · {variant.sku}
+                          </option>
+                      ))}
+                    </select>
+                    {!variants.loading && !variants.error && !availableVariants.length && (
+                        <small className="admin-form-hint">All matching variants already have inventory.</small>
+                    )}
+                    {variants.error && <Notice message={variants.error}/>}
+                  </label>
+                </div>
+            ) : (
+                <p>Variant #{form.productVariantId}</p>
+            )}
 
             {["quantity", "reservedQuantity", "reorderLevel"].map((key) => (
                 <label key={key}>
-                  {key.replace(/([A-Z])/g, " $1")}
+                  {key === "quantity" ? "Initial stock quantity" : key === "reservedQuantity" ? "Reserved quantity" : "Reorder level"}
                   <input
                       type="number"
+                      step="1"
                       min="0"
                       required
                       value={form[key]}
-                      onChange={(event) =>
-                          setForm({...form, [key]: event.target.value})
-                      }
+                      onChange={(event) => set(key, event.target.value)}
                   />
                 </label>
             ))}
+
+            <div className="admin-stock-preview" aria-live="polite">
+              <p>Live stock preview</p>
+              <div>
+                <span><small>In stock</small><b>{Number.isFinite(quantity) ? quantity : 0}</b></span>
+                <span><small>Reserved</small><b>{Number.isFinite(reservedQuantity) ? reservedQuantity : 0}</b></span>
+                <span><small>Available</small><b className={availableQuantity < 0 ? "is-negative" : ""}>{availableQuantity}</b></span>
+              </div>
+            </div>
 
             <div className="admin-dialog-actions">
               <button
@@ -1312,8 +1921,8 @@ function Dialog({ title, children, close }) {
               >
                 Cancel
               </button>
-              <button disabled={busy}>
-                {busy ? "Saving…" : "Save"}
+              <button disabled={busy || (isNew && variants.loading)}>
+                {busy ? "Saving…" : isNew ? "Create inventory" : "Save"}
               </button>
             </div>
           </form>

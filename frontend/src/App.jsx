@@ -7,7 +7,7 @@ import { WishlistPage } from "./pages/WishlistPage";
 import { AdminProvider } from "./admin/AdminContext";
 import { AdminGate, AdminLayout } from "./admin/AdminLayout";
 import { AdminLogin } from "./admin/AdminLogin";
-import { BrandsPage, CategoriesPage, CouponsPage, CustomersPage, InventoryPage, OrdersPage as AdminOrdersPage, OverviewPage, ProductsPage } from "./admin/AdminPages";
+import { BrandsPage, CategoriesPage, CouponsPage, CustomersPage, InventoryPage, OrdersPage as AdminOrdersPage, OverviewPage, ProductVariantsPage, ProductsPage } from "./admin/AdminPages";
 
 function NotFound() { return <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6"><p className="text-sm text-zinc-500">404</p><h1 className="mt-2 text-4xl font-bold">Page not found</h1></div>; }
 
@@ -29,7 +29,7 @@ export default function App() {
   return <BrowserRouter><Routes>
     <Route path="/admin/login" element={<AdminProvider><AdminLogin/></AdminProvider>}/>
     <Route path="/admin" element={<AdminProvider><AdminGate/></AdminProvider>}>
-      <Route element={<AdminLayout/>}><Route index element={<OverviewPage/>}/><Route path="products" element={<ProductsPage/>}/><Route path="orders" element={<AdminOrdersPage/>}/><Route path="customers" element={<CustomersPage/>}/><Route path="categories" element={<CategoriesPage/>}/><Route path="brands" element={<BrandsPage/>}/><Route path="inventory" element={<InventoryPage/>}/><Route path="coupons" element={<CouponsPage/>}/></Route>
+      <Route element={<AdminLayout/>}><Route index element={<OverviewPage/>}/><Route path="products" element={<ProductsPage/>}/><Route path="product-variants" element={<ProductVariantsPage/>}/><Route path="orders" element={<AdminOrdersPage/>}/><Route path="customers" element={<CustomersPage/>}/><Route path="categories" element={<CategoriesPage/>}/><Route path="brands" element={<BrandsPage/>}/><Route path="inventory" element={<InventoryPage/>}/><Route path="coupons" element={<CouponsPage/>}/></Route>
     </Route>
     <Route path="/*" element={<StorefrontRoutes/>}/>
   </Routes></BrowserRouter>;

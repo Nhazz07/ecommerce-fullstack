@@ -1,4 +1,4 @@
-import { Boxes, ChevronDown, LayoutDashboard, LogOut, Menu, Package, ReceiptText, Tags, Users, Warehouse, X } from "lucide-react";
+import { Boxes, ChevronDown, GitBranch, LayoutDashboard, LogOut, Menu, Package, ReceiptText, Tags, Users, Warehouse, X } from "lucide-react";
 import { useContext, useState } from "react";
 import { NavLink, Navigate, Outlet } from "react-router-dom";
 import { AdminContext } from "./AdminContext";
@@ -6,6 +6,7 @@ import { AdminContext } from "./AdminContext";
 const links = [
   ["Overview", "/admin", LayoutDashboard], ["Products", "/admin/products", Package], ["Orders", "/admin/orders", ReceiptText],
   ["Customers", "/admin/customers", Users], ["Categories", "/admin/categories", Tags], ["Brands", "/admin/brands", Boxes],
+  ["Product Variants", "/admin/product-variants", GitBranch],
   ["Inventory", "/admin/inventory", Warehouse], ["Coupons", "/admin/coupons", Tags],
 ];
 
