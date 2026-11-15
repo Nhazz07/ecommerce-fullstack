@@ -13,7 +13,9 @@ import com.example.animeecommercebackend.Repository.InventoryRepository;
 import com.example.animeecommercebackend.Repository.ProductVariantRepository;
 import com.example.animeecommercebackend.Service.InventoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Comparator;
@@ -26,30 +28,35 @@ public class InventoryServiceImpl implements InventoryService {
     private final ProductVariantRepository productVariantRepository;
 
     @Override
+    @Transactional
     public InventoryResponseDto createInventory(InventoryRequestDto dto) {
+        validateStockQuantities(dto);
 
-        // Find the ProductVariant
         ProductVariant productVariant = productVariantRepository
                 .findById(dto.getProductVariantId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Product Variant Not Found"));
 
-        // Convert DTO -> Entity
-        Inventory inventory = InventoryMapper.toEntity(dto);
-
-        // Connect Inventory -> ProductVariant
-        inventory.setProductVariant(productVariant);
-
-        // Calculate available quantity
-        inventory.setAvailableQuantity(
-                inventory.getQuantity() - inventory.getReservedQuantity()
-        );
-        if (inventory.getAvailableQuantity() < 0) {
-            throw new BusinessConflictException("Available inventory cannot be negative.");
+        if (inventoryRepository.existsByProductVariantId(dto.getProductVariantId())) {
+            throw new BusinessConflictException(
+                    "Inventory already exists for product variant " + dto.getProductVariantId()
+            );
         }
 
-        // Save
-        Inventory saved = inventoryRepository.save(inventory);
+        Inventory inventory = InventoryMapper.toEntity(dto);
+        inventory.setProductVariant(productVariant);
+        recalculate(inventory);
+
+        Inventory saved;
+        try {
+            // Flush here so a concurrent create also becomes a 409 instead of leaking a
+            // database exception after the service method has returned.
+            saved = inventoryRepository.saveAndFlush(inventory);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessConflictException(
+                    "Inventory already exists for product variant " + dto.getProductVariantId()
+            );
+        }
 
         return InventoryMapper.toResponse(saved);
     }
@@ -86,7 +93,9 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
+    @Transactional
     public InventoryResponseDto updateInventory(Long id, InventoryRequestDto dto) {
+        validateStockQuantities(dto);
 
         Inventory inventory = inventoryRepository.findById(id)
                 .orElseThrow(() ->
@@ -96,10 +105,7 @@ public class InventoryServiceImpl implements InventoryService {
         inventory.setReservedQuantity(dto.getReservedQuantity());
         inventory.setReOrderLevel(dto.getReorderLevel());
 
-        // Recalculate available quantity
-        inventory.setAvailableQuantity(
-                inventory.getQuantity() - inventory.getReservedQuantity()
-        );
+        recalculate(inventory);
 
         Inventory updated = inventoryRepository.save(inventory);
 
@@ -255,5 +261,19 @@ public class InventoryServiceImpl implements InventoryService {
             throw new BusinessConflictException("Inventory cannot become negative.");
         }
         inventory.setAvailableQuantity(available);
+    }
+
+    private void validateStockQuantities(InventoryRequestDto dto) {
+        if (dto.getQuantity() == null || dto.getReservedQuantity() == null || dto.getReorderLevel() == null) {
+            throw new BusinessConflictException("All stock quantities are required.");
+        }
+        if (dto.getQuantity() < 0 || dto.getReservedQuantity() < 0 || dto.getReorderLevel() < 0) {
+            throw new BusinessConflictException("Stock quantities cannot be negative.");
+        }
+        if (dto.getReservedQuantity() > dto.getQuantity()) {
+            throw new BusinessConflictException(
+                    "Reserved quantity cannot exceed total quantity."
+            );
+        }
     }
 }

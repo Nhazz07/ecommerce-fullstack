@@ -1,8 +1,12 @@
 package com.example.animeecommercebackend.Service.Impl;
 
 import com.example.animeecommercebackend.Dto.Request.UserRequestDto;
+import com.example.animeecommercebackend.Dto.Request.UserStatusRequestDto;
 import com.example.animeecommercebackend.Dto.Response.UserResponseDto;
+import com.example.animeecommercebackend.Entity.Enums.UserRole;
+import com.example.animeecommercebackend.Entity.Enums.UserStatus;
 import com.example.animeecommercebackend.Entity.User;
+import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Exception.ResourceNotFoundException;
 import com.example.animeecommercebackend.Mapper.UserMapper;
 import com.example.animeecommercebackend.Repository.UserRepository;
@@ -57,6 +61,40 @@ public class UserServiceImpl implements UserService {
         User updatedUser = userRepository.save(user);
 
         return UserMapper.toResponse(updatedUser);
+    }
+
+    @Override
+    public UserResponseDto updateUserStatus(Long id, UserStatusRequestDto dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User Not Found"));
+
+        if (user.getRole() != UserRole.CUSTOMER) {
+            throw new BusinessConflictException("Administrator status cannot be changed here.");
+        }
+
+        UserStatus current = user.getStatus();
+        UserStatus requested = dto.getStatus();
+        if (!isAllowedStatusTransition(current, requested)) {
+            throw new BusinessConflictException(
+                    "Cannot change customer status from " + current + " to " + requested + "."
+            );
+        }
+
+        user.setStatus(requested);
+        return UserMapper.toResponse(userRepository.save(user));
+    }
+
+    private boolean isAllowedStatusTransition(UserStatus current, UserStatus requested) {
+        if (current == requested || current == UserStatus.BANNED || requested == UserStatus.BANNED) {
+            return false;
+        }
+
+        return switch (current) {
+            case ACTIVE -> requested == UserStatus.INACTIVE || requested == UserStatus.SUSPENDED;
+            case INACTIVE -> requested == UserStatus.ACTIVE || requested == UserStatus.SUSPENDED;
+            case SUSPENDED -> requested == UserStatus.ACTIVE || requested == UserStatus.INACTIVE;
+            case BANNED -> false;
+        };
     }
 
 

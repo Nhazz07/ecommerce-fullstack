@@ -1,6 +1,7 @@
 package com.example.animeecommercebackend.Dto.Response;
 
 import com.example.animeecommercebackend.Entity.Enums.UserStatus;
+import com.example.animeecommercebackend.Entity.Enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class UserResponseDto {
     private String firstName;
     private String lastName;
     private String phoneNumber;
+    private UserRole role;
     private UserStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

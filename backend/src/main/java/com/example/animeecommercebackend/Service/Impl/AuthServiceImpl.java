@@ -5,7 +5,9 @@ import com.example.animeecommercebackend.Dto.Request.RegisterRequestDto;
 import com.example.animeecommercebackend.Dto.Response.LoginResponseDto;
 import com.example.animeecommercebackend.Dto.Response.RegisterResponseDto;
 import com.example.animeecommercebackend.Entity.Enums.UserRole;
+import com.example.animeecommercebackend.Entity.Enums.UserStatus;
 import com.example.animeecommercebackend.Entity.User;
+import com.example.animeecommercebackend.Exception.BusinessConflictException;
 import com.example.animeecommercebackend.Mapper.RegisterMapper;
 import com.example.animeecommercebackend.Security.CustomerUserDetails;
 import com.example.animeecommercebackend.Security.JwtService;
@@ -78,6 +80,10 @@ public class AuthServiceImpl implements AuthService {
                 dto.getPassword(),
                 user.getPassword())) {
             throw new IllegalArgumentException("Invalid email or password!");
+        }
+
+        if (user.getRole() == UserRole.CUSTOMER && user.getStatus() != UserStatus.ACTIVE) {
+            throw new BusinessConflictException("This customer account is not active.");
         }
 
         String accessToken = jwtService.generateToken(

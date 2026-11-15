@@ -2,6 +2,7 @@ package com.example.animeecommercebackend.Controller;
 
 import com.example.animeecommercebackend.Dto.ApiResponseDto;
 import com.example.animeecommercebackend.Dto.Request.UserRequestDto;
+import com.example.animeecommercebackend.Dto.Request.UserStatusRequestDto;
 import com.example.animeecommercebackend.Dto.Response.UserResponseDto;
 import com.example.animeecommercebackend.Entity.User;
 import com.example.animeecommercebackend.Service.CurrentUserService;
@@ -117,6 +118,20 @@ public class UserController {
                 );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> updateUserStatus(
+            @PathVariable @Positive Long id,
+            @RequestBody @Valid UserStatusRequestDto dto) {
+        UserResponseDto user = userServiceImpl.updateUserStatus(id, dto);
+        return ResponseEntity.ok(new ApiResponseDto<>(
+                true,
+                "User status updated successfully",
+                user
+        ));
     }
 
 

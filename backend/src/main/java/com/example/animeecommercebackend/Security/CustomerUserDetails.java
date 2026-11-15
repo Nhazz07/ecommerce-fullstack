@@ -1,6 +1,7 @@
 package com.example.animeecommercebackend.Security;
 
 import com.example.animeecommercebackend.Entity.Enums.UserStatus;
+import com.example.animeecommercebackend.Entity.Enums.UserRole;
 import com.example.animeecommercebackend.Entity.User;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -50,6 +51,6 @@ public class CustomerUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return user.getStatus() == UserStatus.ACTIVE;
+        return user.getRole() == UserRole.ADMIN || user.getStatus() == UserStatus.ACTIVE;
     }
 }

@@ -69,7 +69,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 UserDetails userDetails =
                         customerUserDetailService.loadUserByUsername(username);
 
-                if (jwtService.isTokenValid(jwt, userDetails)) {
+                if (userDetails.isEnabled() && jwtService.isTokenValid(jwt, userDetails)) {
 
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
@@ -86,6 +86,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext()
                             .setAuthentication(authentication);
 
+                } else if (!userDetails.isEnabled()) {
+                    logger.warn("Disabled account rejected for {} {}", request.getMethod(), request.getServletPath());
+                    SecurityContextHolder.clearContext();
                 } else {
                     logger.warn("Invalid JWT rejected for {} {}", request.getMethod(), request.getServletPath());
                 }

@@ -13,6 +13,8 @@ import jakarta.persistence.LockModeType;
 public interface InventoryRepository extends JpaRepository<Inventory,Long> {
     Inventory findByProductVariantId(Long productVariantId);
 
+    boolean existsByProductVariantId(Long productVariantId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select i from Inventory i where i.productVariant.id = :productVariantId")
     Inventory findByProductVariantIdForUpdate(@Param("productVariantId") Long productVariantId);

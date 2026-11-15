@@ -29,8 +29,9 @@ public class UserMapper {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setPhoneNumber(user.getPhoneNumber());
+        dto.setRole(user.getRole());
         dto.setStatus(user.getStatus());
-        dto.setCreatedAt(user.getUpdatedAt());
+        dto.setCreatedAt(user.getCreatedAt());
         dto.setUpdatedAt(user.getUpdatedAt());
         return dto;
     }
