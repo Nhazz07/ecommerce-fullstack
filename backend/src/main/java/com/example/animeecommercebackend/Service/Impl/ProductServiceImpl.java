@@ -4,6 +4,7 @@ import com.example.animeecommercebackend.Dto.Request.ProductRequestDto;
 import com.example.animeecommercebackend.Dto.Response.ProductResponseDto;
 import com.example.animeecommercebackend.Entity.Brand;
 import com.example.animeecommercebackend.Entity.Category;
+import com.example.animeecommercebackend.Entity.Inventory;
 import com.example.animeecommercebackend.Entity.Product;
 import com.example.animeecommercebackend.Entity.ProductVariant;
 import com.example.animeecommercebackend.Entity.Enums.OrderStatus;
@@ -28,7 +29,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -48,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
+    @Transactional
     public ProductResponseDto createProduct(ProductRequestDto dto) {
 
         // Find Category
@@ -68,13 +74,75 @@ public class ProductServiceImpl implements ProductService {
         // Convert DTO -> Entity
         Product product = ProductMapper.toEntity(dto);
 
+        if (product.getReleaseDate() == null) {
+            product.setReleaseDate(LocalDateTime.now());
+        }
+
         // Set relationships
         product.setCategory(category);
         product.setBrand(brand);
         product.setSeries(series);
 
-        // Save
+        // Save product
         Product saved = productRepository.save(product);
+
+        // Create initial Product Variant
+        ProductVariant variant = new ProductVariant();
+        String requestedSku = (dto.getVariantSku() != null && !dto.getVariantSku().isBlank())
+                ? dto.getVariantSku().trim()
+                : saved.getSku();
+
+        String finalSku = requestedSku;
+        if (productVariantRepository.existsBySku(finalSku)) {
+            finalSku = requestedSku + "-VAR-" + saved.getId();
+        }
+        variant.setSku(finalSku);
+
+        String vName = (dto.getVariantName() != null && !dto.getVariantName().isBlank())
+                ? dto.getVariantName().trim()
+                : "Standard";
+        variant.setName(vName);
+
+        BigDecimal vPrice = (dto.getVariantPrice() != null && dto.getVariantPrice().compareTo(BigDecimal.ZERO) > 0)
+                ? dto.getVariantPrice()
+                : (saved.getPrice() != null && saved.getPrice().compareTo(BigDecimal.ZERO) > 0 ? saved.getPrice() : BigDecimal.valueOf(0.01));
+        variant.setPrice(vPrice);
+
+        String vSize = (dto.getVariantSize() != null && !dto.getVariantSize().isBlank())
+                ? dto.getVariantSize().trim()
+                : "Standard";
+        variant.setSize(vSize);
+
+        String vColor = (dto.getVariantColor() != null && !dto.getVariantColor().isBlank())
+                ? dto.getVariantColor().trim()
+                : "Standard";
+        variant.setColor(vColor);
+
+        variant.setProduct(saved);
+        ProductVariant savedVariant = productVariantRepository.save(variant);
+
+        // Create connected Inventory
+        int qty = (dto.getInitialStock() != null && dto.getInitialStock() >= 0)
+                ? dto.getInitialStock()
+                : 10;
+        int reorder = (dto.getReorderLevel() != null && dto.getReorderLevel() >= 0)
+                ? dto.getReorderLevel()
+                : 5;
+
+        Inventory inventory = new Inventory();
+        inventory.setQuantity(qty);
+        inventory.setReservedQuantity(0);
+        inventory.setReOrderLevel(reorder);
+        inventory.setAvailableQuantity(qty);
+        inventory.setUpdateAt(LocalDateTime.now());
+        inventory.setProductVariant(savedVariant);
+        Inventory savedInventory = inventoryRepository.save(inventory);
+
+        savedVariant.setInventory(savedInventory);
+        if (saved.getProductVariants() == null) {
+            saved.setProductVariants(new ArrayList<>());
+        }
+        saved.getProductVariants().add(savedVariant);
 
         // Entity -> Response DTO
         return ProductMapper.toResponse(saved);

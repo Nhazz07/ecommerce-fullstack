@@ -2,6 +2,7 @@ package com.example.animeecommercebackend.Dto.Request;
 
 import com.example.animeecommercebackend.Entity.Enums.ProductStatus;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -44,4 +45,21 @@ public class ProductRequestDto {
 
     @NotNull(message = "Series ID is required")
     private Long seriesId;
+
+    private String variantSku;
+
+    private String variantName;
+
+    @DecimalMin(value = "0.00", message = "Variant price cannot be negative")
+    private BigDecimal variantPrice;
+
+    private String variantSize;
+
+    private String variantColor;
+
+    @Min(value = 0, message = "Initial stock cannot be negative")
+    private Integer initialStock;
+
+    @Min(value = 0, message = "Reorder level cannot be negative")
+    private Integer reorderLevel;
 }
