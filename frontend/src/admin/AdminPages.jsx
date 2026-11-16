@@ -23,6 +23,13 @@ const emptyProduct = {
   categoryId: "",
   brandId: "",
   seriesId: "",
+  variantSku: "",
+  variantName: "Standard",
+  variantPrice: "",
+  variantSize: "Standard",
+  variantColor: "Standard",
+  stockQuantity: 10,
+  reorderLevel: 5,
 };
 
 const emptyCoupon = {
@@ -301,6 +308,13 @@ function Dialog({ title, children, close }) {
           categoryId: Number(form.categoryId),
           brandId: Number(form.brandId),
           seriesId: Number(form.seriesId),
+          variantSku: form.variantSku?.trim() || form.sku?.trim(),
+          variantName: form.variantName?.trim() || "Standard",
+          variantPrice: form.variantPrice ? Number(form.variantPrice) : Number(form.price),
+          variantSize: form.variantSize?.trim() || "Standard",
+          variantColor: form.variantColor?.trim() || "Standard",
+          initialStock: form.stockQuantity !== undefined && form.stockQuantity !== "" ? Number(form.stockQuantity) : 10,
+          reorderLevel: form.reorderLevel !== undefined && form.reorderLevel !== "" ? Number(form.reorderLevel) : 5,
         };
 
         let productId = form.id;
@@ -308,9 +322,35 @@ function Dialog({ title, children, close }) {
           setStatus?.("Saving product details…");
           await adminApi.updateProduct(form.id, payload);
         } else {
-          setStatus?.("Creating product…");
+          setStatus?.("Creating product with variant and inventory…");
           const created = await adminApi.createProduct(payload);
           productId = created?.id;
+
+          // Fallback: If backend did not auto-create the variant/inventory, create them here
+          if (productId && (!created?.productVariants || created.productVariants.length === 0)) {
+            try {
+              setStatus?.("Creating initial product variant…");
+              const variant = await adminApi.createProductVariant({
+                productId: Number(productId),
+                sku: payload.variantSku,
+                name: payload.variantName,
+                price: payload.variantPrice,
+                size: payload.variantSize,
+                color: payload.variantColor,
+              });
+              if (variant?.id) {
+                setStatus?.("Initializing stock inventory…");
+                await adminApi.createInventory({
+                  quantity: payload.initialStock,
+                  reservedQuantity: 0,
+                  reorderLevel: payload.reorderLevel,
+                  productVariantId: Number(variant.id),
+                });
+              }
+            } catch (fallbackError) {
+              console.warn("Fallback variant/inventory creation error:", fallbackError);
+            }
+          }
         }
 
         if (removedImageIds.length > 0) {
@@ -768,6 +808,95 @@ function Dialog({ title, children, close }) {
                 items={lookups?.[2]}
                 required
             />
+
+            {!form.id && (
+              <div style={{ borderTop: "1px solid var(--admin-line)", paddingTop: "14px", marginTop: "4px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "6px" }}>
+                  <h4 style={{ margin: 0, fontSize: "14px", color: "#242428", fontWeight: 700 }}>
+                    Initial Variant & Inventory
+                  </h4>
+                  <small style={{ color: "#777", fontSize: "11px" }}>Connected automatically</small>
+                </div>
+                <p className="admin-form-hint" style={{ margin: "0 0 12px", color: "#77777b", fontSize: "12px" }}>
+                  Creates the default product variant and sets its initial stock in inventory so the product is immediately ready to sell.
+                </p>
+
+                <div className="admin-form-grid">
+                  <label>
+                    Variant SKU
+                    <input
+                      placeholder={form.sku || "Same as product SKU"}
+                      value={form.variantSku || ""}
+                      onChange={(event) => set("variantSku", event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Variant name / label
+                    <input
+                      required
+                      placeholder="Standard"
+                      value={form.variantName || ""}
+                      onChange={(event) => set("variantName", event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Variant price
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      placeholder={form.price || "Same as product price"}
+                      value={form.variantPrice || ""}
+                      onChange={(event) => set("variantPrice", event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Size
+                    <input
+                      required
+                      placeholder="Standard"
+                      value={form.variantSize || ""}
+                      onChange={(event) => set("variantSize", event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Color
+                    <input
+                      required
+                      placeholder="Standard"
+                      value={form.variantColor || ""}
+                      onChange={(event) => set("variantColor", event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Initial stock quantity
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      value={form.stockQuantity ?? 10}
+                      onChange={(event) => set("stockQuantity", event.target.value)}
+                    />
+                  </label>
+
+                  <label>
+                    Reorder level
+                    <input
+                      required
+                      type="number"
+                      min="0"
+                      value={form.reorderLevel ?? 5}
+                      onChange={(event) => set("reorderLevel", event.target.value)}
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
 
             <div className="admin-dialog-actions">
               <button
