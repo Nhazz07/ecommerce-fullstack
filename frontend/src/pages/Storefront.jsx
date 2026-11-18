@@ -1566,9 +1566,6 @@ export function ProductReviewsPage() {
     </section>
   );
 }
-    </section>
-  );
-}
 
 /* =========================================================================
    5. CART PAGE

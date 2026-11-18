@@ -86,7 +86,7 @@ export function WishlistPage() {
 
   if (wishlistLoading || (wishlists === null && !wishlistError)) {
     return (
-      <Page eyebrow="Sanctuary" title="Saved Wishlist" subtitle="Loading your curated wishlist records…">
+      <Page eyebrow="Wishlist" title="Saved Items" subtitle="Loading your curated wishlist…">
         <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <ProductCardSkeleton key={i} />
@@ -98,13 +98,13 @@ export function WishlistPage() {
 
   return (
     <Page
-      eyebrow="Sanctuary"
-      title="Saved Wishlist"
-      subtitle="Artefacts and collectables reserved for your personal collection."
+      eyebrow="Wishlist"
+      title="Saved Items"
+      subtitle="Products reserved for your personal collection."
       actions={
         <Link
           to="/shop"
-          className="text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline"
+          className="text-xs font-semibold uppercase tracking-wider text-black hover:underline underline-offset-4"
         >
           Explore Collection →
         </Link>
@@ -116,7 +116,7 @@ export function WishlistPage() {
           <button
             type="button"
             onClick={() => loadWishlists().catch(() => {})}
-            className="ml-1 font-semibold underline underline-offset-4 text-[#dfc79b]"
+            className="ml-1 font-semibold underline underline-offset-4"
           >
             Try again
           </button>
@@ -124,7 +124,11 @@ export function WishlistPage() {
       )}
 
       {actionError && <Notice>{actionError}</Notice>}
-      {feedback && <Notice type="info">{feedback}</Notice>}
+      {feedback && (
+        <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-black">
+          {feedback}
+        </div>
+      )}
 
       {wishlists === null ? null : wishlists.length ? (
         <div className="space-y-14">
@@ -132,19 +136,19 @@ export function WishlistPage() {
             const ids = wishlist.productIds || [];
             return (
               <section key={wishlist.id} aria-labelledby={`wishlist-${wishlist.id}`}>
-                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-zinc-800 pb-4">
+                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#E5E5E5] pb-4">
                   <div>
-                    <h2 id={`wishlist-${wishlist.id}`} className="font-serif text-xl font-medium text-zinc-100">
+                    <h2 id={`wishlist-${wishlist.id}`} className="text-lg font-bold text-black">
                       {wishlist.name}
                     </h2>
                     {wishlist.description && (
-                      <p className="mt-1 text-xs text-zinc-400 font-sans">
+                      <p className="mt-1 text-xs text-[#737373]">
                         {wishlist.description}
                       </p>
                     )}
                   </div>
-                  <span className="font-mono text-xs text-[#c5a880]">
-                    {ids.length} {ids.length === 1 ? "piece" : "pieces"}
+                  <span className="text-xs font-semibold text-[#737373] tabular-nums">
+                    {ids.length} {ids.length === 1 ? "item" : "items"}
                   </span>
                 </div>
 
@@ -160,11 +164,11 @@ export function WishlistPage() {
                               onAdd={(item, variant) => addToCart(toCartItem(item, variant))}
                             />
                           ) : (
-                            <div className="flex aspect-[4/5] flex-col items-center justify-center border border-zinc-800 bg-zinc-950 p-5 text-center text-xs text-zinc-500">
+                            <div className="flex aspect-[4/5] flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-5 text-center text-xs text-[#737373]">
                               {productsLoading ? (
-                                <span className="animate-pulse">Loading piece…</span>
+                                <span className="animate-pulse">Loading…</span>
                               ) : (
-                                <span>Piece details are no longer available in the catalogue.</span>
+                                <span>Product no longer available in catalogue.</span>
                               )}
                             </div>
                           )}
@@ -173,11 +177,11 @@ export function WishlistPage() {
                             type="button"
                             disabled={Boolean(busyItem)}
                             onClick={() => removeProduct(wishlist.id, id)}
-                            className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 border border-zinc-800 bg-zinc-900/60 text-[11px] font-semibold uppercase tracking-wider text-zinc-400 hover:border-red-900/60 hover:text-red-400 disabled:opacity-50 transition-colors"
+                            className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 border border-[#E5E5E5] bg-white text-[11px] font-semibold uppercase tracking-wider text-[#737373] hover:border-black hover:text-black disabled:opacity-50 transition-colors"
                           >
                             <Trash2 size={13} />
                             <span>
-                              {busyItem === `${wishlist.id}:${id}` ? "Removing…" : "Remove from Wishlist"}
+                              {busyItem === `${wishlist.id}:${id}` ? "Removing…" : "Remove"}
                             </span>
                           </button>
                         </div>
@@ -185,8 +189,8 @@ export function WishlistPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="mt-6 border border-zinc-800 bg-zinc-950 p-8 text-center text-xs text-zinc-500">
-                    This wishlist is empty. Explore the archive to save collectables here.
+                  <p className="mt-6 border border-[#E5E5E5] bg-[#FAFAFA] p-8 text-center text-xs text-[#737373]">
+                    This wishlist is empty. Explore the shop to save items here.
                   </p>
                 )}
               </section>
@@ -194,19 +198,19 @@ export function WishlistPage() {
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center border border-zinc-800 bg-zinc-950 p-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/60 text-[#c5a880]">
+        <div className="flex flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center border border-black bg-white text-black">
             <Heart size={26} strokeWidth={1.5} />
           </div>
-          <h2 className="mt-4 font-serif text-xl font-medium text-zinc-200">
+          <h2 className="mt-4 text-lg font-bold text-black">
             Your wishlist is empty
           </h2>
-          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-400">
-            Save unique statues, collector hoodies, and official Japanese prints to inspect them later.
+          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[#737373]">
+            Save unique figures, collector hoodies, and official prints to come back to them later.
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-flex items-center gap-2 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black hover:opacity-95 transition-opacity"
+            className="mt-6 inline-flex items-center gap-2 bg-black px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-[#1a1a1a] transition-colors"
           >
             <span>Explore The Collection</span>
             <ArrowRight size={14} />

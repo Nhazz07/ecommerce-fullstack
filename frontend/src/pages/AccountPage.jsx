@@ -22,13 +22,13 @@ const accountError = (error, method, endpoint) => {
 
 const Field = ({ label, value, onChange, type = "text" }) => (
   <label className="block space-y-1.5 text-xs font-semibold">
-    <span className="uppercase tracking-wider text-zinc-300">{label}</span>
+    <span className="uppercase tracking-wider text-black">{label}</span>
     <input
       required
       type={type}
       value={value ?? ""}
       onChange={(event) => onChange(event.target.value)}
-      className="field text-xs"
+      className="field text-xs border-[#E5E5E5] bg-white text-black focus:border-black"
     />
   </label>
 );
@@ -191,45 +191,50 @@ export function AccountPage() {
 
   return (
     <Page
-      eyebrow="Collector Portal"
-      title="Account Sanctuary"
-      subtitle="Manage your personal profile, credentials, and global shipping addresses."
+      eyebrow="Account"
+      title="Your Profile"
+      subtitle="Manage your personal details and shipping addresses."
       actions={
         <Link
           to="/shop"
-          className="text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline"
+          className="text-xs font-semibold uppercase tracking-wider text-black hover:underline underline-offset-4"
         >
           Explore Collection →
         </Link>
       }
     >
-      <div className="grid gap-12 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         {/* Profile Section */}
         <section
           aria-labelledby="profile-heading"
-          className="border border-zinc-800 bg-zinc-950 p-6 sm:p-8 space-y-6"
+          className="border border-[#E5E5E5] bg-white p-6 sm:p-8 space-y-6"
         >
-          <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#c5a880]/40 bg-[#c5a880]/10 text-[#dfc79b]">
+          <div className="flex items-center gap-3 border-b border-[#E5E5E5] pb-4">
+            <div className="flex h-9 w-9 items-center justify-center border border-black bg-black text-white">
               <User size={16} />
             </div>
             <div>
-              <h2 id="profile-heading" className="font-serif text-lg font-medium text-zinc-100">
+              <h2 id="profile-heading" className="text-base font-bold text-black">
                 Collector Profile
               </h2>
-              <span className="text-[11px] text-zinc-400">
+              <span className="text-[11px] text-[#737373]">
                 Primary contact details and credentials
               </span>
             </div>
           </div>
 
           {profileLoading ? (
-            <p className="text-xs text-zinc-500">Loading profile data…</p>
+            <p className="text-xs text-[#737373]">Loading profile data…</p>
           ) : profileError ? (
             <Notice>{profileError}</Notice>
           ) : profile ? (
             <form onSubmit={saveProfile} className="space-y-4">
-              {profileFeedback && <Notice type="info">{profileFeedback}</Notice>}
+              {profileFeedback && (
+                <div className="flex items-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-black">
+                  <Check size={13} className="shrink-0" />
+                  {profileFeedback}
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field
@@ -266,7 +271,7 @@ export function AccountPage() {
               </Button>
             </form>
           ) : (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-[#737373]">
               Profile information is not available from the account response.
             </p>
           )}
@@ -275,37 +280,42 @@ export function AccountPage() {
         {/* Addresses Section */}
         <section
           aria-labelledby="addresses-heading"
-          className="border border-zinc-800 bg-zinc-950 p-6 sm:p-8 space-y-6"
+          className="border border-[#E5E5E5] bg-white p-6 sm:p-8 space-y-6"
         >
-          <div className="flex items-center gap-3 border-b border-zinc-800 pb-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#c5a880]/40 bg-[#c5a880]/10 text-[#dfc79b]">
+          <div className="flex items-center gap-3 border-b border-[#E5E5E5] pb-4">
+            <div className="flex h-9 w-9 items-center justify-center border border-black bg-black text-white">
               <MapPin size={16} />
             </div>
             <div>
-              <h2 id="addresses-heading" className="font-serif text-lg font-medium text-zinc-100">
+              <h2 id="addresses-heading" className="text-base font-bold text-black">
                 Shipping Destinations
               </h2>
-              <span className="text-[11px] text-zinc-400">
+              <span className="text-[11px] text-[#737373]">
                 Registered delivery addresses
               </span>
             </div>
           </div>
 
           {addressError && <Notice>{addressError}</Notice>}
-          {addressFeedback && <Notice type="info">{addressFeedback}</Notice>}
+          {addressFeedback && (
+            <div className="flex items-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-black">
+              <Check size={13} className="shrink-0" />
+              {addressFeedback}
+            </div>
+          )}
 
           {addressesLoading ? (
-            <p className="text-xs text-zinc-500">Loading saved addresses…</p>
+            <p className="text-xs text-[#737373]">Loading saved addresses…</p>
           ) : addresses.length ? (
             <div className="space-y-3">
               {addresses.map((address) => (
                 <article
                   key={address.id}
-                  className="border border-zinc-800/80 bg-zinc-900/40 p-4 text-xs font-sans space-y-2"
+                  className="border border-[#E5E5E5] bg-[#FAFAFA] p-4 text-xs space-y-2"
                 >
                   <div className="flex flex-wrap justify-between gap-3">
-                    <p className="text-zinc-300 leading-relaxed">
-                      <span className="font-semibold text-zinc-100">{address.street}</span>
+                    <p className="text-[#737373] leading-relaxed">
+                      <span className="font-semibold text-black">{address.street}</span>
                       <br />
                       {address.city}
                       {address.state ? `, ${address.state}` : ""} {address.postalCode}
@@ -317,7 +327,7 @@ export function AccountPage() {
                       <button
                         type="button"
                         onClick={() => deleteAddress(address.id)}
-                        className="text-zinc-500 hover:text-red-400 underline underline-offset-4"
+                        className="text-[#737373] hover:text-black underline underline-offset-4 transition-colors"
                       >
                         Remove
                       </button>
@@ -325,7 +335,7 @@ export function AccountPage() {
                         <button
                           type="button"
                           onClick={() => makeDefault(address.id)}
-                          className="text-[#dfc79b] underline underline-offset-4"
+                          className="text-black font-semibold underline underline-offset-4"
                         >
                           Set Default
                         </button>
@@ -333,11 +343,11 @@ export function AccountPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1 border-t border-zinc-800/60 text-[10px] uppercase font-mono tracking-wider">
-                    <span className="text-zinc-500">{address.addressType || "Home"}</span>
+                  <div className="flex items-center gap-2 pt-2 border-t border-[#E5E5E5] text-[10px] uppercase tracking-wider">
+                    <span className="text-[#737373]">{address.addressType || "Home"}</span>
                     {address.isDefault && (
-                      <span className="text-[#dfc79b] bg-[#c5a880]/10 border border-[#c5a880]/40 px-1.5 py-0.5">
-                        Default Address
+                      <span className="bg-black text-white px-1.5 py-0.5 text-[9px] font-bold tracking-widest">
+                        Default
                       </span>
                     )}
                   </div>
@@ -346,7 +356,7 @@ export function AccountPage() {
             </div>
           ) : (
             !addressError && (
-              <p className="border border-zinc-800/80 bg-zinc-900/30 p-5 text-center text-xs text-zinc-500">
+              <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-5 text-center text-xs text-[#737373]">
                 No saved shipping addresses registered yet.
               </p>
             )
@@ -355,9 +365,9 @@ export function AccountPage() {
           {/* Add Address Form */}
           <form
             onSubmit={addAddress}
-            className="border-t border-zinc-800 pt-6 space-y-4 text-xs"
+            className="border-t border-[#E5E5E5] pt-6 space-y-4 text-xs"
           >
-            <h3 className="font-serif text-sm font-medium text-zinc-100">
+            <h3 className="text-sm font-bold text-black">
               Add New Address
             </h3>
 
@@ -394,22 +404,22 @@ export function AccountPage() {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-black cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.isDefault}
                   onChange={(event) => setForm({ ...form, isDefault: event.target.checked })}
-                  className="accent-[#c5a880]"
+                  className="accent-black"
                 />
                 <span>Set as default address</span>
               </label>
 
-              <label className="flex items-center gap-2 text-xs text-zinc-300">
+              <label className="flex items-center gap-2 text-xs text-[#737373]">
                 <span>Type:</span>
                 <select
                   value={form.addressType}
                   onChange={(event) => setForm({ ...form, addressType: event.target.value })}
-                  className="bg-zinc-900 border border-zinc-700 px-2 py-1 text-xs text-zinc-200"
+                  className="bg-white border border-[#E5E5E5] px-2 py-1 text-xs text-black focus:border-black focus:outline-none"
                 >
                   <option value="Home">Home</option>
                   <option value="Work">Work</option>
