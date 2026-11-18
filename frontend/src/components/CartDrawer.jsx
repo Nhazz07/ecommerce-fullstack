@@ -61,57 +61,57 @@ export function CartDrawer() {
     <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label="Shopping bag drawer">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 transition-opacity duration-200"
         onClick={closeCartDrawer}
       />
 
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-        <div className="w-screen max-w-md border-l border-zinc-800 bg-zinc-950 text-zinc-100 flex flex-col shadow-2xl transition-transform duration-300 ease-out">
+        <div className="w-screen max-w-md border-l border-[#E5E5E5] bg-white text-black flex flex-col shadow-2xl transition-transform duration-200 ease-out">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-5">
+          <div className="flex items-center justify-between border-b border-[#E5E5E5] px-6 py-5">
             <div className="flex items-baseline gap-2">
-              <h2 className="font-serif text-lg font-medium tracking-wider text-zinc-100">SHOPPING BAG</h2>
-              <span className="text-xs text-[#c5a880] tracking-widest font-mono">({count})</span>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-black">Shopping Bag</h2>
+              <span className="text-xs font-bold text-[#737373]">({count})</span>
             </div>
             <button
               type="button"
               onClick={closeCartDrawer}
               aria-label="Close bag drawer"
-              className="text-zinc-400 hover:text-white transition-colors p-1"
+              className="text-[#737373] hover:text-black transition-colors p-1"
             >
               <X size={20} />
             </button>
           </div>
 
           {/* Complimentary Shipping Progress */}
-          <div className="border-b border-zinc-800/80 bg-zinc-900/40 px-6 py-3.5">
+          <div className="border-b border-[#E5E5E5] bg-[#FAFAFA] px-6 py-3.5">
             {remainingForFreeShipping > 0 ? (
-              <p className="text-xs text-zinc-300">
-                Add <span className="font-semibold text-[#dfc79b]">{money(remainingForFreeShipping)}</span> more for complimentary express delivery.
+              <p className="text-xs text-black font-medium">
+                Add <span className="font-bold">{money(remainingForFreeShipping)}</span> more for complimentary express delivery.
               </p>
             ) : (
-              <p className="text-xs font-medium text-[#dfc79b]">
-                ✓ You have unlocked complimentary express delivery.
+              <p className="text-xs font-bold text-black">
+                ✓ Complimentary express delivery unlocked.
               </p>
             )}
-            <div className="mt-2 h-1 w-full overflow-hidden bg-zinc-800">
+            <div className="mt-2 h-1 w-full overflow-hidden bg-[#E5E5E5]">
               <div
-                className="h-full bg-gradient-to-r from-[#c5a880] to-[#dfc79b] transition-all duration-500"
+                className="h-full bg-black transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
 
           {/* Cart Items List */}
-          <div className="flex-1 overflow-y-auto px-6 py-4 divide-y divide-zinc-800/60">
+          <div className="flex-1 overflow-y-auto px-6 py-4 divide-y divide-[#E5E5E5]">
             {cart.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center py-12">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/50 text-[#c5a880]">
-                  <ShoppingBag size={26} strokeWidth={1.5} />
+                <div className="flex h-14 w-14 items-center justify-center border border-black bg-white text-black">
+                  <ShoppingBag size={22} strokeWidth={1.75} />
                 </div>
-                <h3 className="mt-4 font-serif text-base font-medium text-zinc-200">Your bag is empty</h3>
-                <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-zinc-400">
-                  Discover our curated acquisitions and archival Tokyo Ghoul collectables.
+                <h3 className="mt-4 text-base font-bold text-black">Your bag is empty</h3>
+                <p className="mt-1 max-w-xs text-xs leading-relaxed text-[#737373]">
+                  Explore our curated anime figures and authenticated imports.
                 </p>
                 <button
                   type="button"
@@ -119,7 +119,7 @@ export function CartDrawer() {
                     closeCartDrawer();
                     navigate("/shop");
                   }}
-                  className="mt-6 inline-flex items-center gap-2 border border-[#c5a880]/60 bg-[#c5a880]/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-[#dfc79b] hover:bg-[#c5a880] hover:text-black transition-colors"
+                  className="mt-6 border border-black bg-black px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
                 >
                   Explore Collection
                 </button>
@@ -128,7 +128,7 @@ export function CartDrawer() {
               cart.map((item) => (
                 <div key={item.variantId} className="flex gap-4 py-4">
                   {/* Item Image */}
-                  <div className="h-24 w-20 shrink-0 overflow-hidden border border-zinc-800 bg-zinc-900">
+                  <div className="h-24 w-20 shrink-0 overflow-hidden border border-[#E5E5E5] bg-[#FAFAFA]">
                     <img
                       src={item.image || ANTEIKU_FALLBACK_IMAGE}
                       alt={item.name}
@@ -146,7 +146,7 @@ export function CartDrawer() {
                         <Link
                           to={`/product/${item.productId}`}
                           onClick={closeCartDrawer}
-                          className="font-serif text-sm font-medium text-zinc-200 hover:text-[#dfc79b] line-clamp-1 transition-colors"
+                          className="text-xs font-semibold text-black hover:underline line-clamp-1 transition-colors"
                         >
                           {item.name}
                         </Link>
@@ -154,14 +154,14 @@ export function CartDrawer() {
                           type="button"
                           aria-label={`Remove ${item.name}`}
                           onClick={() => removeFromCart(item.variantId)}
-                          className="text-zinc-500 hover:text-red-400 transition-colors p-0.5"
+                          className="text-[#737373] hover:text-black transition-colors p-0.5"
                         >
                           <Trash2 size={14} />
                         </button>
                       </div>
 
                       {item.variantName && (
-                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                        <p className="text-[11px] text-[#737373] mt-0.5 font-medium">
                           {item.variantName}
                         </p>
                       )}
@@ -169,29 +169,29 @@ export function CartDrawer() {
 
                     <div className="flex items-center justify-between pt-2">
                       {/* Quantity Stepper */}
-                      <div className="flex items-center border border-zinc-800 bg-zinc-900/60">
+                      <div className="flex items-center border border-[#E5E5E5] bg-white">
                         <button
                           type="button"
                           aria-label="Decrease quantity"
                           onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                          className="px-2 py-1 text-zinc-400 hover:text-white transition-colors"
+                          className="px-2 py-1 text-[#737373] hover:text-black transition-colors"
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="w-6 text-center text-xs font-mono tabular-nums text-zinc-200">
+                        <span className="w-6 text-center text-xs font-bold tabular-nums text-black">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           aria-label="Increase quantity"
                           onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                          className="px-2 py-1 text-zinc-400 hover:text-white transition-colors"
+                          className="px-2 py-1 text-[#737373] hover:text-black transition-colors"
                         >
                           <Plus size={12} />
                         </button>
                       </div>
 
-                      <span className="text-xs font-semibold text-zinc-200">
+                      <span className="text-xs font-bold text-black">
                         {money(item.price * item.quantity)}
                       </span>
                     </div>
@@ -203,19 +203,19 @@ export function CartDrawer() {
 
           {/* Footer */}
           {cart.length > 0 && (
-            <div className="border-t border-zinc-800 bg-zinc-950 p-6 space-y-4">
+            <div className="border-t border-[#E5E5E5] bg-white p-6 space-y-4">
               <div className="space-y-1.5">
-                <div className="flex justify-between text-xs text-zinc-400">
+                <div className="flex justify-between text-xs text-[#737373]">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-zinc-200">{money(total)}</span>
+                  <span className="font-bold text-black">{money(total)}</span>
                 </div>
-                <div className="flex justify-between text-xs text-zinc-400">
+                <div className="flex justify-between text-xs text-[#737373]">
                   <span>Shipping & Taxes</span>
                   <span>Calculated at checkout</span>
                 </div>
-                <div className="flex justify-between text-sm font-semibold text-zinc-100 pt-2 border-t border-zinc-800/80">
-                  <span className="font-serif">Estimated Total</span>
-                  <span className="text-[#dfc79b]">{money(total)}</span>
+                <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-[#E5E5E5]">
+                  <span>Estimated Total</span>
+                  <span className="text-black font-extrabold">{money(total)}</span>
                 </div>
               </div>
 
@@ -223,7 +223,7 @@ export function CartDrawer() {
                 <button
                   type="button"
                   onClick={handleCheckout}
-                  className="w-full flex items-center justify-center gap-2 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] py-3 text-xs font-bold uppercase tracking-widest text-black hover:opacity-95 transition-opacity"
+                  className="w-full flex items-center justify-center gap-2 border border-black bg-black py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
                 >
                   <span>Proceed to Checkout</span>
                   <ArrowRight size={14} />
@@ -232,14 +232,14 @@ export function CartDrawer() {
                 <button
                   type="button"
                   onClick={handleViewBag}
-                  className="w-full border border-zinc-800 bg-zinc-900 py-3 text-xs font-semibold uppercase tracking-widest text-zinc-300 hover:border-zinc-700 hover:text-white transition-colors"
+                  className="w-full border border-[#E5E5E5] bg-white py-3 text-xs font-bold uppercase tracking-widest text-black hover:border-black transition-colors"
                 >
                   View Full Bag
                 </button>
               </div>
 
-              <p className="text-center text-[10px] uppercase tracking-widest text-zinc-500">
-                Guaranteed Authentic · Insured Worldwide Shipping
+              <p className="text-center text-[10px] uppercase tracking-widest text-[#737373]">
+                Guaranteed Authentic · Express Dispatch
               </p>
             </div>
           )}

@@ -64,25 +64,25 @@ export function QuickViewModal() {
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-black/60 transition-opacity"
         onClick={closeQuickView}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-3xl overflow-hidden border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-2xl">
+      <div className="relative w-full max-w-3xl overflow-hidden border border-[#E5E5E5] bg-white text-black shadow-2xl">
         <button
           type="button"
           onClick={closeQuickView}
           aria-label="Close modal"
-          className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900/80 text-zinc-400 hover:text-white hover:bg-black transition-colors"
+          className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center border border-[#E5E5E5] bg-white text-black hover:bg-[#F5F5F5] transition-colors"
         >
-          <X size={18} />
+          <X size={16} />
         </button>
 
-        <div className="grid gap-6 md:grid-cols-2 p-6 sm:p-8">
+        <div className="grid gap-8 md:grid-cols-2 p-6 sm:p-8">
           {/* Images */}
           <div className="space-y-3">
-            <div className="aspect-[4/5] w-full overflow-hidden border border-zinc-800 bg-zinc-900">
+            <div className="aspect-[4/5] w-full overflow-hidden border border-[#E5E5E5] bg-[#FAFAFA]">
               <img
                 src={images[activeImageIndex]?.imageUrl || ANTEIKU_FALLBACK_IMAGE}
                 alt={images[activeImageIndex]?.altText || quickViewProduct.name}
@@ -98,20 +98,18 @@ export function QuickViewModal() {
                 {images.map((img, i) => (
                   <button
                     key={img.id || i}
+                    type="button"
                     onClick={() => setActiveImageIndex(i)}
-                    className={`h-14 w-12 shrink-0 overflow-hidden border transition-all ${
+                    className={`h-16 w-16 shrink-0 overflow-hidden border transition-all ${
                       i === activeImageIndex
-                        ? "border-[#c5a880] ring-1 ring-[#c5a880]"
-                        : "border-zinc-800 opacity-60 hover:opacity-100"
+                        ? "border-black ring-1 ring-black"
+                        : "border-[#E5E5E5] opacity-60 hover:opacity-100"
                     }`}
                   >
                     <img
                       src={img.imageUrl}
-                      alt=""
+                      alt={img.altText || ""}
                       className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
-                      }}
                     />
                   </button>
                 ))}
@@ -119,47 +117,58 @@ export function QuickViewModal() {
             )}
           </div>
 
-          {/* Product Details */}
-          <div className="flex flex-col justify-between">
+          {/* Details */}
+          <div className="flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="space-y-1">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#c5a880]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#737373]">
                   {quickViewProduct.brandName || quickViewProduct.categoryName || "ANTEIKU ARCHIVE"}
                 </p>
-                <h3 className="font-serif text-xl sm:text-2xl font-medium leading-tight text-zinc-100">
+                <h2 className="text-xl font-bold tracking-tight text-black sm:text-2xl">
                   {quickViewProduct.name}
-                </h3>
+                </h2>
               </div>
 
-              <div className="text-lg font-semibold text-zinc-100 font-sans">
-                {money(selectedVariant?.price ?? quickViewProduct.price)}
+              <div className="flex items-baseline gap-3">
+                <span className="text-xl font-bold tracking-tight text-black">
+                  {money(selectedVariant?.price ?? quickViewProduct.price)}
+                </span>
+                {quickViewProduct.status === "ACTIVE" ? (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-black">
+                    In Stock
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                    Archived
+                  </span>
+                )}
               </div>
 
               {quickViewProduct.description && (
-                <p className="text-xs leading-relaxed text-zinc-400 line-clamp-3">
+                <p className="text-xs leading-relaxed text-[#737373] line-clamp-3">
                   {quickViewProduct.description}
                 </p>
               )}
 
               {/* Variants */}
-              {quickViewProduct.productVariants?.length > 1 && (
+              {quickViewProduct.productVariants && quickViewProduct.productVariants.length > 1 && (
                 <div className="space-y-2 pt-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
-                    Option / Edition
-                  </span>
+                  <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-black">
+                    Select Edition / Option
+                  </label>
                   <div className="flex flex-wrap gap-2">
-                    {quickViewProduct.productVariants.map((variant) => (
+                    {quickViewProduct.productVariants.map((v) => (
                       <button
-                        key={variant.id}
+                        key={v.id}
                         type="button"
-                        onClick={() => setSelectedVariant(variant)}
-                        className={`border px-3 py-1.5 text-xs font-medium transition-all ${
-                          selectedVariant?.id === variant.id
-                            ? "border-[#c5a880] bg-[#c5a880]/15 text-[#dfc79b]"
-                            : "border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white"
+                        onClick={() => setSelectedVariant(v)}
+                        className={`px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all ${
+                          selectedVariant?.id === v.id
+                            ? "bg-black text-white border border-black"
+                            : "bg-white text-black border border-[#E5E5E5] hover:border-black"
                         }`}
                       >
-                        {variant.name || [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}
+                        {v.name}
                       </button>
                     ))}
                   </div>
@@ -167,46 +176,45 @@ export function QuickViewModal() {
               )}
             </div>
 
-            {/* Stepper + Add to Cart */}
-            <div className="space-y-4 pt-6 border-t border-zinc-800/80 mt-6">
-              {!unavailable && (
+            {/* Stepper & Add Button */}
+            <div className="space-y-3 pt-4 border-t border-[#E5E5E5]">
+              {!unavailable ? (
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 items-center border border-zinc-800 bg-zinc-900/60">
+                  <div className="flex h-11 items-center border border-[#E5E5E5] bg-white">
                     <button
                       type="button"
                       aria-label="Decrease quantity"
                       disabled={quantity === 1}
-                      onClick={() => setQuantity((v) => Math.max(1, v - 1))}
-                      className="px-3 h-full flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-30"
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="px-3 h-full flex items-center justify-center text-[#737373] hover:text-black disabled:opacity-30"
                     >
-                      <Minus size={13} />
+                      <Minus size={14} />
                     </button>
-                    <span className="w-8 text-center text-xs font-mono tabular-nums text-zinc-200">
+                    <span className="w-8 text-center text-xs font-bold tabular-nums text-black">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       aria-label="Increase quantity"
-                      onClick={() => setQuantity((v) => v + 1)}
-                      className="px-3 h-full flex items-center justify-center text-zinc-400 hover:text-white"
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="px-3 h-full flex items-center justify-center text-[#737373] hover:text-black"
                     >
-                      <Plus size={13} />
+                      <Plus size={14} />
                     </button>
                   </div>
 
                   <button
                     type="button"
                     onClick={handleAdd}
-                    disabled={unavailable || !selectedVariant}
-                    className={`flex-1 h-11 flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-widest transition-all ${
+                    className={`flex h-11 flex-1 items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${
                       added
-                        ? "border-[#c5a880] bg-[#c5a880]/20 text-[#dfc79b]"
-                        : "border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] text-black hover:opacity-95"
+                        ? "bg-neutral-800 text-white"
+                        : "bg-black text-white hover:bg-neutral-800"
                     }`}
                   >
                     {added ? (
                       <>
-                        <Check size={14} className="text-[#dfc79b]" />
+                        <Check size={15} />
                         <span>Added to Bag</span>
                       </>
                     ) : (
@@ -217,22 +225,20 @@ export function QuickViewModal() {
                     )}
                   </button>
                 </div>
+              ) : (
+                <div className="flex h-11 items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] text-xs font-bold uppercase tracking-widest text-[#737373]">
+                  Item Unavailable
+                </div>
               )}
 
-              <div className="flex justify-between items-center text-xs pt-1">
-                <Link
-                  to={`/product/${quickViewProduct.id}`}
-                  onClick={closeQuickView}
-                  className="inline-flex items-center gap-1.5 text-zinc-400 hover:text-[#dfc79b] underline underline-offset-4 tracking-wider transition-colors"
-                >
-                  <span>View Full Details & Reviews</span>
-                  <ArrowRight size={13} />
-                </Link>
-
-                <span className="text-[10px] uppercase tracking-widest text-zinc-500">
-                  SKU: {selectedVariant?.sku || quickViewProduct.sku || "—"}
-                </span>
-              </div>
+              <Link
+                to={`/product/${quickViewProduct.id}`}
+                onClick={closeQuickView}
+                className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline py-1"
+              >
+                <span>View Complete Product Details</span>
+                <ArrowRight size={13} />
+              </Link>
             </div>
           </div>
         </div>

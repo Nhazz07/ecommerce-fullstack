@@ -1,18 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import {
-  Compass,
   Heart,
-  Layers,
   LogOut,
   Menu,
-  Moon,
   Package,
   Search,
   ShoppingBag,
-  Sparkles,
-  Sun,
   User,
   X,
+  ArrowRight,
 } from "lucide-react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useContext, useEffect, useRef, useState } from "react";
@@ -25,7 +21,7 @@ export const money = (value) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
 
 export function Layout({ children }) {
-  const { cart, user, theme, setTheme, signOut, openCartDrawer, wishlists } = useContext(StoreContext);
+  const { cart, user, signOut, openCartDrawer, wishlists } = useContext(StoreContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -51,7 +47,7 @@ export function Layout({ children }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close mobile menu on route change
+  // Close mobile menu and dropdowns on route change
   useEffect(() => {
     setMobileMenuOpen(false);
     setSearchOpen(false);
@@ -83,7 +79,7 @@ export function Layout({ children }) {
   };
 
   const links = [
-    { label: "Collection", to: "/shop" },
+    { label: "Shop All", to: "/shop" },
     { label: "Categories", to: "/categories" },
     { label: "Brands", to: "/brands" },
     { label: "Series", to: "/series" },
@@ -91,45 +87,43 @@ export function Layout({ children }) {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-zinc-950 text-zinc-100 selection:bg-[#c5a880]/30 selection:text-[#dfc79b]">
-      {/* Top Luxury Announcement Bar */}
-      <aside aria-label="Announcement" className="relative z-40 border-b border-zinc-900 bg-black/90 py-1.5 text-center text-[10px] sm:text-[11px] font-medium tracking-[0.22em] uppercase text-zinc-400">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-white text-black selection:bg-black selection:text-white">
+      {/* Minimalist Top Announcement Bar - Black with White text */}
+      <aside aria-label="Announcement" className="relative z-40 bg-black py-2 text-center text-[11px] font-medium tracking-[0.2em] uppercase text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-center px-4">
-          <span className="flex items-center gap-2">
-            <span className="h-1 w-1 rounded-full bg-[#c5a880]" />
-            <span>Complimentary Express Worldwide Shipping Over $150</span>
-            <span className="hidden md:inline text-zinc-600">·</span>
-            <span className="hidden md:inline text-[#c5a880]">Direct from Tokyo</span>
-            <span className="h-1 w-1 rounded-full bg-[#c5a880]" />
+          <span className="flex items-center gap-3">
+            <span>Complimentary Express Shipping On Orders Over $150</span>
+            <span className="hidden sm:inline text-neutral-500">/</span>
+            <span className="hidden sm:inline text-neutral-300">100% Guaranteed Japanese Authenticity</span>
           </span>
         </div>
       </aside>
 
-      {/* Main Sticky Header */}
-      <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/85 backdrop-blur-md transition-all duration-300">
+      {/* Main Sticky Header - Clean White with Light Gray Border */}
+      <header className="sticky top-0 z-30 border-b border-[#E5E5E5] bg-white/95 backdrop-blur-md transition-all duration-200">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Brand Logo */}
-          <div className="flex items-center gap-8">
-            <Link to="/" className="group flex flex-col tracking-tight">
-              <span className="font-serif text-xl sm:text-2xl font-bold tracking-[0.28em] text-zinc-100 transition-colors duration-200 group-hover:text-[#dfc79b]">
+          {/* Brand Logo & Desktop Nav */}
+          <div className="flex items-center gap-10">
+            <Link to="/" className="flex flex-col tracking-tight group">
+              <span className="text-xl sm:text-2xl font-bold tracking-[0.25em] text-black">
                 ANTEIKU
               </span>
-              <span className="-mt-1 text-[8px] font-semibold uppercase tracking-[0.38em] text-[#c5a880] opacity-80 group-hover:opacity-100 transition-opacity">
+              <span className="-mt-1 text-[9px] font-medium uppercase tracking-[0.35em] text-[#737373]">
                 Tokyo Archive
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav aria-label="Main Navigation" className="hidden md:flex items-center gap-8 text-xs font-medium tracking-[0.16em] uppercase">
+            <nav aria-label="Main Navigation" className="hidden md:flex items-center gap-7 text-xs font-semibold tracking-[0.14em] uppercase">
               {links.map(({ label, to }) => (
                 <NavLink
                   key={to}
                   to={to}
                   className={({ isActive }) =>
-                    `relative py-1 transition-colors duration-200 ${
+                    `relative py-2 transition-colors duration-150 ${
                       isActive
-                        ? "text-[#dfc79b] font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[1.5px] after:bg-[#c5a880]"
-                        : "text-zinc-400 hover:text-zinc-100"
+                        ? "text-black after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-black"
+                        : "text-[#737373] hover:text-black"
                     }`
                   }
                 >
@@ -139,22 +133,23 @@ export function Layout({ children }) {
             </nav>
           </div>
 
-          {/* Search Bar - Expandable Desktop */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Action Icons: Search, Wishlist, Account, Cart */}
+          <div className="flex items-center gap-1 sm:gap-2">
+            {/* Search Input / Toggle */}
             {searchOpen ? (
-              <form onSubmit={goSearch} className="relative hidden sm:flex items-center animate-in fade-in duration-200">
+              <form onSubmit={goSearch} className="relative hidden sm:flex items-center animate-in fade-in duration-150">
                 <input
                   ref={searchInputRef}
                   type="text"
                   value={term}
                   onChange={(e) => setTerm(e.target.value)}
-                  placeholder="Search archive or characters..."
-                  className="h-9 w-64 border border-[#c5a880]/60 bg-zinc-900/90 pl-3 pr-8 text-xs text-zinc-100 placeholder:text-zinc-500 outline-none focus:w-80 transition-all duration-300"
+                  placeholder="Search products or series..."
+                  className="h-9 w-64 border border-black bg-white pl-3 pr-8 text-xs text-black placeholder:text-[#737373] outline-none focus:w-80 transition-all duration-200"
                 />
                 <button
                   type="button"
                   onClick={() => setSearchOpen(false)}
-                  className="absolute right-2 text-zinc-400 hover:text-white"
+                  className="absolute right-2 text-[#737373] hover:text-black"
                 >
                   <X size={14} />
                 </button>
@@ -165,21 +160,11 @@ export function Layout({ children }) {
                 aria-label="Open search bar"
                 onClick={handleSearchToggle}
                 className="icon-button hidden sm:grid"
-                title="Search (Archive)"
+                title="Search"
               >
                 <Search size={18} strokeWidth={1.75} />
               </button>
             )}
-
-            {/* Theme Toggle */}
-            <button
-              aria-label="Toggle theme"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="icon-button"
-              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-            >
-              {theme === "light" ? <Moon size={18} strokeWidth={1.75} /> : <Sun size={18} strokeWidth={1.75} />}
-            </button>
 
             {/* Wishlist Link */}
             <Link
@@ -190,7 +175,7 @@ export function Layout({ children }) {
             >
               <Heart size={18} strokeWidth={1.75} />
               {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a880] px-1 text-[9px] font-bold text-black">
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center bg-black px-1 text-[9px] font-bold text-white">
                   {wishlistCount}
                 </span>
               )}
@@ -205,7 +190,7 @@ export function Layout({ children }) {
                   aria-haspopup="menu"
                   aria-expanded={accountOpen}
                   onClick={() => setAccountOpen(!accountOpen)}
-                  className={`icon-button ${accountOpen ? "border border-[#c5a880]/60 text-[#dfc79b]" : ""}`}
+                  className={`icon-button ${accountOpen ? "bg-[#F5F5F5]" : ""}`}
                 >
                   <User size={18} strokeWidth={1.75} />
                 </button>
@@ -214,13 +199,13 @@ export function Layout({ children }) {
                   <div
                     role="menu"
                     aria-label="Account options"
-                    className="absolute right-0 top-full z-40 mt-2 w-56 border border-zinc-800 bg-zinc-950 p-1.5 shadow-2xl backdrop-blur-md animate-in fade-in duration-150"
+                    className="absolute right-0 top-full z-40 mt-1 w-56 border border-[#E5E5E5] bg-white p-2 shadow-lg animate-in fade-in duration-100"
                   >
-                    <div className="border-b border-zinc-800/80 px-3 py-2.5">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[#c5a880]">
-                        Signed In
+                    <div className="border-b border-[#E5E5E5] px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                        Account
                       </p>
-                      <p className="mt-0.5 truncate text-xs font-medium text-zinc-200">
+                      <p className="mt-0.5 truncate text-xs font-semibold text-black">
                         {user.username || user.email || "Collector"}
                       </p>
                     </div>
@@ -230,37 +215,37 @@ export function Layout({ children }) {
                         role="menuitem"
                         to="/account"
                         onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-800 hover:bg-[#F5F5F5] transition-colors"
                       >
-                        <User size={14} className="text-[#c5a880]" />
-                        <span>Account & Addresses</span>
+                        <User size={14} className="text-black" />
+                        <span>Profile & Addresses</span>
                       </Link>
                       <Link
                         role="menuitem"
                         to="/orders"
                         onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-800 hover:bg-[#F5F5F5] transition-colors"
                       >
-                        <Package size={14} className="text-[#c5a880]" />
+                        <Package size={14} className="text-black" />
                         <span>Order History</span>
                       </Link>
                       <Link
                         role="menuitem"
                         to="/wishlist"
                         onClick={() => setAccountOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-white transition-colors"
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-800 hover:bg-[#F5F5F5] transition-colors"
                       >
-                        <Heart size={14} className="text-[#c5a880]" />
-                        <span>Saved Artefacts</span>
+                        <Heart size={14} className="text-black" />
+                        <span>Wishlist</span>
                       </Link>
                     </div>
 
-                    <div className="border-t border-zinc-800/80 pt-1">
+                    <div className="border-t border-[#E5E5E5] pt-1">
                       <button
                         role="menuitem"
                         type="button"
                         onClick={logOut}
-                        className="flex w-full items-center gap-2.5 px-3 py-2 text-xs text-zinc-400 hover:bg-zinc-900 hover:text-red-400 transition-colors"
+                        className="flex w-full items-center gap-2.5 px-3 py-2 text-xs font-medium text-neutral-600 hover:bg-[#F5F5F5] hover:text-black transition-colors"
                       >
                         <LogOut size={14} />
                         <span>Sign Out</span>
@@ -285,12 +270,12 @@ export function Layout({ children }) {
               type="button"
               aria-label="Open shopping bag"
               onClick={openCartDrawer}
-              className="relative icon-button group"
+              className="relative icon-button"
               title="Shopping Bag"
             >
-              <ShoppingBag size={18} strokeWidth={1.75} className="group-hover:text-[#dfc79b] transition-colors" />
+              <ShoppingBag size={18} strokeWidth={1.75} />
               {count > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-1 text-[9px] font-bold text-black shadow-[0_0_8px_rgba(197,168,128,0.4)]">
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center bg-black px-1 text-[9px] font-bold text-white">
                   {count}
                 </span>
               )}
@@ -310,54 +295,54 @@ export function Layout({ children }) {
 
         {/* Mobile Navigation Drawer / Panel */}
         {mobileMenuOpen && (
-          <div className="border-t border-zinc-800 bg-zinc-950 px-4 py-6 md:hidden animate-in slide-in-from-top-2 duration-200">
+          <div className="border-t border-[#E5E5E5] bg-white px-4 py-6 md:hidden animate-in slide-in-from-top-1 duration-150">
             {/* Mobile Search Bar */}
-            <form onSubmit={goSearch} className="mb-5 flex border border-zinc-700 bg-zinc-900">
+            <form onSubmit={goSearch} className="mb-5 flex border border-[#E5E5E5] bg-white focus-within:border-black">
               <input
                 aria-label="Search products"
                 value={term}
                 onChange={(e) => setTerm(e.target.value)}
-                className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-xs text-zinc-100 placeholder:text-zinc-500 outline-none"
+                className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-xs text-black placeholder:text-[#737373] outline-none"
                 placeholder="Search collection..."
               />
-              <button type="submit" aria-label="Search" className="px-3 text-[#c5a880] hover:text-white">
+              <button type="submit" aria-label="Search" className="px-3 text-black hover:bg-[#F5F5F5]">
                 <Search size={16} />
               </button>
             </form>
 
-            <nav aria-label="Mobile Navigation" className="space-y-1 divide-y divide-zinc-900 border-y border-zinc-900 py-2">
+            <nav aria-label="Mobile Navigation" className="divide-y divide-[#E5E5E5] border-y border-[#E5E5E5]">
               {links.map(({ label, to }) => (
                 <NavLink
                   key={to}
                   to={to}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center justify-between py-3 text-xs uppercase tracking-[0.18em] transition-colors ${
-                      isActive ? "text-[#dfc79b] font-bold" : "text-zinc-300 hover:text-white"
+                    `flex items-center justify-between py-3.5 text-xs font-semibold uppercase tracking-[0.15em] transition-colors ${
+                      isActive ? "text-black font-bold" : "text-[#737373] hover:text-black"
                     }`
                   }
                 >
                   <span>{label}</span>
-                  <span className="text-zinc-600">→</span>
+                  <ArrowRight size={14} className="text-[#737373]" />
                 </NavLink>
               ))}
             </nav>
 
-            <div className="mt-6 flex flex-col gap-2 pt-2">
+            <div className="mt-6 flex flex-col gap-2">
               {user ? (
                 <>
                   <Link
                     to="/account"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 py-2 text-xs text-zinc-400 hover:text-white"
+                    className="flex items-center gap-2 py-2 text-xs font-semibold text-black"
                   >
-                    <User size={15} className="text-[#c5a880]" />
-                    <span>Manage Account ({user.username || user.email})</span>
+                    <User size={15} />
+                    <span>My Account ({user.username || user.email})</span>
                   </Link>
                   <button
                     type="button"
                     onClick={logOut}
-                    className="flex items-center gap-2 py-2 text-left text-xs text-zinc-500 hover:text-red-400"
+                    className="flex items-center gap-2 py-2 text-left text-xs font-medium text-[#737373] hover:text-black"
                   >
                     <LogOut size={15} />
                     <span>Sign Out</span>
@@ -367,7 +352,7 @@ export function Layout({ children }) {
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 border border-zinc-700 bg-zinc-900 py-2.5 text-xs font-semibold uppercase tracking-widest text-zinc-200 hover:border-[#c5a880]"
+                  className="flex items-center justify-center gap-2 border border-black bg-black py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
                 >
                   <User size={14} />
                   <span>Sign In / Register</span>
@@ -386,82 +371,82 @@ export function Layout({ children }) {
       <QuickViewModal />
       <ToastContainer />
 
-      {/* Luxury Editorial Footer */}
-      <footer className="mt-28 w-full border-t border-zinc-800 bg-black text-zinc-400">
+      {/* Minimalist Black Footer with White Typography */}
+      <footer className="mt-28 w-full border-t border-black bg-black text-white">
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-4 lg:gap-14">
-            {/* Brand Manifesto */}
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-4 lg:gap-16">
+            {/* Brand Information */}
             <div className="md:col-span-2 space-y-4">
               <Link to="/" className="inline-block">
-                <span className="font-serif text-2xl font-bold tracking-[0.28em] text-zinc-100">
+                <span className="text-2xl font-bold tracking-[0.25em] text-white">
                   ANTEIKU
                 </span>
-                <span className="block text-[9px] uppercase tracking-[0.38em] text-[#c5a880]">
-                  Tokyo Connoisseur Archive
+                <span className="block text-[9px] font-semibold uppercase tracking-[0.35em] text-neutral-400">
+                  Tokyo Anime Collection
                 </span>
               </Link>
-              <p className="max-w-md text-xs leading-relaxed text-zinc-400 font-sans">
-                Curating authentic Japanese anime collectables, limited-edition statues,
-                and high-fashion apparel. Inspired by the calm sanctuary of the 20th Ward.
+              <p className="max-w-md text-xs leading-relaxed text-neutral-400">
+                Curated official Japanese anime collectables, museum-grade statues,
+                and limited edition figures. Built on uncompromising authenticity,
+                monochromatic design, and meticulous craftsmanship.
               </p>
-              <div className="flex items-center gap-3 pt-2 text-[11px] text-[#dfc79b]">
-                <Sparkles size={14} />
-                <span className="tracking-widest uppercase text-[10px]">100% Guaranteed Japanese Authenticity</span>
+              <div className="pt-2 text-[11px] font-semibold uppercase tracking-widest text-neutral-300">
+                Official Studio Licensed Products
               </div>
             </div>
 
-            {/* Navigation Column: Explore */}
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-200">
-                The Archive
+            {/* Explore Column */}
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Collection
               </p>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-2.5 text-xs">
                 <li>
-                  <Link to="/shop" className="hover:text-[#dfc79b] transition-colors">
-                    Complete Collection
+                  <Link to="/shop" className="text-neutral-400 hover:text-white transition-colors">
+                    All Products
                   </Link>
                 </li>
                 <li>
-                  <Link to="/categories" className="hover:text-[#dfc79b] transition-colors">
-                    Curated Categories
+                  <Link to="/categories" className="text-neutral-400 hover:text-white transition-colors">
+                    Categories
                   </Link>
                 </li>
                 <li>
-                  <Link to="/brands" className="hover:text-[#dfc79b] transition-colors">
-                    Official Brands & Studios
+                  <Link to="/brands" className="text-neutral-400 hover:text-white transition-colors">
+                    Official Brands
                   </Link>
                 </li>
                 <li>
-                  <Link to="/series" className="hover:text-[#dfc79b] transition-colors">
-                    Anime Series Index
+                  <Link to="/series" className="text-neutral-400 hover:text-white transition-colors">
+                    Anime Series
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Client Services */}
-            <div className="space-y-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-200">
-                Client Sanctuary
+            {/* Client Services & Links */}
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Client Services
               </p>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-2.5 text-xs">
                 <li>
-                  <Link to="/orders" className="hover:text-[#dfc79b] transition-colors">
+                  <Link to="/orders" className="text-neutral-400 hover:text-white transition-colors">
                     Order Tracking
                   </Link>
                 </li>
                 <li>
-                  <Link to="/wishlist" className="hover:text-[#dfc79b] transition-colors">
-                    Your Wishlist
+                  <Link to="/wishlist" className="text-neutral-400 hover:text-white transition-colors">
+                    Saved Wishlist
                   </Link>
                 </li>
                 <li>
-                  <Link to="/account" className="hover:text-[#dfc79b] transition-colors">
+                  <Link to="/account" className="text-neutral-400 hover:text-white transition-colors">
                     Account Details
                   </Link>
                 </li>
                 <li>
-                  <Link to="/cart" className="hover:text-[#dfc79b] transition-colors">
+                  <Link to="/cart" className="text-neutral-400 hover:text-white transition-colors">
                     Shopping Bag
                   </Link>
                 </li>
@@ -469,11 +454,11 @@ export function Layout({ children }) {
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-zinc-900 pt-8 sm:flex-row text-[11px] text-zinc-600">
-            <p>© {new Date().getFullYear()} ANTEIKU TOKYO. All rights reserved.</p>
-            <p className="tracking-wider text-zinc-500">
-              Handcrafted for anime connoisseurs and art collectors worldwide.
+          {/* Bottom Bar: Copyright & Navigation */}
+          <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-neutral-800 pt-8 sm:flex-row text-[11px] text-neutral-500">
+            <p>© {new Date().getFullYear()} ANTEIKU. All rights reserved.</p>
+            <p className="tracking-wider text-neutral-400">
+              Clean. Modern. Monochromatic.
             </p>
           </div>
         </div>

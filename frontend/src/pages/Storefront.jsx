@@ -29,30 +29,30 @@ import { StoreContext } from "../context/StoreContext";
 import { visibleShopProducts } from "../utils/productPrice";
 import { QRCodeSVG } from "qrcode.react";
 export const Button = ({ className = "", variant = "primary", ...props }) => {
-  const base = "inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
+  const base = "inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
   const styles = {
-    primary: "border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] text-black hover:opacity-95 shadow-[0_0_15px_rgba(197,168,128,0.2)]",
-    secondary: "border border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-[#c5a880] hover:text-[#dfc79b]",
-    outline: "border border-zinc-800 bg-transparent text-zinc-300 hover:border-zinc-600 hover:text-white",
-    dark: "border border-zinc-800 bg-black text-white hover:bg-zinc-900 hover:border-zinc-700",
+    primary: "border border-black bg-black text-white hover:bg-neutral-800",
+    secondary: "border border-[#E5E5E5] bg-white text-black hover:border-black",
+    outline: "border border-black bg-transparent text-black hover:bg-black hover:text-white",
+    dark: "border border-black bg-black text-white hover:bg-neutral-800",
   };
   return <button className={`${base} ${styles[variant] || styles.primary} ${className}`} {...props} />;
 };
 
 export const Page = ({ eyebrow, title, subtitle, children, actions }) => (
-  <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-    <div className="border-b border-zinc-800/80 pb-6 mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+  <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 bg-white text-black">
+    <div className="border-b border-[#E5E5E5] pb-6 mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div>
         {eyebrow && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#c5a880]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-2 font-serif text-3xl font-medium tracking-tight text-zinc-100 sm:text-4xl md:text-5xl">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl md:text-4xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 text-xs text-zinc-400 font-sans max-w-2xl leading-relaxed">
+          <p className="mt-2 text-xs text-[#737373] max-w-2xl leading-relaxed">
             {subtitle}
           </p>
         )}
@@ -68,8 +68,8 @@ export const Notice = ({ children, type = "error" }) => (
     role={type === "error" ? "alert" : "status"}
     className={`my-4 flex items-start gap-3 border p-4 text-xs leading-relaxed ${
       type === "error"
-        ? "border-red-900/60 bg-red-950/30 text-red-300"
-        : "border-[#c5a880]/40 bg-[#c5a880]/10 text-[#dfc79b]"
+        ? "border-black bg-black text-white"
+        : "border-[#E5E5E5] bg-[#FAFAFA] text-black"
     }`}
   >
     <div className="mt-0.5 shrink-0">
@@ -81,9 +81,9 @@ export const Notice = ({ children, type = "error" }) => (
 
 export const Loading = () => (
   <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6">
-    <div className="inline-flex items-center gap-3 border border-zinc-800 bg-zinc-900/40 px-6 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#c5a880]">
-      <div className="h-2 w-2 animate-ping rounded-full bg-[#c5a880]" />
-      <span>Consulting the Anteiku Archive…</span>
+    <div className="inline-flex items-center gap-3 border border-[#E5E5E5] bg-[#FAFAFA] px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
+      <div className="h-2 w-2 animate-ping bg-black" />
+      <span>Consulting Archive…</span>
     </div>
   </div>
 );
@@ -160,43 +160,42 @@ export function HomePage() {
   }
 
   const featuredPiece = products[0];
+  const featuredProducts = products.slice(0, 4);
+  const newArrivals = products.slice(4, 12).length > 0 ? products.slice(4, 12) : products.slice(0, 8);
 
   return (
-    <div className="space-y-20 sm:space-y-28">
-      {/* Hero Editorial Section */}
-      <section className="relative overflow-hidden border-b border-zinc-800 bg-gradient-to-b from-black via-zinc-950 to-zinc-950 py-16 sm:py-24 lg:py-32">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(197,168,128,0.12),transparent_50%)]" />
-
+    <div className="space-y-16 sm:space-y-24 bg-white text-black">
+      {/* Large Hero Section */}
+      <section className="relative border-b border-[#E5E5E5] bg-[#FAFAFA] py-16 sm:py-24 lg:py-28">
         <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:gap-16">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 border border-[#c5a880]/40 bg-[#c5a880]/10 px-3.5 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-[#dfc79b]">
-              <Sparkles size={12} />
-              <span>Tokyo Ghoul & Fine Japanese Collectables</span>
+            <div className="inline-flex items-center gap-2 border border-black bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-black">
+              <span>Authentic Anime Artefacts & Figures</span>
             </div>
 
-            <h1 className="font-serif text-4xl font-normal leading-[1.05] tracking-tight text-zinc-100 sm:text-6xl lg:text-7xl">
-              Stories Worth <br />
-              <span className="font-light italic text-[#dfc79b]">Preserving.</span>
+            <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-black sm:text-6xl lg:text-7xl">
+              Sculpted In Silence. <br />
+              <span className="font-light italic text-neutral-600">Defined In Monochrome.</span>
             </h1>
 
-            <p className="max-w-lg text-xs leading-relaxed text-zinc-400 sm:text-sm">
-              ANTEIKU is an independent Tokyo archive curated for the discerning anime connoisseur.
-              Museum-grade statues, limited artisan apparel, and authenticated imports.
+            <p className="max-w-lg text-xs leading-relaxed text-[#737373] sm:text-sm">
+              ANTEIKU is a minimalist Tokyo archive curated for the discerning anime connoisseur.
+              Explore licensed scale figures, artisan statues, and authenticated limited editions.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2.5 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-black hover:opacity-95 shadow-[0_0_20px_rgba(197,168,128,0.25)] transition-all"
+                className="inline-flex items-center gap-2 border border-black bg-black px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
               >
-                <span>Explore The Archive</span>
+                <span>Shop Now</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
                 to="/series"
-                className="inline-flex items-center gap-2 border border-zinc-700 bg-zinc-900/60 px-6 py-3.5 text-xs font-semibold uppercase tracking-widest text-zinc-300 hover:border-[#c5a880] hover:text-[#dfc79b] transition-all"
+                className="inline-flex items-center gap-2 border border-black bg-white px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-black hover:bg-black hover:text-white transition-colors"
               >
-                <span>Anime Series</span>
+                <span>Browse Series</span>
               </Link>
             </div>
           </div>
@@ -204,32 +203,32 @@ export function HomePage() {
           {/* Hero Feature Piece Card */}
           {featuredPiece && (
             <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-              <div className="relative aspect-[4/5] overflow-hidden border border-zinc-800 bg-zinc-900/80 shadow-2xl">
+              <div className="relative aspect-[4/5] overflow-hidden border border-black bg-white shadow-sm">
                 <img
                   src={imageOf(featuredPiece)}
                   alt={featuredPiece.name}
-                  className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-102"
                   onError={(e) => {
                     e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                <div className="absolute inset-x-6 bottom-6 space-y-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#dfc79b]">
-                    Archival Acquisition 01
-                  </span>
-                  <h3 className="font-serif text-xl font-medium text-white line-clamp-1">
+                <div className="absolute inset-x-0 bottom-0 bg-white/95 p-5 border-t border-[#E5E5E5] space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#737373]">
+                    <span>Featured Piece</span>
+                    <span>{featuredPiece.categoryName || "Archive"}</span>
+                  </div>
+                  <h3 className="text-base font-bold text-black line-clamp-1">
                     {featuredPiece.name}
                   </h3>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="font-sans text-sm font-semibold text-zinc-200">
+                    <span className="text-sm font-extrabold text-black">
                       {money(featuredPiece.price)}
                     </span>
                     <Link
                       to={`/product/${featuredPiece.id}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline underline-offset-4"
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-black hover:underline"
                     >
-                      <span>Inspect Piece</span>
+                      <span>View Details</span>
                       <ArrowRight size={13} />
                     </Link>
                   </div>
@@ -240,42 +239,42 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Brand Pillars / Value Guarantee */}
+      {/* Brand Value Pillars */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               icon: Sparkles,
               title: "100% Japanese Authenticity",
-              desc: "Verified through licensed official Japanese studios and distributors in Tokyo.",
+              desc: "Directly verified through licensed official Japanese studios and distributors.",
             },
             {
               icon: Package,
-              title: "Archival Double-Boxing",
-              desc: "Every statue and collectable arrives in custom reinforced collector packaging.",
+              title: "Archival Packaging",
+              desc: "Every statue and figure arrives safely in reinforced double-boxed protection.",
             },
             {
               icon: Truck,
               title: "Complimentary Express",
-              desc: "Insured express worldwide shipping with real-time tracking on orders over $150.",
+              desc: "Insured express global shipping with full tracking on all orders over $150.",
             },
             {
               icon: ShieldCheck,
-              title: "Connoisseur Sanctuary",
-              desc: "Dedicated white-glove client support for private collectors and display enthusiasts.",
+              title: "Collector Guarantee",
+              desc: "Uncompromising quality checks and dedicated customer support for collectors.",
             },
           ].map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
-              className="border border-zinc-800/80 bg-zinc-950/60 p-6 transition-colors duration-200 hover:border-[#c5a880]/50"
+              className="border border-[#E5E5E5] bg-white p-6 transition-colors hover:border-black"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#c5a880]/30 bg-[#c5a880]/10 text-[#dfc79b]">
-                <Icon size={18} strokeWidth={1.5} />
+              <div className="flex h-10 w-10 items-center justify-center border border-black bg-white text-black">
+                <Icon size={18} strokeWidth={1.75} />
               </div>
-              <h3 className="mt-4 font-serif text-sm font-medium tracking-wide text-zinc-100">
+              <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-black">
                 {title}
               </h3>
-              <p className="mt-2 text-xs leading-relaxed text-zinc-400 font-sans">
+              <p className="mt-2 text-xs leading-relaxed text-[#737373]">
                 {desc}
               </p>
             </div>
@@ -283,20 +282,20 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Explore by Category */}
+      {/* Popular Categories Section */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-800 pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E5E5] pb-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c5a880]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
               Curated Mediums
             </p>
-            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-medium text-zinc-100">
-              Browse Categories
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              Popular Categories
             </h2>
           </div>
           <Link
             to="/categories"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-[#dfc79b] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
           >
             <span>All Categories ({categories.length})</span>
             <ArrowRight size={13} />
@@ -308,21 +307,21 @@ export function HomePage() {
             <Link
               key={cat.id}
               to={`/shop?category=${cat.id}`}
-              className="group relative flex flex-col justify-between border border-zinc-800 bg-zinc-950 p-6 transition-all duration-300 hover:border-[#c5a880]/60 hover:bg-zinc-900/50"
+              className="group flex flex-col justify-between border border-[#E5E5E5] bg-[#FAFAFA] p-6 transition-all hover:border-black hover:bg-white"
             >
               <div>
-                <span className="text-[10px] font-mono tracking-widest text-zinc-500">
-                  ARCHIVE // 0{cat.id || 1}
+                <span className="text-[10px] font-mono tracking-widest text-[#737373]">
+                  CATEGORY // 0{cat.id || 1}
                 </span>
-                <h3 className="mt-3 font-serif text-lg font-medium text-zinc-100 group-hover:text-[#dfc79b] transition-colors">
+                <h3 className="mt-3 text-lg font-bold text-black transition-colors">
                   {cat.name}
                 </h3>
-                <p className="mt-2 text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                <p className="mt-2 text-xs text-[#737373] line-clamp-2 leading-relaxed">
                   {cat.description || "Official licensed artefacts and figures."}
                 </p>
               </div>
-              <span className="mt-8 inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-widest text-[#c5a880] group-hover:translate-x-1 transition-transform">
-                <span>View Pieces</span>
+              <span className="mt-8 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-black group-hover:translate-x-1 transition-transform">
+                <span>Explore Category</span>
                 <span>→</span>
               </span>
             </Link>
@@ -330,22 +329,22 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Curated Acquisitions (Recent Products) */}
+      {/* Featured Products Section */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-800 pb-5">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E5E5] pb-5">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c5a880]">
-              Latest Arrivals
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+              Curated Highlights
             </p>
-            <h2 className="mt-1 font-serif text-2xl sm:text-3xl font-medium text-zinc-100">
-              Recent Acquisitions
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              Featured Products
             </h2>
           </div>
           <Link
             to="/shop"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-[#dfc79b] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
           >
-            <span>View Full Archive</span>
+            <span>View All Products</span>
             <ArrowRight size={13} />
           </Link>
         </div>
@@ -353,7 +352,7 @@ export function HomePage() {
         {error && <Notice>{error}</Notice>}
 
         <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
-          {products.slice(0, 8).map((p) => (
+          {featuredProducts.map((p) => (
             <ProductCard
               key={p.id}
               product={p}
@@ -363,20 +362,69 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Anteiku Sanctuary Philosophy Quote */}
-      <section className="border-y border-zinc-900 bg-black/60 py-16 text-center">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 space-y-4">
-          <p className="font-serif text-xl sm:text-2xl font-light italic leading-relaxed text-zinc-300">
-            “Anteiku was a sanctuary where beings found quietude and understanding.
-            We treat every artefact with that same solemn reverence.”
-          </p>
-          <div className="flex items-center justify-center gap-2 pt-2">
-            <span className="h-[1px] w-8 bg-[#c5a880]" />
-            <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a880]">
-              The 20th Ward Philosophy
-            </span>
-            <span className="h-[1px] w-8 bg-[#c5a880]" />
+      {/* Promotional Banner: Black Background & White Typography */}
+      <section className="w-full bg-black text-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
+            <div className="space-y-4">
+              <span className="inline-block border border-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.25em] text-white">
+                Archival Release
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+                Limited Japanese Imports & Studio Masterpieces
+              </h2>
+              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-xl">
+                Direct allocations from Tokyo studios. From classic dark fantasy to modern shonen legends,
+                each piece is numbered and verified for authenticity. Complimentary worldwide shipping over $150.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start lg:items-center justify-start lg:justify-end gap-4">
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 border border-white bg-white px-8 py-4 text-xs font-bold uppercase tracking-widest text-black hover:bg-neutral-200 transition-colors"
+              >
+                <span>Shop New Releases</span>
+                <ArrowRight size={14} />
+              </Link>
+              <Link
+                to="/brands"
+                className="inline-flex items-center gap-2 border border-white bg-transparent px-7 py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-black transition-colors"
+              >
+                <span>Explore Brands</span>
+              </Link>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* New Arrivals Section */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E5E5] pb-5">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+              Recently Added
+            </p>
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-black">
+              New Arrivals
+            </h2>
+          </div>
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
+          >
+            <span>View Full Archive ({products.length})</span>
+            <ArrowRight size={13} />
+          </Link>
+        </div>
+
+        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3 lg:grid-cols-4">
+          {newArrivals.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              onAdd={(prod, variant) => addToCart(toCartItem(prod, variant))}
+            />
+          ))}
         </div>
       </section>
     </div>
@@ -391,6 +439,8 @@ export function ShopPage() {
   const { addToCart } = useContext(StoreContext);
   const [params, setParams] = useSearchParams();
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
   const q = params.get("q") || "";
   const category = params.get("category") || "";
@@ -400,6 +450,11 @@ export function ShopPage() {
   const maxPrice = params.get("maxPrice") || "";
   const inStock = params.get("inStock") === "true";
   const sort = params.get("sort") || "featured";
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [q, category, brand, seriesParam, minPrice, maxPrice, inStock, sort]);
 
   const update = (key, value) => {
     const next = new URLSearchParams(params);
@@ -445,16 +500,22 @@ export function ShopPage() {
     [products, q, category, brand, seriesParam, minPrice, maxPrice, inStock, sort]
   );
 
+  const totalPages = Math.ceil(shown.length / pageSize) || 1;
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return shown.slice(start, start + pageSize);
+  }, [shown, currentPage, pageSize]);
+
   const categoryName = categories.find((c) => String(c.id) === category)?.name;
   const brandName = brands.find((b) => String(b.id) === brand)?.name;
   const seriesName = series.find((s) => String(s.id) === seriesParam)?.name;
 
   const filterSidebar = (
-    <aside className="space-y-8 text-xs font-sans">
+    <aside className="space-y-6 text-xs">
       {/* Search Filter */}
       <div className="space-y-2">
-        <label htmlFor="shop-search-input" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
-          Search Artefacts
+        <label htmlFor="shop-search-input" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+          Search Products
         </label>
         <div className="relative">
           <input
@@ -462,14 +523,14 @@ export function ShopPage() {
             type="text"
             value={q}
             onChange={(e) => update("q", e.target.value)}
-            placeholder="Search characters, series, titles..."
-            className="field pr-8 text-xs"
+            placeholder="Search figures, titles..."
+            className="field pr-8 text-xs border-[#E5E5E5] bg-white text-black focus:border-black"
           />
           {q && (
             <button
               type="button"
               onClick={() => update("q", "")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#737373] hover:text-black"
             >
               <X size={14} />
             </button>
@@ -478,15 +539,15 @@ export function ShopPage() {
       </div>
 
       {/* Category Filter */}
-      <div className="space-y-2 border-t border-zinc-800/80 pt-6">
-        <label htmlFor="shop-category-select" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+      <div className="space-y-2 border-t border-[#E5E5E5] pt-5">
+        <label htmlFor="shop-category-select" className="block text-[11px] font-bold uppercase tracking-wider text-black">
           Category
         </label>
         <select
           id="shop-category-select"
           value={category}
           onChange={(e) => update("category", e.target.value)}
-          className="field text-xs bg-zinc-950"
+          className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
         >
           <option value="">All Categories ({categories.length})</option>
           {categories.map((c) => (
@@ -498,15 +559,15 @@ export function ShopPage() {
       </div>
 
       {/* Brand / Studio Filter */}
-      <div className="space-y-2 border-t border-zinc-800/80 pt-6">
-        <label htmlFor="shop-brand-select" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
-          Studio / Brand
+      <div className="space-y-2 border-t border-[#E5E5E5] pt-5">
+        <label htmlFor="shop-brand-select" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+          Brand / Studio
         </label>
         <select
           id="shop-brand-select"
           value={brand}
           onChange={(e) => update("brand", e.target.value)}
-          className="field text-xs bg-zinc-950"
+          className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
         >
           <option value="">All Brands ({brands.length})</option>
           {brands.map((b) => (
@@ -519,15 +580,15 @@ export function ShopPage() {
 
       {/* Series Filter */}
       {series.length > 0 && (
-        <div className="space-y-2 border-t border-zinc-800/80 pt-6">
-          <label htmlFor="shop-series-select" className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+        <div className="space-y-2 border-t border-[#E5E5E5] pt-5">
+          <label htmlFor="shop-series-select" className="block text-[11px] font-bold uppercase tracking-wider text-black">
             Anime Series
           </label>
           <select
             id="shop-series-select"
             value={seriesParam}
             onChange={(e) => update("series", e.target.value)}
-            className="field text-xs bg-zinc-950"
+            className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
           >
             <option value="">All Anime Series ({series.length})</option>
             {series.map((s) => (
@@ -540,8 +601,8 @@ export function ShopPage() {
       )}
 
       {/* Price Range Filter */}
-      <div className="space-y-3 border-t border-zinc-800/80 pt-6">
-        <span className="block text-xs font-semibold uppercase tracking-wider text-zinc-200">
+      <div className="space-y-3 border-t border-[#E5E5E5] pt-5">
+        <span className="block text-[11px] font-bold uppercase tracking-wider text-black">
           Price Range (USD)
         </span>
         <div className="grid grid-cols-2 gap-2">
@@ -553,7 +614,7 @@ export function ShopPage() {
               placeholder="Min ($)"
               value={minPrice}
               onChange={(e) => update("minPrice", e.target.value)}
-              className="field text-xs"
+              className="field text-xs border-[#E5E5E5] focus:border-black"
             />
           </label>
           <label className="block">
@@ -564,7 +625,7 @@ export function ShopPage() {
               placeholder="Max ($)"
               value={maxPrice}
               onChange={(e) => update("maxPrice", e.target.value)}
-              className="field text-xs"
+              className="field text-xs border-[#E5E5E5] focus:border-black"
             />
           </label>
         </div>
@@ -572,7 +633,7 @@ export function ShopPage() {
         {/* Quick price presets */}
         <div className="flex flex-wrap gap-1.5 pt-1">
           {[
-            { label: "Under $50", max: "50", min: "" },
+            { label: "< $50", max: "50", min: "" },
             { label: "$50 – $150", min: "50", max: "150" },
             { label: "$150 – $300", min: "150", max: "300" },
             { label: "$300+", min: "300", max: "" },
@@ -588,7 +649,7 @@ export function ShopPage() {
                 else next.delete("maxPrice");
                 setParams(next);
               }}
-              className="border border-zinc-800 bg-zinc-900/60 px-2.5 py-1 text-[10px] text-zinc-400 hover:border-[#c5a880] hover:text-[#dfc79b] transition-colors"
+              className="border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-[10px] font-semibold text-black hover:border-black hover:bg-white transition-colors"
             >
               {preset.label}
             </button>
@@ -597,15 +658,15 @@ export function ShopPage() {
       </div>
 
       {/* In-Stock Only Toggle */}
-      <div className="border-t border-zinc-800/80 pt-6">
+      <div className="border-t border-[#E5E5E5] pt-5">
         <label className="flex items-center gap-2.5 cursor-pointer">
           <input
             type="checkbox"
             checked={inStock}
             onChange={(e) => update("inStock", e.target.checked)}
-            className="accent-[#c5a880] h-4 w-4"
+            className="accent-black h-4 w-4"
           />
-          <span className="text-xs text-zinc-300 font-medium">In-Stock Only</span>
+          <span className="text-xs text-black font-semibold">In-Stock Only</span>
         </label>
       </div>
 
@@ -614,7 +675,7 @@ export function ShopPage() {
         <button
           type="button"
           onClick={clearAllFilters}
-          className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline underline-offset-4 pt-2"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-black hover:underline pt-2"
         >
           <RotateCcw size={13} />
           <span>Reset All Filters</span>
@@ -625,19 +686,19 @@ export function ShopPage() {
 
   return (
     <Page
-      eyebrow="The Archive"
-      title="Complete Collection"
-      subtitle="Curated Japanese anime artefacts, figures, and apparel from the 20th Ward and Tokyo studios."
+      eyebrow="Catalogue"
+      title="All Products"
+      subtitle="Curated official anime figures, collectables, and artefacts from Tokyo studios."
     >
       {/* Top Filter and Sort Controls Bar */}
-      <div className="flex flex-col gap-4 border-b border-zinc-800 pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-[#E5E5E5] pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="font-mono text-xs tracking-wider text-zinc-400">
-            {loading ? "Counting pieces..." : `Showing ${shown.length} pieces`}
+          <span className="text-xs font-semibold tracking-wider text-[#737373]">
+            {loading ? "Loading..." : `Showing ${shown.length} ${shown.length === 1 ? "product" : "products"}`}
           </span>
 
           {activeFiltersCount > 0 && (
-            <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest bg-[#c5a880]/15 text-[#dfc79b] border border-[#c5a880]/40">
+            <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-black text-white">
               {activeFiltersCount} Active {activeFiltersCount === 1 ? "Filter" : "Filters"}
             </span>
           )}
@@ -648,12 +709,12 @@ export function ShopPage() {
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(true)}
-            className="flex items-center gap-2 border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-200 lg:hidden hover:border-[#c5a880]"
+            className="flex items-center gap-2 border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black lg:hidden hover:border-black"
           >
-            <SlidersHorizontal size={14} className="text-[#c5a880]" />
+            <SlidersHorizontal size={14} />
             <span>Filter</span>
             {activeFiltersCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#c5a880] text-[10px] font-bold text-black">
+              <span className="flex h-4 w-4 items-center justify-center bg-black text-[9px] font-bold text-white">
                 {activeFiltersCount}
               </span>
             )}
@@ -661,17 +722,17 @@ export function ShopPage() {
 
           {/* Sort Selector */}
           <div className="flex items-center gap-2">
-            <label htmlFor="shop-sort-select" className="text-xs text-zinc-400 hidden sm:inline">
+            <label htmlFor="shop-sort-select" className="text-xs text-[#737373] hidden sm:inline">
               Sort by:
             </label>
             <select
               id="shop-sort-select"
               value={sort}
               onChange={(e) => update("sort", e.target.value)}
-              className="border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 outline-none focus:border-[#c5a880]"
+              className="border border-[#E5E5E5] bg-white px-3 py-2 text-xs font-semibold text-black outline-none focus:border-black"
             >
-              <option value="featured">Featured Archive</option>
-              <option value="newest">Newest Acquisitions</option>
+              <option value="featured">Featured Collection</option>
+              <option value="newest">New Arrivals</option>
               <option value="price-low">Price: Low to High</option>
               <option value="price-high">Price: High to Low</option>
               <option value="name">Title: A – Z</option>
@@ -683,18 +744,18 @@ export function ShopPage() {
 
       {/* Active Filter Chips */}
       {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2 py-4 border-b border-zinc-800/60">
-          <span className="text-[10px] uppercase tracking-widest text-zinc-500 mr-1">
-            Active:
+        <div className="flex flex-wrap items-center gap-2 py-3 border-b border-[#E5E5E5]">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373] mr-1">
+            Active Filters:
           </span>
 
           {q && (
-            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
               <span>Query: “{q}”</span>
               <button
                 type="button"
                 onClick={() => removeFilter("q")}
-                className="text-zinc-500 hover:text-white"
+                className="text-[#737373] hover:text-black"
               >
                 <X size={12} />
               </button>
@@ -702,12 +763,12 @@ export function ShopPage() {
           )}
 
           {category && (
-            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
               <span>Category: {categoryName || category}</span>
               <button
                 type="button"
                 onClick={() => removeFilter("category")}
-                className="text-zinc-500 hover:text-white"
+                className="text-[#737373] hover:text-black"
               >
                 <X size={12} />
               </button>
@@ -715,12 +776,12 @@ export function ShopPage() {
           )}
 
           {brand && (
-            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
               <span>Brand: {brandName || brand}</span>
               <button
                 type="button"
                 onClick={() => removeFilter("brand")}
-                className="text-zinc-500 hover:text-white"
+                className="text-[#737373] hover:text-black"
               >
                 <X size={12} />
               </button>
@@ -728,12 +789,12 @@ export function ShopPage() {
           )}
 
           {seriesParam && (
-            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
               <span>Series: {seriesName || seriesParam}</span>
               <button
                 type="button"
                 onClick={() => removeFilter("series")}
-                className="text-zinc-500 hover:text-white"
+                className="text-[#737373] hover:text-black"
               >
                 <X size={12} />
               </button>
@@ -741,14 +802,14 @@ export function ShopPage() {
           )}
 
           {(minPrice || maxPrice) && (
-            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
               <span>
                 Price: {minPrice ? `$${minPrice}` : "$0"} – {maxPrice ? `$${maxPrice}` : "∞"}
               </span>
               <button
                 type="button"
                 onClick={() => removeFilter("minPrice", "maxPrice")}
-                className="text-zinc-500 hover:text-white"
+                className="text-[#737373] hover:text-black"
               >
                 <X size={12} />
               </button>
@@ -756,12 +817,12 @@ export function ShopPage() {
           )}
 
           {inStock && (
-            <span className="inline-flex items-center gap-1.5 border border-zinc-800 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-300">
+            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
               <span>In-Stock Only</span>
               <button
                 type="button"
                 onClick={() => removeFilter("inStock")}
-                className="text-zinc-500 hover:text-white"
+                className="text-[#737373] hover:text-black"
               >
                 <X size={12} />
               </button>
@@ -771,7 +832,7 @@ export function ShopPage() {
           <button
             type="button"
             onClick={clearAllFilters}
-            className="text-[11px] text-[#dfc79b] hover:underline underline-offset-4 ml-2"
+            className="text-[11px] font-bold text-black hover:underline ml-2"
           >
             Clear all
           </button>
@@ -784,20 +845,20 @@ export function ShopPage() {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 transition-opacity"
             onClick={() => setMobileFiltersOpen(false)}
           />
           <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-            <div className="w-screen max-w-xs border-l border-zinc-800 bg-zinc-950 p-6 flex flex-col justify-between">
+            <div className="w-screen max-w-xs border-l border-[#E5E5E5] bg-white p-6 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
-                  <h3 className="font-serif text-lg font-medium text-zinc-100">
-                    Filter Archive
+                <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4 mb-6">
+                  <h3 className="text-base font-bold text-black">
+                    Filter Products
                   </h3>
                   <button
                     type="button"
                     onClick={() => setMobileFiltersOpen(false)}
-                    className="text-zinc-400 hover:text-white p-1"
+                    className="text-[#737373] hover:text-black p-1"
                   >
                     <X size={20} />
                   </button>
@@ -805,20 +866,20 @@ export function ShopPage() {
                 {filterSidebar}
               </div>
 
-              <div className="pt-6 border-t border-zinc-800 mt-6 space-y-2">
+              <div className="pt-6 border-t border-[#E5E5E5] mt-6 space-y-2">
                 <Button
                   onClick={() => setMobileFiltersOpen(false)}
                   className="w-full"
                 >
-                  Apply Filters ({shown.length})
+                  View {shown.length} Results
                 </Button>
                 {activeFiltersCount > 0 && (
                   <button
                     type="button"
                     onClick={clearAllFilters}
-                    className="w-full text-center text-xs text-zinc-400 hover:text-white py-2"
+                    className="w-full text-center text-xs font-semibold text-[#737373] hover:text-black py-2"
                   >
-                    Reset All Filters
+                    Reset Filters
                   </button>
                 )}
               </div>
@@ -830,7 +891,7 @@ export function ShopPage() {
       {/* Main Grid Section */}
       <div className="mt-8 grid gap-10 lg:grid-cols-[240px_1fr]">
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block border-r border-zinc-800/80 pr-8">
+        <div className="hidden lg:block border-r border-[#E5E5E5] pr-8">
           {filterSidebar}
         </div>
 
@@ -842,31 +903,82 @@ export function ShopPage() {
                 <ProductCardSkeleton key={i} />
               ))}
             </div>
-          ) : shown.length ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">
-              {shown.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  onAdd={(prod, variant) => addToCart(toCartItem(prod, variant))}
-                />
-              ))}
+          ) : paginatedProducts.length ? (
+            <div className="space-y-12">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">
+                {paginatedProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    product={p}
+                    onAdd={(prod, variant) => addToCart(toCartItem(prod, variant))}
+                  />
+                ))}
+              </div>
+
+              {/* Minimalist Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between border-t border-[#E5E5E5] pt-6">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() => {
+                      setCurrentPage((p) => Math.max(1, p - 1));
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    ← Previous
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => {
+                          setCurrentPage(num);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                        className={`h-8 w-8 text-xs font-bold transition-colors ${
+                          currentPage === num
+                            ? "bg-black text-white"
+                            : "border border-[#E5E5E5] bg-white text-black hover:border-black"
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() => {
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center border border-zinc-800 bg-zinc-950/60 p-12 text-center my-8">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/40 text-[#c5a880]">
-                <Search size={24} />
+            <div className="flex flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center my-8">
+              <div className="flex h-14 w-14 items-center justify-center border border-black bg-white text-black">
+                <Search size={22} />
               </div>
-              <h3 className="mt-4 font-serif text-lg font-medium text-zinc-200">
-                No Archive Pieces Found
+              <h3 className="mt-4 text-base font-bold text-black">
+                No Products Found
               </h3>
-              <p className="mt-2 max-w-sm text-xs leading-relaxed text-zinc-400 font-sans">
-                No items match your active filters or search terms. Try broadening your criteria or resetting filters.
+              <p className="mt-2 max-w-sm text-xs leading-relaxed text-[#737373]">
+                No items match your active filters or search terms. Try broadening your criteria or clearing filters.
               </p>
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="mt-6 inline-flex items-center gap-2 border border-[#c5a880]/60 bg-[#c5a880]/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-[#dfc79b] hover:bg-[#c5a880] hover:text-black transition-colors"
+                className="mt-6 border border-black bg-black px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
               >
                 Reset All Filters
               </button>
@@ -895,6 +1007,7 @@ export function ProductPage() {
   const [index, setIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [related, setRelated] = useState([]);
 
   useEffect(() => {
     catalogueApi
@@ -907,12 +1020,27 @@ export function ProductPage() {
       .catch((loadError) => setError(messageFrom(loadError)));
   }, [id]);
 
+  useEffect(() => {
+    if (product) {
+      if (product.seriesId) {
+        catalogueApi.productsForSeries(product.seriesId).then((items) => {
+          setRelated((items || []).filter((p) => String(p.id) !== String(product.id)).slice(0, 4));
+        }).catch(() => {});
+      } else {
+        catalogueApi.products(0, 8).then((res) => {
+          const list = res?.content || [];
+          setRelated(list.filter((p) => String(p.id) !== String(product.id)).slice(0, 4));
+        }).catch(() => {});
+      }
+    }
+  }, [product]);
+
   if (error) {
     return (
-      <Page eyebrow="Archive" title="Acquisition Error">
+      <Page eyebrow="Catalogue" title="Product Notice">
         <Notice>{error}</Notice>
-        <Link to="/shop" className="mt-4 inline-block text-xs uppercase tracking-wider text-[#dfc79b] underline underline-offset-4">
-          ← Return to Archive
+        <Link to="/shop" className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-black underline">
+          ← Return to All Products
         </Link>
       </Page>
     );
@@ -939,12 +1067,12 @@ export function ProductPage() {
         );
         if (!list) throw new Error("Your wishlist is still loading. Please try again shortly.");
         await removeWishlistProduct(list.id, product.id);
-        const msg = "Removed from your wishlist.";
+        const msg = "Removed from wishlist.";
         setWishMessage(msg);
         showToast(product.name, "info", "Removed from Wishlist");
       } else {
         const result = await addWishlistProduct(product.id);
-        const msg = result.alreadySaved ? "Already in your wishlist." : "Saved to your wishlist.";
+        const msg = result.alreadySaved ? "Already in wishlist." : "Saved to wishlist.";
         setWishMessage(msg);
         showToast(product.name, "success", result.alreadySaved ? "Already in Wishlist" : "Saved to Wishlist");
       }
@@ -977,37 +1105,37 @@ export function ProductPage() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-14 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 bg-white text-black">
       {/* Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-[11px] text-zinc-500 font-mono tracking-wider">
-        <Link to="/" className="hover:text-zinc-300 transition-colors">
-          HOME
+      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-xs text-[#737373] tracking-wide">
+        <Link to="/" className="hover:text-black transition-colors font-medium">
+          Home
         </Link>
         <span>/</span>
-        <Link to="/shop" className="hover:text-zinc-300 transition-colors">
-          ARCHIVE
+        <Link to="/shop" className="hover:text-black transition-colors font-medium">
+          Products
         </Link>
         {product.categoryName && (
           <>
             <span>/</span>
             <Link
               to={`/shop?category=${product.categoryId}`}
-              className="hover:text-zinc-300 transition-colors uppercase"
+              className="hover:text-black transition-colors font-medium"
             >
               {product.categoryName}
             </Link>
           </>
         )}
         <span>/</span>
-        <span className="truncate max-w-[200px] text-[#c5a880]">{product.name}</span>
+        <span className="truncate max-w-[200px] text-black font-semibold">{product.name}</span>
       </nav>
 
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-start">
         {/* Gallery Column */}
         <div className="space-y-4">
-          <div className="relative aspect-[4/5] w-full overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl">
+          <div className="relative aspect-[4/5] w-full overflow-hidden border border-[#E5E5E5] bg-[#FAFAFA]">
             <img
-              className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 hover:scale-102"
               src={images[index]?.imageUrl || ANTEIKU_FALLBACK_IMAGE}
               alt={images[index]?.altText || product.name}
               onError={(event) => {
@@ -1023,10 +1151,10 @@ export function ProductPage() {
                   key={img.id || i}
                   type="button"
                   onClick={() => setIndex(i)}
-                  className={`h-20 w-16 shrink-0 overflow-hidden border transition-all duration-200 ${
+                  className={`h-20 w-16 shrink-0 overflow-hidden border transition-all duration-150 ${
                     i === index
-                      ? "border-[#c5a880] ring-1 ring-[#c5a880]"
-                      : "border-zinc-800 opacity-60 hover:opacity-100"
+                      ? "border-black ring-1 ring-black"
+                      : "border-[#E5E5E5] opacity-60 hover:opacity-100"
                   }`}
                 >
                   <img
@@ -1045,34 +1173,34 @@ export function ProductPage() {
 
         {/* Product Information Column */}
         <div className="space-y-6">
-          <div className="space-y-2 border-b border-zinc-800 pb-6">
+          <div className="space-y-2 border-b border-[#E5E5E5] pb-6">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a880]">
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
                 {product.brandName || "ANTEIKU ARCHIVE"}
               </span>
               {product.seriesName && (
-                <span className="text-[10px] uppercase tracking-widest text-zinc-400">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
                   {product.seriesName}
                 </span>
               )}
             </div>
 
-            <h1 className="font-serif text-3xl font-medium tracking-tight text-zinc-100 sm:text-4xl lg:text-5xl">
+            <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl lg:text-4xl">
               {product.name}
             </h1>
 
             <div className="flex items-baseline gap-4 pt-2">
-              <span className="font-sans text-2xl font-semibold tracking-tight text-zinc-100">
+              <span className="text-2xl font-bold tracking-tight text-black">
                 {money(selected?.price ?? product.price)}
               </span>
-              <span className="text-[10px] font-medium uppercase tracking-widest text-emerald-400 border border-emerald-900/60 bg-emerald-950/40 px-2 py-0.5">
-                In Stock · Direct Tokyo Dispatch
+              <span className="text-[10px] font-bold uppercase tracking-wider border border-black bg-white text-black px-2 py-0.5">
+                {unavailable ? "Archived / Unavailable" : "In Stock · Direct Tokyo Dispatch"}
               </span>
             </div>
           </div>
 
           {/* Description */}
-          <div className="text-xs leading-relaxed text-zinc-300 font-sans space-y-3">
+          <div className="text-xs leading-relaxed text-[#737373] space-y-3">
             <p className="whitespace-pre-line">
               {product.description ||
                 "Acquired directly from verified Tokyo creators and licensed Japanese workshops. Hand-inspected prior to archival dispatch."}
@@ -1082,19 +1210,19 @@ export function ProductPage() {
           {/* Variant Selection */}
           {product.productVariants?.length > 0 && (
             <div className="space-y-3 pt-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-black">
                 Select Option / Edition
               </span>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 {product.productVariants.map((variant) => (
                   <button
                     key={variant.id}
                     type="button"
                     onClick={() => setSelected(variant)}
-                    className={`border px-4 py-2.5 text-xs font-medium transition-all ${
+                    className={`border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all ${
                       selected?.id === variant.id
-                        ? "border-[#c5a880] bg-[#c5a880]/15 text-[#dfc79b]"
-                        : "border-zinc-800 text-zinc-300 hover:border-zinc-700 hover:text-white"
+                        ? "border-black bg-black text-white"
+                        : "border-[#E5E5E5] bg-white text-black hover:border-black"
                     }`}
                   >
                     {variant.name || [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}
@@ -1108,24 +1236,24 @@ export function ProductPage() {
           <div className="space-y-3 pt-4">
             <div className="flex items-center gap-3">
               {/* Stepper */}
-              <div className="flex h-12 items-center border border-zinc-800 bg-zinc-900/60">
+              <div className="flex h-12 items-center border border-[#E5E5E5] bg-white">
                 <button
                   type="button"
                   aria-label="Decrease quantity"
                   disabled={quantity === 1}
                   onClick={() => setQuantity((v) => Math.max(1, v - 1))}
-                  className="px-3.5 h-full flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-30"
+                  className="px-3.5 h-full flex items-center justify-center text-[#737373] hover:text-black disabled:opacity-30 transition-colors"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-8 text-center text-xs font-mono tabular-nums text-zinc-200">
+                <span className="w-8 text-center text-xs font-bold tabular-nums text-black">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   aria-label="Increase quantity"
                   onClick={() => setQuantity((v) => v + 1)}
-                  className="px-3.5 h-full flex items-center justify-center text-zinc-400 hover:text-white"
+                  className="px-3.5 h-full flex items-center justify-center text-[#737373] hover:text-black transition-colors"
                 >
                   <Plus size={14} />
                 </button>
@@ -1136,15 +1264,15 @@ export function ProductPage() {
                 type="button"
                 onClick={handleAdd}
                 disabled={unavailable || !selected}
-                className={`flex-1 h-12 flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-widest transition-all ${
+                className={`flex-1 h-12 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${
                   added
-                    ? "border-[#c5a880] bg-[#c5a880]/20 text-[#dfc79b]"
-                    : "border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] text-black hover:opacity-95 shadow-[0_0_15px_rgba(197,168,128,0.2)]"
+                    ? "bg-neutral-800 text-white"
+                    : "bg-black text-white hover:bg-neutral-800 disabled:opacity-40"
                 }`}
               >
                 {added ? (
                   <>
-                    <Check size={16} className="text-[#dfc79b]" />
+                    <Check size={16} />
                     <span>Added to Bag</span>
                   </>
                 ) : (
@@ -1162,10 +1290,10 @@ export function ProductPage() {
                 aria-pressed={wished}
                 onClick={save}
                 aria-label={wished ? "Remove from wishlist" : "Save to wishlist"}
-                className={`h-12 w-12 flex items-center justify-center border transition-all ${
+                className={`h-12 w-12 flex items-center justify-center border transition-colors ${
                   wished
-                    ? "border-[#c5a880] bg-[#c5a880]/15 text-[#dfc79b]"
-                    : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-[#c5a880] hover:text-white"
+                    ? "border-black bg-black text-white"
+                    : "border-[#E5E5E5] bg-white text-black hover:border-black"
                 }`}
               >
                 <Heart size={18} fill={wished ? "currentColor" : "none"} />
@@ -1173,40 +1301,69 @@ export function ProductPage() {
             </div>
 
             {wishMessage && (
-              <p role="status" className="text-xs text-[#dfc79b] pt-1">
+              <p role="status" className="text-xs font-semibold text-black pt-1">
                 {wishMessage}
               </p>
             )}
           </div>
 
-          {/* Archival Specifications DL */}
-          <dl className="mt-8 grid grid-cols-2 gap-y-3 border-t border-zinc-800 pt-6 text-xs font-mono">
-            <dt className="text-zinc-500 uppercase tracking-widest">Category</dt>
-            <dd className="text-zinc-200">{product.categoryName || "—"}</dd>
+          {/* Specifications Table */}
+          <dl className="mt-8 grid grid-cols-2 gap-y-3 border-t border-[#E5E5E5] pt-6 text-xs">
+            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Category</dt>
+            <dd className="text-black font-semibold">{product.categoryName || "—"}</dd>
 
-            <dt className="text-zinc-500 uppercase tracking-widest">Series</dt>
-            <dd className="text-zinc-200">{product.seriesName || "—"}</dd>
+            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Series</dt>
+            <dd className="text-black font-semibold">{product.seriesName || "—"}</dd>
 
-            <dt className="text-zinc-500 uppercase tracking-widest">Studio / Brand</dt>
-            <dd className="text-zinc-200">{product.brandName || "ANTEIKU"}</dd>
+            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Studio / Brand</dt>
+            <dd className="text-black font-semibold">{product.brandName || "ANTEIKU"}</dd>
 
-            <dt className="text-zinc-500 uppercase tracking-widest">Archive SKU</dt>
-            <dd className="text-zinc-200">{selected?.sku || product.sku || "—"}</dd>
+            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Item SKU</dt>
+            <dd className="text-black font-mono font-semibold">{selected?.sku || product.sku || "—"}</dd>
           </dl>
 
           {/* Guarantee Badges */}
-          <div className="border-t border-zinc-800/80 pt-6 grid grid-cols-2 gap-4 text-[11px] text-zinc-400">
+          <div className="border-t border-[#E5E5E5] pt-6 grid grid-cols-2 gap-4 text-xs text-[#737373]">
             <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-[#c5a880]" />
-              <span>Official License Certificate</span>
+              <ShieldCheck size={16} className="text-black" />
+              <span className="font-semibold text-black">Official License Certificate</span>
             </div>
             <div className="flex items-center gap-2">
-              <Truck size={16} className="text-[#c5a880]" />
-              <span>Double-Boxed Archival Shipping</span>
+              <Truck size={16} className="text-black" />
+              <span className="font-semibold text-black">Archival Double-Boxing</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Related Products Section */}
+      {related.length > 0 && (
+        <div className="mt-20 border-t border-[#E5E5E5] pt-12">
+          <div className="flex items-end justify-between pb-6">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+                Curated Suggestions
+              </p>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-black">
+                Related Products
+              </h2>
+            </div>
+            <Link to="/shop" className="text-xs font-bold uppercase tracking-wider text-black hover:underline">
+              View All →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-4">
+            {related.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                onAdd={(prod, variant) => addToCart(toCartItem(prod, variant))}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -1268,7 +1425,7 @@ export function ProductReviewsPage() {
       }
       setReviews((current) => [created, ...current]);
       setComment("");
-      setFeedback("Your verified collector review has been submitted.");
+      setFeedback("Your collector review has been submitted.");
     } catch (err) {
       setError(messageFrom(err));
     } finally {
@@ -1277,35 +1434,35 @@ export function ProductReviewsPage() {
   };
 
   return (
-    <section className="mx-auto w-full min-w-0 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-      <div className="border-t border-zinc-800 pt-12">
+    <section className="mx-auto w-full min-w-0 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 bg-white text-black">
+      <div className="border-t border-[#E5E5E5] pt-12">
         <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#c5a880]">
-              Collector Feedback
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+              Customer Reviews
             </p>
-            <h2 className="mt-1 font-serif text-2xl font-medium text-zinc-100">
-              Verified Acquisitions & Reviews
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-black">
+              Verified Collector Feedback
             </h2>
           </div>
-          <span className="text-xs font-mono text-zinc-500">
+          <span className="text-xs font-semibold text-[#737373]">
             {reviews.length} {reviews.length === 1 ? "Review" : "Reviews"}
           </span>
         </div>
 
         {!user ? (
-          <div className="mt-6 border border-zinc-800 bg-zinc-950 p-6 text-center text-xs text-zinc-400">
+          <div className="mt-6 border border-[#E5E5E5] bg-[#FAFAFA] p-6 text-center text-xs text-[#737373]">
             <p>Sign in to read client reviews and share your impressions of this piece.</p>
             <Link
               to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
               state={{ notice: "Sign in to view and write product reviews." }}
-              className="mt-3 inline-block font-semibold uppercase tracking-wider text-[#dfc79b] underline underline-offset-4"
+              className="mt-3 inline-block font-bold uppercase tracking-wider text-black underline"
             >
               Sign In to Your Account
             </Link>
           </div>
         ) : loading ? (
-          <p className="mt-6 text-xs text-zinc-500">Consulting collector archives…</p>
+          <p className="mt-6 text-xs text-[#737373]">Loading reviews…</p>
         ) : (
           <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
             {/* Reviews List */}
@@ -1314,40 +1471,40 @@ export function ProductReviewsPage() {
               {feedback && <Notice type="info">{feedback}</Notice>}
 
               {reviews.length === 0 ? (
-                <div className="border border-zinc-800/80 bg-zinc-950/60 p-8 text-center text-xs text-zinc-500">
+                <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-8 text-center text-xs text-[#737373]">
                   No collector reviews have been registered for this piece yet.
                 </div>
               ) : (
-                <div className="divide-y divide-zinc-800/80 border border-zinc-800 bg-zinc-950">
+                <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] bg-white">
                   {reviews.map((review) => (
                     <article key={review.id} className="p-5 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="font-serif text-sm font-medium text-zinc-200">
+                          <span className="text-sm font-bold text-black">
                             {review.userName || "Verified Collector"}
                           </span>
-                          <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 border border-emerald-900/60">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-black bg-[#F5F5F5] px-1.5 py-0.5 border border-[#E5E5E5]">
                             Verified
                           </span>
                         </div>
-                        <span className="text-[10px] font-mono text-zinc-500">
+                        <span className="text-[10px] text-[#737373]">
                           {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Date unavailable"}
                         </span>
                       </div>
 
                       {/* Stars */}
-                      <div className="flex items-center gap-1 text-[#dfc79b]">
+                      <div className="flex items-center gap-1 text-black">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star
                             key={i}
                             size={12}
                             fill={i < (review.rating || 5) ? "currentColor" : "none"}
-                            className={i < (review.rating || 5) ? "text-[#dfc79b]" : "text-zinc-700"}
+                            className={i < (review.rating || 5) ? "text-black" : "text-[#E5E5E5]"}
                           />
                         ))}
                       </div>
 
-                      <p className="text-xs leading-relaxed text-zinc-300 font-sans whitespace-pre-line pt-1">
+                      <p className="text-xs leading-relaxed text-[#737373] whitespace-pre-line pt-1">
                         {review.comment}
                       </p>
                     </article>
@@ -1357,20 +1514,20 @@ export function ProductReviewsPage() {
             </div>
 
             {/* Submit Review Form */}
-            <div className="border border-zinc-800 bg-zinc-950 p-6 h-fit space-y-4">
-              <h3 className="font-serif text-base font-medium text-zinc-100">
+            <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 h-fit space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-black">
                 Write a Review
               </h3>
 
-              <form onSubmit={submit} className="space-y-4 text-xs font-sans">
+              <form onSubmit={submit} className="space-y-4 text-xs">
                 <label className="block space-y-1.5">
-                  <span className="font-semibold uppercase tracking-wider text-zinc-300">
+                  <span className="font-bold uppercase tracking-wider text-black">
                     Rating
                   </span>
                   <select
                     value={rating}
                     onChange={(e) => setRating(e.target.value)}
-                    className="field text-xs bg-zinc-900"
+                    className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
                   >
                     <option value="5">★★★★★ — 5 (Museum Quality)</option>
                     <option value="4">★★★★☆ — 4 (Excellent)</option>
@@ -1381,8 +1538,8 @@ export function ProductReviewsPage() {
                 </label>
 
                 <label className="block space-y-1.5">
-                  <span className="font-semibold uppercase tracking-wider text-zinc-300">
-                    Review Impression
+                  <span className="font-bold uppercase tracking-wider text-black">
+                    Your Review
                   </span>
                   <textarea
                     required
@@ -1390,10 +1547,10 @@ export function ProductReviewsPage() {
                     rows="4"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="field text-xs resize-y"
-                    placeholder="Describe craftsmanship, detail, packaging, and display quality..."
+                    className="field text-xs resize-y border-[#E5E5E5] bg-white text-black focus:border-black"
+                    placeholder="Describe detail, authenticity, packaging, and display quality..."
                   />
-                  <span className="block text-[10px] text-zinc-500">
+                  <span className="block text-[10px] text-[#737373]">
                     Maximum 1,000 characters.
                   </span>
                 </label>
@@ -1409,6 +1566,9 @@ export function ProductReviewsPage() {
     </section>
   );
 }
+    </section>
+  );
+}
 
 /* =========================================================================
    5. CART PAGE
@@ -1421,24 +1581,24 @@ export function CartPage() {
 
   return (
     <Page
-      eyebrow="Sanctuary Bag"
-      title="Shopping Bag"
-      subtitle="Review selected anime merchandise and fine statues before proceeding to dispatch."
+      eyebrow="Bag"
+      title="Shopping Cart"
+      subtitle="Review your selected anime figures and merchandise before proceeding to checkout."
     >
       {cart.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border border-zinc-800 bg-zinc-950 p-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/60 text-[#c5a880]">
-            <ShoppingBag size={26} strokeWidth={1.5} />
+        <div className="flex flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center border border-black bg-white text-black">
+            <ShoppingBag size={24} strokeWidth={1.75} />
           </div>
-          <h2 className="mt-4 font-serif text-xl font-medium text-zinc-200">
-            Your shopping bag is empty
+          <h2 className="mt-4 text-lg font-bold text-black">
+            Your shopping cart is empty
           </h2>
-          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-400">
-            Discover curated Tokyo Ghoul figurines, collector apparel, and art pieces.
+          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[#737373]">
+            Discover official Japanese figurines, exclusive releases, and collection pieces.
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-flex items-center gap-2 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black hover:opacity-95 transition-opacity"
+            className="mt-6 inline-flex items-center gap-2 border border-black bg-black px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
           >
             <span>Explore The Collection</span>
             <ArrowRight size={14} />
@@ -1447,13 +1607,13 @@ export function CartPage() {
       ) : (
         <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
           {/* Items List */}
-          <div className="border border-zinc-800 bg-zinc-950 divide-y divide-zinc-800">
+          <div className="border border-[#E5E5E5] bg-white divide-y divide-[#E5E5E5]">
             {cart.map((item) => (
               <div key={item.variantId} className="flex gap-5 p-5 sm:p-6">
                 <img
                   src={item.image || ANTEIKU_FALLBACK_IMAGE}
                   alt=""
-                  className="h-28 w-24 shrink-0 border border-zinc-800 bg-zinc-900 object-cover"
+                  className="h-28 w-24 shrink-0 border border-[#E5E5E5] bg-[#FAFAFA] object-cover"
                   onError={(e) => {
                     e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
                   }}
@@ -1464,7 +1624,7 @@ export function CartPage() {
                     <div className="flex items-start justify-between gap-2">
                       <Link
                         to={`/product/${item.productId}`}
-                        className="font-serif text-base font-medium text-zinc-100 hover:text-[#dfc79b] transition-colors"
+                        className="text-sm font-bold text-black hover:underline transition-colors"
                       >
                         {item.name}
                       </Link>
@@ -1472,47 +1632,47 @@ export function CartPage() {
                         type="button"
                         aria-label={`Remove ${item.name}`}
                         onClick={() => removeFromCart(item.variantId)}
-                        className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                        className="text-[#737373] hover:text-black transition-colors p-1"
                       >
                         <Trash2 size={16} />
                       </button>
                     </div>
 
                     {item.variantName && (
-                      <p className="text-xs text-zinc-400 mt-1">
+                      <p className="text-xs text-[#737373] mt-1 font-medium">
                         {item.variantName}
                       </p>
                     )}
-                    <p className="text-xs font-semibold text-[#dfc79b] mt-1 font-sans">
+                    <p className="text-xs font-bold text-black mt-1">
                       {money(item.price)} each
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-3">
                     {/* Stepper */}
-                    <div className="flex items-center border border-zinc-800 bg-zinc-900/60">
+                    <div className="flex items-center border border-[#E5E5E5] bg-white">
                       <button
                         type="button"
                         aria-label="Decrease quantity"
                         onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                        className="px-2.5 py-1 text-zinc-400 hover:text-white transition-colors"
+                        className="px-2.5 py-1 text-[#737373] hover:text-black transition-colors"
                       >
                         <Minus size={13} />
                       </button>
-                      <span className="w-8 text-center text-xs font-mono tabular-nums text-zinc-200">
+                      <span className="w-8 text-center text-xs font-bold tabular-nums text-black">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         aria-label="Increase quantity"
                         onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                        className="px-2.5 py-1 text-zinc-400 hover:text-white transition-colors"
+                        className="px-2.5 py-1 text-[#737373] hover:text-black transition-colors"
                       >
                         <Plus size={13} />
                       </button>
                     </div>
 
-                    <span className="text-sm font-semibold text-zinc-100 font-sans">
+                    <span className="text-sm font-bold text-black">
                       {money(item.price * item.quantity)}
                     </span>
                   </div>
@@ -1522,23 +1682,23 @@ export function CartPage() {
           </div>
 
           {/* Summary Sidebar */}
-          <aside className="border border-zinc-800 bg-zinc-950 p-6 h-fit space-y-5">
-            <h2 className="font-serif text-lg font-medium text-zinc-100 border-b border-zinc-800 pb-3">
+          <aside className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 h-fit space-y-5">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-black border-b border-[#E5E5E5] pb-3">
               Order Summary
             </h2>
 
-            <div className="space-y-3 text-xs font-sans">
-              <div className="flex justify-between text-zinc-400">
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between text-[#737373]">
                 <span>Items Subtotal</span>
-                <span className="font-semibold text-zinc-200">{money(total)}</span>
+                <span className="font-bold text-black">{money(total)}</span>
               </div>
-              <div className="flex justify-between text-zinc-400">
+              <div className="flex justify-between text-[#737373]">
                 <span>Shipping & Insurance</span>
                 <span>Calculated at checkout</span>
               </div>
-              <div className="flex justify-between text-sm font-semibold text-zinc-100 border-t border-zinc-800 pt-3">
-                <span className="font-serif">Subtotal</span>
-                <span className="text-[#dfc79b]">{money(total)}</span>
+              <div className="flex justify-between text-sm font-bold text-black border-t border-[#E5E5E5] pt-3">
+                <span>Subtotal</span>
+                <span className="font-extrabold">{money(total)}</span>
               </div>
             </div>
 
@@ -1555,7 +1715,7 @@ export function CartPage() {
             </Button>
 
             {!user && (
-              <p className="text-[11px] leading-relaxed text-zinc-500 text-center font-sans">
+              <p className="text-[11px] leading-relaxed text-[#737373] text-center">
                 You can browse as a guest. An account is required to complete dispatch and track your order.
               </p>
             )}
@@ -1613,20 +1773,20 @@ function AuthPage({ register = false }) {
   };
 
   return (
-    <section className="mx-auto max-w-md px-4 py-16 sm:py-24">
-      <div className="border border-zinc-800 bg-zinc-950 p-8 sm:p-10 shadow-2xl">
+    <section className="mx-auto max-w-md px-4 py-16 sm:py-24 bg-white text-black">
+      <div className="border border-[#E5E5E5] bg-white p-8 sm:p-10 shadow-sm">
         <div className="text-center space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a880]">
-            Anteiku Client Access
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+            Anteiku Member Access
           </p>
-          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-zinc-100">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
             {register ? "Create Account" : "Sign In"}
           </h1>
         </div>
 
         {location.state?.notice && <Notice type="info">{location.state.notice}</Notice>}
 
-        <form onSubmit={submit} className="mt-8 space-y-4 text-xs font-sans">
+        <form onSubmit={submit} className="mt-8 space-y-4 text-xs">
           {register && (
             <div className="grid gap-4 sm:grid-cols-2">
               <Input
@@ -1677,15 +1837,15 @@ function AuthPage({ register = false }) {
           {error && <Notice>{error}</Notice>}
 
           <Button disabled={busy} className="mt-4 w-full">
-            {busy ? "Authenticating…" : register ? "Create Collector Account" : "Sign In"}
+            {busy ? "Authenticating…" : register ? "Create Account" : "Sign In"}
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-zinc-400">
+        <p className="mt-6 text-center text-xs text-[#737373]">
           {register ? "Already registered with Anteiku?" : "New to the Archive?"}{" "}
           <Link
             to={`${register ? "/login" : "/register"}?returnTo=${encodeURIComponent(returnTo)}`}
-            className="text-[#dfc79b] underline underline-offset-4 font-semibold"
+            className="text-black underline font-bold"
           >
             {register ? "Sign In" : "Create Account"}
           </Link>
@@ -1697,7 +1857,7 @@ function AuthPage({ register = false }) {
 
 const Input = ({ label, type = "text", value, onChange }) => (
   <label className="block space-y-1.5">
-    <span className="font-semibold uppercase tracking-wider text-zinc-300">
+    <span className="font-bold uppercase tracking-wider text-black text-[11px]">
       {label}
     </span>
     <input
@@ -1705,7 +1865,7 @@ const Input = ({ label, type = "text", value, onChange }) => (
       required
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="field text-xs"
+      className="field text-xs border-[#E5E5E5] bg-white text-black focus:border-black"
     />
   </label>
 );
@@ -1911,19 +2071,19 @@ const created = await accountApi.createOrder(payload);
 };
 
   const field = (name, label, props = {}) => (
-    <label className="block space-y-1.5 text-xs font-semibold" htmlFor={`shipping-${name}`}>
-      <span className="uppercase tracking-wider text-zinc-300">{label}</span>
+    <label className="block space-y-1.5 text-xs font-bold" htmlFor={`shipping-${name}`}>
+      <span className="uppercase tracking-wider text-black text-[11px]">{label}</span>
       <input
         id={`shipping-${name}`}
         name={name}
         value={shipping[name]}
         onChange={(event) => updateShipping(name, event.target.value)}
         aria-invalid={Boolean(fieldErrors[name])}
-        className={`field text-xs ${fieldErrors[name] ? "field-error" : ""}`}
+        className={`field text-xs border-[#E5E5E5] bg-white text-black focus:border-black ${fieldErrors[name] ? "field-error" : ""}`}
         {...props}
       />
       {fieldErrors[name] && (
-        <span className="block text-[11px] text-red-400 font-normal">
+        <span className="block text-[11px] text-red-600 font-normal">
           {fieldErrors[name]}
         </span>
       )}
@@ -1932,30 +2092,30 @@ const created = await accountApi.createOrder(payload);
 
   if (done) {
     return (
-      <Page eyebrow="Confirmation" title="Dispatch Confirmed">
-        <div className="border border-zinc-800 bg-zinc-950 p-6 sm:p-10 max-w-3xl space-y-6">
-          <div className="flex items-start gap-4 border-b border-zinc-800 pb-6">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#c5a880]/40 bg-[#c5a880]/15 text-[#dfc79b]">
+      <Page eyebrow="Confirmation" title="Order Confirmed">
+        <div className="border border-[#E5E5E5] bg-white p-6 sm:p-10 max-w-3xl space-y-6">
+          <div className="flex items-start gap-4 border-b border-[#E5E5E5] pb-6">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-black bg-black text-white">
               <Check size={24} />
             </span>
             <div className="min-w-0">
-              <h2 className="font-serif text-xl font-medium text-zinc-100">
+              <h2 className="text-xl font-bold text-black">
                 Order Placed Successfully
               </h2>
-              <p className="mt-1 text-xs text-zinc-400 font-mono">
+              <p className="mt-1 text-xs text-[#737373] font-mono">
                 {done.orderNumber != null ? `Order Reference: #${done.orderNumber}` : `Record ID: ${done.id}`}
               </p>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-200">
-              Purchased Artefacts
+            <h3 className="text-xs font-bold uppercase tracking-wider text-black">
+              Purchased Items
             </h3>
             <OrderItems items={done.orderItems} />
           </div>
 
-          <dl className="space-y-2 border-t border-zinc-800 py-4 text-xs">
+          <dl className="space-y-2 border-t border-[#E5E5E5] py-4 text-xs">
             {[
               ["Subtotal", done.subTotal],
               ["Shipping Fee", done.shippingFee],
@@ -1963,59 +2123,59 @@ const created = await accountApi.createOrder(payload);
             ].map(
               ([lbl, amt]) =>
                 amt != null && (
-                  <div key={lbl} className="flex justify-between text-zinc-400">
+                  <div key={lbl} className="flex justify-between text-[#737373]">
                     <span>{lbl}</span>
-                    <span className="text-zinc-200">{money(amt)}</span>
+                    <span className="text-black font-semibold">{money(amt)}</span>
                   </div>
                 )
             )}
           </dl>
 
-          <div className="flex items-center justify-between border-t border-zinc-800 pt-4 text-sm font-semibold">
+          <div className="flex items-center justify-between border-t border-[#E5E5E5] pt-4 text-sm font-bold text-black">
             <span>Order Total</span>
-            <span className="text-[#dfc79b]">{money(done.totalAmount)}</span>
+            <span className="text-black font-extrabold">{money(done.totalAmount)}</span>
           </div>
 
           {done.payment?.qrCode && (
-  <div className="border border-[#c5a880]/30 bg-zinc-900 p-6 space-y-4">
-    <div className="text-center">
-      <h3 className="text-sm font-semibold uppercase tracking-widest text-[#dfc79b]">
-        Complete Your Payment
-      </h3>
-      <p className="mt-2 text-xs text-zinc-400">
-        Scan this KHQR code using Bakong or a supported banking app.
-      </p>
-    </div>
+            <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 space-y-4">
+              <div className="text-center">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-black">
+                  Complete Your Payment
+                </h3>
+                <p className="mt-2 text-xs text-[#737373]">
+                  Scan this KHQR code using Bakong or a supported banking app.
+                </p>
+              </div>
 
-    <div className="flex justify-center rounded-lg bg-white p-5">
-      <QRCodeSVG
-        value={done.payment.qrCode}
-        size={240}
-        level="M"
-        includeMargin
-      />
-    </div>
+              <div className="flex justify-center border border-[#E5E5E5] bg-white p-5">
+                <QRCodeSVG
+                  value={done.payment.qrCode}
+                  size={240}
+                  level="M"
+                  includeMargin
+                />
+              </div>
 
-    <div className="text-center space-y-2">
-      <p className="text-xs text-zinc-400">Amount to Pay</p>
-      <p className="text-2xl font-bold text-[#dfc79b]">
-       {new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 0,
-}).format(Number(done.payment.amount ?? 0))} ៛
-      </p>
+              <div className="text-center space-y-2">
+                <p className="text-xs text-[#737373]">Amount to Pay</p>
+                <p className="text-2xl font-extrabold text-black">
+                  {new Intl.NumberFormat("en-US", {
+                    maximumFractionDigits: 0,
+                  }).format(Number(done.payment.amount ?? 0))} ៛
+                </p>
 
-      <p className="text-xs text-amber-400">
-        Payment Status: {done.payment.status ?? "PENDING"}
-      </p>
+                <p className="text-xs font-semibold text-black">
+                  Payment Status: {done.payment.status ?? "PENDING"}
+                </p>
 
-      {done.payment.expiresAt && (
-        <p className="text-xs text-zinc-500">
-          QR expires: {new Date(done.payment.expiresAt).toLocaleString()}
-        </p>
-      )}
-    </div>
-  </div>
-)}
+                {done.payment.expiresAt && (
+                  <p className="text-xs text-[#737373]">
+                    QR expires: {new Date(done.payment.expiresAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </Page>
     );
@@ -2026,34 +2186,34 @@ const created = await accountApi.createOrder(payload);
   return (
     <Page
       eyebrow="Checkout"
-      title="Complete Acquisition"
-      subtitle="Enter your shipping coordinates and complete your Anteiku order."
+      title="Complete Order"
+      subtitle="Enter your shipping address and complete your order."
     >
       {error && <Notice>{error}</Notice>}
 
       <form onSubmit={submit} noValidate className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8">
           {/* Shipping Address */}
-          <fieldset className="border border-zinc-800 bg-zinc-950 p-6 space-y-5">
-            <legend className="font-serif text-base font-medium text-zinc-100 px-2">
-              Shipping Destination
+          <fieldset className="border border-[#E5E5E5] bg-white p-6 space-y-5">
+            <legend className="text-sm font-bold uppercase tracking-wider text-black px-2">
+              Shipping Address
             </legend>
 
             {addressesLoading ? (
-              <p className="text-xs text-zinc-500">Loading saved addresses…</p>
+              <p className="text-xs text-[#737373]">Loading saved addresses…</p>
             ) : addresses.length ? (
-              <div className="space-y-2 border-b border-zinc-800 pb-4">
-                <span className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
+              <div className="space-y-2 border-b border-[#E5E5E5] pb-4">
+                <span className="block text-xs font-bold uppercase tracking-wider text-black">
                   Select Saved Address
                 </span>
                 <div className="grid gap-2">
                   {addresses.map((address) => (
                     <label
                       key={address.id}
-                      className={`block cursor-pointer border p-3 text-xs transition-all ${
+                      className={`block cursor-pointer border p-3 text-xs transition-colors ${
                         String(address.id) === selectedAddressId
-                          ? "border-[#c5a880] bg-[#c5a880]/10 text-white"
-                          : "border-zinc-800 hover:border-zinc-700 text-zinc-300"
+                          ? "border-black bg-[#FAFAFA] text-black font-semibold"
+                          : "border-[#E5E5E5] hover:border-black text-[#737373]"
                       }`}
                     >
                       <span className="flex items-start gap-3">
@@ -2062,13 +2222,13 @@ const created = await accountApi.createOrder(payload);
                           name="saved-address"
                           checked={String(address.id) === selectedAddressId}
                           onChange={() => selectAddress(address)}
-                          className="mt-0.5 accent-[#c5a880]"
+                          className="mt-0.5 accent-black"
                         />
                         <span>
                           {address.street} · {address.city}, {address.state} {address.postalCode} · {address.country}
                           {address.isDefault && (
-                            <span className="ml-2 inline-block text-[10px] text-[#dfc79b] font-mono">
-                              [DEFAULT]
+                            <span className="ml-2 inline-block text-[10px] font-bold text-black uppercase">
+                              [Default]
                             </span>
                           )}
                         </span>
@@ -2080,7 +2240,7 @@ const created = await accountApi.createOrder(payload);
             ) : null}
 
             {addressError && (
-              <p className="text-xs text-red-400">
+              <p className="text-xs text-red-600">
                 Saved addresses could not be loaded. Enter shipping destination below.
               </p>
             )}
@@ -2097,14 +2257,14 @@ const created = await accountApi.createOrder(payload);
 
             <div className="grid gap-4 sm:grid-cols-2">
               {field("postalCode", "Postal Code", { autoComplete: "postal-code" })}
-              <label className="block space-y-1.5 text-xs font-semibold">
-                <span className="uppercase tracking-wider text-zinc-300">Country</span>
+              <label className="block space-y-1.5 text-xs font-bold">
+                <span className="uppercase tracking-wider text-black text-[11px]">Country</span>
                 <select
                   id="shipping-country"
                   name="country"
                   value={shipping.country}
                   onChange={(event) => updateShipping("country", event.target.value)}
-                  className={`field text-xs bg-zinc-950 ${fieldErrors.country ? "field-error" : ""}`}
+                  className={`field text-xs bg-white text-black border-[#E5E5E5] focus:border-black ${fieldErrors.country ? "field-error" : ""}`}
                 >
                   <option value="">Select country</option>
                   {countries.map((c) => (
@@ -2114,7 +2274,7 @@ const created = await accountApi.createOrder(payload);
                   ))}
                 </select>
                 {fieldErrors.country && (
-                  <span className="block text-[11px] text-red-400 font-normal">
+                  <span className="block text-[11px] text-red-600 font-normal">
                     {fieldErrors.country}
                   </span>
                 )}
@@ -2123,8 +2283,8 @@ const created = await accountApi.createOrder(payload);
           </fieldset>
 
           {/* Payment Method */}
-          <fieldset className="border border-zinc-800 bg-zinc-950 p-6 space-y-4">
-            <legend className="font-serif text-base font-medium text-zinc-100 px-2">
+          <fieldset className="border border-[#E5E5E5] bg-white p-6 space-y-4">
+            <legend className="text-sm font-bold uppercase tracking-wider text-black px-2">
               Payment Method
             </legend>
 
@@ -2132,10 +2292,10 @@ const created = await accountApi.createOrder(payload);
               {checkoutPaymentOptions.map((opt) => (
                 <label
                   key={opt.value}
-                  className={`flex items-start gap-3 border p-4 text-xs transition-all ${
+                  className={`flex items-start gap-3 border p-4 text-xs transition-colors ${
                     opt.available
-                      ? "cursor-pointer border-zinc-700 bg-zinc-900/60 text-zinc-200 hover:border-[#c5a880]"
-                      : "cursor-not-allowed border-zinc-800/60 opacity-50 text-zinc-500"
+                      ? "cursor-pointer border-[#E5E5E5] bg-white text-black hover:border-black"
+                      : "cursor-not-allowed border-[#E5E5E5] opacity-40 text-[#737373]"
                   }`}
                 >
                   <input
@@ -2145,37 +2305,37 @@ const created = await accountApi.createOrder(payload);
                     checked={paymentMethod === opt.value}
                     disabled={!opt.available || busy || syncing}
                     onChange={() => opt.available && setPaymentMethod(opt.value)}
-                    className="mt-0.5 accent-[#c5a880]"
+                    className="mt-0.5 accent-black"
                   />
                   <div className="flex-1 flex justify-between">
-                    <span className="font-semibold text-zinc-100">{opt.label}</span>
-                    <span className="text-[10px] uppercase font-mono tracking-wider text-[#dfc79b]">
-                      {opt.available ? "Active" : "Coming Soon"}
+                    <span className="font-bold text-black">{opt.label}</span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#737373]">
+                      {opt.available ? "Available" : "Unavailable"}
                     </span>
                   </div>
                 </label>
               ))}
             </div>
 
-            <p className="text-[11px] text-zinc-500 font-sans leading-relaxed">
+            <p className="text-xs text-[#737373] leading-relaxed">
               Anteiku adheres to secure collector order processing. Cash on Delivery is currently selected for your region.
             </p>
           </fieldset>
         </div>
 
         {/* Order Summary Sidebar */}
-        <aside className="border border-zinc-800 bg-zinc-950 p-6 h-fit space-y-5">
-          <h2 className="font-serif text-base font-medium text-zinc-100 border-b border-zinc-800 pb-3">
-            Acquisition Summary
+        <aside className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 h-fit space-y-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-black border-b border-[#E5E5E5] pb-3">
+            Order Summary
           </h2>
 
-          <div className="space-y-3 divide-y divide-zinc-800/80 text-xs">
+          <div className="space-y-3 divide-y divide-[#E5E5E5] text-xs">
             {cart.map((item) => (
               <div key={item.variantId} className="flex justify-between pt-2">
-                <span className="text-zinc-300">
+                <span className="text-black font-medium">
                   {item.name} × {item.quantity}
                 </span>
-                <span className="font-mono text-zinc-100">
+                <span className="font-bold text-black">
                   {money(item.price * item.quantity)}
                 </span>
               </div>
@@ -2183,9 +2343,9 @@ const created = await accountApi.createOrder(payload);
           </div>
 
           {/* Coupon Code Section */}
-          <div className="border-t border-zinc-800 pt-4 space-y-2">
-            <label htmlFor="coupon-code-checkout" className="block text-xs font-semibold uppercase tracking-wider text-zinc-300">
-              Archival Voucher
+          <div className="border-t border-[#E5E5E5] pt-4 space-y-2">
+            <label htmlFor="coupon-code-checkout" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+              Discount Code / Coupon
             </label>
             <div className="flex gap-2">
               <input
@@ -2197,13 +2357,13 @@ const created = await accountApi.createOrder(payload);
                   setCouponFeedback(null);
                 }}
                 placeholder="Enter coupon code"
-                className="field text-xs flex-1"
+                className="field text-xs flex-1 border-[#E5E5E5] bg-white text-black focus:border-black"
               />
               {appliedCoupon ? (
                 <button
                   type="button"
                   onClick={removeCoupon}
-                  className="border border-zinc-700 px-3 text-xs font-semibold text-zinc-300 hover:text-white"
+                  className="border border-black px-3 text-xs font-bold text-black hover:bg-black hover:text-white transition-colors"
                 >
                   Remove
                 </button>
@@ -2212,7 +2372,7 @@ const created = await accountApi.createOrder(payload);
                   type="button"
                   onClick={applyCoupon}
                   disabled={!couponCode.trim() || couponBusy || busy}
-                  className="border border-[#c5a880] bg-[#c5a880]/15 px-3 text-xs font-semibold text-[#dfc79b] hover:bg-[#c5a880] hover:text-black transition-colors"
+                  className="border border-black bg-black px-4 text-xs font-bold uppercase text-white hover:bg-neutral-800 disabled:opacity-40 transition-colors"
                 >
                   {couponBusy ? "Checking…" : "Apply"}
                 </button>
@@ -2221,8 +2381,8 @@ const created = await accountApi.createOrder(payload);
 
             {couponFeedback && (
               <p
-                className={`text-[11px] ${
-                  couponFeedback.type === "error" ? "text-red-400" : "text-[#dfc79b]"
+                className={`text-xs font-semibold ${
+                  couponFeedback.type === "error" ? "text-red-600" : "text-black"
                 }`}
               >
                 {couponFeedback.message}
@@ -2230,20 +2390,20 @@ const created = await accountApi.createOrder(payload);
             )}
           </div>
 
-          <div className="border-t border-zinc-800 pt-3 space-y-2 text-xs">
-            <div className="flex justify-between text-zinc-400">
+          <div className="border-t border-[#E5E5E5] pt-3 space-y-2 text-xs">
+            <div className="flex justify-between text-[#737373]">
               <span>Items Total</span>
-              <span className="font-mono text-zinc-200">{money(total)}</span>
+              <span className="font-bold text-black">{money(total)}</span>
             </div>
             {appliedCoupon && (
-              <div className="flex justify-between text-[#dfc79b]">
+              <div className="flex justify-between text-black font-semibold">
                 <span>Coupon ({appliedCoupon.code})</span>
                 <span>Applied</span>
               </div>
             )}
-            <div className="flex justify-between text-sm font-semibold text-zinc-100 pt-2 border-t border-zinc-800">
-              <span className="font-serif">Total Due</span>
-              <span className="text-[#dfc79b] font-mono">{money(total)}</span>
+            <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-[#E5E5E5]">
+              <span>Total Due</span>
+              <span className="font-extrabold">{money(total)}</span>
             </div>
           </div>
 
@@ -2299,7 +2459,7 @@ export function SeriesPage() {
 
   return (
     <Page
-      eyebrow="Chronicle"
+      eyebrow="Index"
       title="Anime Series"
       subtitle="Browse official collectables indexed across legendary Japanese animation titles."
     >
@@ -2310,27 +2470,27 @@ export function SeriesPage() {
               key={item.id}
               to={`/series/${item.id}`}
               state={{ seriesName: item.name }}
-              className="group border border-zinc-800 bg-zinc-950 p-6 transition-all duration-300 hover:border-[#c5a880]/60 hover:bg-zinc-900/60"
+              className="group border border-[#E5E5E5] bg-[#FAFAFA] p-6 transition-all hover:border-black hover:bg-white"
             >
-              <span className="text-[10px] font-mono tracking-widest text-[#c5a880]">
+              <span className="text-[10px] font-mono tracking-widest text-[#737373]">
                 SERIES RECORD #{item.id}
               </span>
-              <h2 className="mt-2 font-serif text-xl font-medium text-zinc-100 group-hover:text-[#dfc79b] transition-colors">
+              <h2 className="mt-2 text-lg font-bold text-black transition-colors">
                 {item.name}
               </h2>
-              <p className="mt-4 text-xs font-mono text-zinc-400">
-                {item.count} {item.count === 1 ? "artefact piece" : "artefact pieces"}
+              <p className="mt-3 text-xs font-semibold text-[#737373]">
+                {item.count} {item.count === 1 ? "product piece" : "product pieces"}
               </p>
-              <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#dfc79b] group-hover:translate-x-1 transition-transform">
-                <span>Inspect Series</span>
+              <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black group-hover:translate-x-1 transition-transform">
+                <span>View Products</span>
                 <span>→</span>
               </span>
             </Link>
           ))}
         </div>
       ) : (
-        <p className="border border-zinc-800 bg-zinc-950 p-12 text-center text-xs text-zinc-500">
-          No series records are currently listed in the archive catalogue.
+        <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center text-xs text-[#737373]">
+          No series records are currently listed in the catalogue.
         </p>
       )}
     </Page>
@@ -2380,7 +2540,7 @@ export function SeriesDetailPage() {
     return (
       <Page eyebrow="Series" title={state.name || "Series Details"}>
         <Notice>{state.error}</Notice>
-        <Link to="/series" className="mt-4 inline-block text-xs uppercase tracking-wider text-[#dfc79b]">
+        <Link to="/series" className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-black hover:underline">
           ← Back to series index
         </Link>
       </Page>
@@ -2395,7 +2555,7 @@ export function SeriesDetailPage() {
       actions={
         <Link
           to="/series"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white"
+          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
         >
           <span>← All Series</span>
         </Link>
@@ -2412,7 +2572,7 @@ export function SeriesDetailPage() {
           ))}
         </div>
       ) : (
-        <p className="border border-zinc-800 bg-zinc-950 p-12 text-center text-xs text-zinc-500">
+        <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center text-xs text-[#737373]">
           No products are currently listed for this series.
         </p>
       )}
@@ -2444,15 +2604,15 @@ export function BrowsePage({ type }) {
             onClick={() =>
               navigate(`/shop?${type === "categories" ? "category" : "brand"}=${item.id}`)
             }
-            className="group border border-zinc-800 bg-zinc-950 p-6 text-left transition-all duration-300 hover:border-[#c5a880]/60 hover:bg-zinc-900/60"
+            className="group border border-[#E5E5E5] bg-[#FAFAFA] p-6 text-left transition-all hover:border-black hover:bg-white cursor-pointer"
           >
-            <p className="font-serif text-lg font-medium text-zinc-100 group-hover:text-[#dfc79b] transition-colors">
+            <p className="text-lg font-bold text-black transition-colors">
               {item.name}
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-400 line-clamp-2">
+            <p className="mt-2 text-xs leading-relaxed text-[#737373] line-clamp-2">
               {item.description || `Shop authentic items from ${item.name}.`}
             </p>
-            <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#dfc79b]">
+            <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black group-hover:translate-x-1 transition-transform">
               <span>Explore Collection →</span>
             </span>
           </button>
@@ -2460,7 +2620,7 @@ export function BrowsePage({ type }) {
       </div>
 
       {!items.length && (
-        <p className="border border-zinc-800 bg-zinc-950 p-12 text-center text-xs text-zinc-500">
+        <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center text-xs text-[#737373]">
           No {label.toLowerCase()} are currently listed.
         </p>
       )}
@@ -2481,14 +2641,14 @@ const orderDate = (value) =>
     : "Date unavailable";
 
 const OrderStatus = ({ status }) => (
-  <span className="inline-flex rounded-full border border-[#c5a880]/40 bg-[#c5a880]/10 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[#dfc79b]">
+  <span className="inline-flex border border-black bg-black text-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
     {status ? status.replaceAll("_", " ") : "Status unavailable"}
   </span>
 );
 
 const OrderItems = ({ items }) =>
   items?.length ? (
-    <div className="divide-y divide-zinc-800/80 border border-zinc-800 bg-zinc-950 mt-4">
+    <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] bg-white mt-4">
       {items.map((item, index) => (
         <div key={item.id ?? index} className="flex items-center gap-4 p-4">
           <img
@@ -2497,23 +2657,23 @@ const OrderItems = ({ items }) =>
             onError={(e) => {
               e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
             }}
-            className="h-16 w-14 shrink-0 border border-zinc-800 bg-zinc-900 object-cover"
+            className="h-16 w-14 shrink-0 border border-[#E5E5E5] bg-[#FAFAFA] object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="font-serif text-sm font-medium text-zinc-100 truncate">
+            <p className="text-sm font-bold text-black truncate">
               {item.productName || "Product information unavailable"}
             </p>
             {(item.variantName || item.variantSku) && (
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-[#737373] mt-0.5">
                 {item.variantName || item.variantSku}
               </p>
             )}
-            <p className="text-xs text-zinc-500 font-mono mt-0.5">
+            <p className="text-xs text-[#737373] mt-0.5">
               Qty: {item.quantity ?? 1} · {item.unitPrice != null && money(item.unitPrice)}
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <span className="text-xs font-semibold text-[#dfc79b] font-mono">
+            <span className="text-xs font-bold text-black font-mono">
               {item.subTotal != null ? money(item.subTotal) : "—"}
             </span>
           </div>
@@ -2521,7 +2681,7 @@ const OrderItems = ({ items }) =>
       ))}
     </div>
   ) : (
-    <p className="text-xs text-zinc-500">No items listed in this order record.</p>
+    <p className="text-xs text-[#737373]">No items listed in this order record.</p>
   );
 
 export function OrdersPage() {
@@ -2557,13 +2717,13 @@ export function OrdersPage() {
 
   return (
     <Page
-      eyebrow="Collector Portal"
+      eyebrow="Account"
       title="Order History"
-      subtitle="Track your confirmed dispatches and historical acquisitions."
+      subtitle="Track your confirmed dispatches and previous acquisitions."
       actions={
         <Link
           to="/shop"
-          className="text-xs font-semibold uppercase tracking-wider text-[#dfc79b] hover:underline"
+          className="text-xs font-bold uppercase tracking-wider text-black hover:underline"
         >
           Explore Collection →
         </Link>
@@ -2574,14 +2734,14 @@ export function OrdersPage() {
           {orders.map((order) => (
             <article
               key={order.id}
-              className="border border-zinc-800 bg-zinc-950 p-5 sm:p-6 transition-colors hover:border-[#c5a880]/50"
+              className="border border-[#E5E5E5] bg-white p-5 sm:p-6 transition-colors hover:border-black"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+                  <span className="text-[10px] uppercase tracking-wider text-[#737373] font-semibold">
                     Placed {orderDate(order.orderDate)}
                   </span>
-                  <h2 className="font-serif text-lg font-medium text-zinc-100 mt-1">
+                  <h2 className="text-base font-bold text-black mt-1">
                     {order.orderNumber != null ? `Order #${order.orderNumber}` : `Record #${order.id}`}
                   </h2>
                 </div>
@@ -2589,16 +2749,16 @@ export function OrdersPage() {
                 <div className="flex flex-wrap items-center gap-4">
                   <OrderStatus status={order.status} />
                   <div className="sm:text-right">
-                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 block">
+                    <span className="text-[10px] uppercase tracking-wider text-[#737373] block font-semibold">
                       Total
                     </span>
-                    <span className="text-sm font-semibold text-[#dfc79b] font-mono">
+                    <span className="text-sm font-bold text-black">
                       {order.totalAmount != null ? money(order.totalAmount) : "—"}
                     </span>
                   </div>
                   <Link
                     to={`/orders/${order.id}`}
-                    className="border border-zinc-700 bg-zinc-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-200 hover:border-[#c5a880] hover:text-[#dfc79b]"
+                    className="border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black transition-colors"
                   >
                     View Details
                   </Link>
@@ -2608,18 +2768,18 @@ export function OrdersPage() {
           ))}
         </div>
       ) : (
-        <div className="border border-zinc-800 bg-zinc-950 p-16 text-center">
-          <p className="font-serif text-lg font-medium text-zinc-200">
+        <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-16 text-center">
+          <p className="text-base font-bold text-black">
             No order records found
           </p>
-          <p className="mt-1 text-xs text-zinc-400">
-            Acquisitions placed with your account will appear here.
+          <p className="mt-1 text-xs text-[#737373]">
+            Orders placed with your account will appear here.
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-flex items-center gap-2 border border-[#c5a880] bg-gradient-to-r from-[#dfc79b] to-[#c5a880] px-6 py-3 text-xs font-bold uppercase tracking-widest text-black"
+            className="mt-6 inline-flex items-center gap-2 border border-black bg-black px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
           >
-            <span>Explore Archive</span>
+            <span>Explore Collection</span>
             <ArrowRight size={14} />
           </Link>
         </div>
@@ -2664,7 +2824,7 @@ export function OrderPage() {
     return (
       <Page eyebrow="Account" title="Order Record Error">
         <Notice>{error}</Notice>
-        <Link to="/orders" className="text-xs uppercase tracking-wider text-[#dfc79b] underline">
+        <Link to="/orders" className="text-xs uppercase tracking-wider text-black underline font-bold">
           ← Back to Orders
         </Link>
       </Page>
@@ -2681,56 +2841,56 @@ export function OrderPage() {
       actions={
         <Link
           to="/orders"
-          className="text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white"
+          className="text-xs font-bold uppercase tracking-wider text-black hover:underline"
         >
           ← Back to Orders
         </Link>
       }
     >
-      <div className="border border-zinc-800 bg-zinc-950 p-6 sm:p-8 max-w-3xl space-y-6">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-          <span className="text-xs font-mono text-zinc-400">
-            Internal ID: {order.id}
+      <div className="border border-[#E5E5E5] bg-white p-6 sm:p-8 max-w-3xl space-y-6">
+        <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
+          <span className="text-xs font-mono text-[#737373]">
+            Record ID: {order.id}
           </span>
           <OrderStatus status={order.status} />
         </div>
 
         <div>
-          <h3 className="font-serif text-sm font-medium text-zinc-200">
-            Purchased Pieces
+          <h3 className="text-sm font-bold text-black uppercase tracking-wider">
+            Purchased Items
           </h3>
           <OrderItems items={order.orderItems} />
         </div>
 
-        <div className="border-t border-zinc-800 pt-4 space-y-1.5 text-xs">
-          <h3 className="font-serif text-sm font-medium text-zinc-200 pb-1">
+        <div className="border-t border-[#E5E5E5] pt-4 space-y-1.5 text-xs">
+          <h3 className="text-sm font-bold text-black uppercase tracking-wider pb-1">
             Shipping Destination
           </h3>
-          <p className="whitespace-pre-line text-zinc-400 font-sans leading-relaxed">
+          <p className="whitespace-pre-line text-[#737373] leading-relaxed">
             {order.shippingAddress || "Shipping coordinates not provided."}
           </p>
         </div>
 
-        <div className="border-t border-zinc-800 pt-4 space-y-2 text-xs font-mono">
-          <div className="flex justify-between text-zinc-400">
+        <div className="border-t border-[#E5E5E5] pt-4 space-y-2 text-xs">
+          <div className="flex justify-between text-[#737373]">
             <span>Subtotal</span>
-            <span>{money(order.subTotal)}</span>
+            <span className="font-bold text-black">{money(order.subTotal)}</span>
           </div>
           {order.shippingFee != null && (
-            <div className="flex justify-between text-zinc-400">
+            <div className="flex justify-between text-[#737373]">
               <span>Shipping Fee</span>
-              <span>{money(order.shippingFee)}</span>
+              <span className="font-bold text-black">{money(order.shippingFee)}</span>
             </div>
           )}
           {order.discountAmount != null && (
-            <div className="flex justify-between text-[#dfc79b]">
+            <div className="flex justify-between text-black font-semibold">
               <span>Discount</span>
               <span>-{money(order.discountAmount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-sm font-semibold text-zinc-100 pt-2 border-t border-zinc-800">
-            <span className="font-serif">Total Amount</span>
-            <span className="text-[#dfc79b]">{money(order.totalAmount)}</span>
+          <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-[#E5E5E5]">
+            <span>Total Amount</span>
+            <span className="font-extrabold">{money(order.totalAmount)}</span>
           </div>
         </div>
       </div>

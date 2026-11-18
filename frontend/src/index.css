@@ -1,125 +1,110 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
-  --font-serif: "Cinzel", "Cormorant Garamond", "Playfair Display", Georgia, serif;
-  --font-sans: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --color-gold-300: #dfc79b;
-  --color-gold-400: #d4af37;
-  --color-gold-500: #c5a880;
-  --color-gold-600: #a68958;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Space Grotesk", "Plus Jakarta Sans", sans-serif;
 }
 
 :root {
-  --gold-primary: #c5a880;
-  --gold-light: #dfc79b;
-  --gold-dark: #9a7d55;
-  --gold-glow: rgba(197, 168, 128, 0.15);
-  --gold-border: rgba(197, 168, 128, 0.28);
+  --bg-primary: #ffffff;
+  --text-primary: #000000;
+  --text-secondary: #737373;
+  --border-light: #e5e5e5;
+  --bg-surface: #fafafa;
+  --bg-surface-secondary: #f5f5f5;
 }
 
-* { box-sizing: border-box; }
-html {
-  font-family: var(--font-sans, "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif);
-  scroll-behavior: smooth;
+* {
+  box-sizing: border-box;
 }
+
+html {
+  font-family: var(--font-sans);
+  background-color: #ffffff;
+  color: #000000;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   overflow-x: hidden;
-}
-button, input, select, textarea { font: inherit; }
-button { cursor: pointer; }
-
-/* Luxury Typography Utilities */
-.font-serif {
-  font-family: var(--font-serif, "Cinzel", "Cormorant Garamond", Georgia, serif);
-}
-.font-sans {
-  font-family: var(--font-sans, "Plus Jakarta Sans", Inter, ui-sans-serif, system-ui, sans-serif);
+  background-color: #ffffff;
+  color: #000000;
 }
 
-/* Subtle Gold Text & Borders */
-.text-gold {
-  color: #c5a880;
-}
-.text-gold-light {
-  color: #dfc79b;
-}
-.border-gold {
-  border-color: rgba(197, 168, 128, 0.35);
-}
-.border-gold-subtle {
-  border-color: rgba(197, 168, 128, 0.18);
-}
-.bg-gold-subtle {
-  background-color: rgba(197, 168, 128, 0.08);
-}
-.bg-gold-gradient {
-  background: linear-gradient(135deg, #dfc79b 0%, #c5a880 50%, #9a7d55 100%);
+button, input, select, textarea {
+  font: inherit;
 }
 
-/* Luxury Icon Buttons */
+button {
+  cursor: pointer;
+}
+
+/* Minimalist Icon Buttons */
 .icon-button {
   display: grid;
-  height: 38px;
-  width: 38px;
+  height: 40px;
+  width: 40px;
   place-items: center;
-  color: inherit;
-  border-radius: 9999px;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.icon-button:hover {
-  background: rgb(244 244 245);
-  color: #18181b;
-}
-.dark .icon-button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #dfc79b;
+  color: #000000;
+  border-radius: 0px;
+  background: transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-/* Luxury Input Fields */
+.icon-button:hover {
+  background: #f5f5f5;
+  color: #000000;
+}
+
+/* Minimalist Input Fields */
 .field {
   width: 100%;
   min-height: 44px;
-  border: 1px solid rgb(212 212 216);
-  background: transparent;
-  padding: .7rem .85rem;
+  border: 1px solid #e5e5e5;
+  background: #ffffff;
+  color: #000000;
+  padding: 0.75rem 0.875rem;
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  border-radius: 0px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.field:focus {
-  border-color: #c5a880;
-  box-shadow: 0 0 0 1px #c5a880;
-}
-.field-error { border-color: rgb(185 28 28); }
-.field-error:focus { border-color: rgb(185 28 28); box-shadow: 0 0 0 2px rgb(254 226 226); }
-.dark .field {
-  border-color: rgba(255, 255, 255, 0.12);
-  background-color: rgba(24, 24 27, 0.5);
-  color: #fafafa;
-}
-.dark .field:focus {
-  border-color: #c5a880;
-  background-color: rgba(24, 24 27, 0.85);
-  box-shadow: 0 0 0 1px rgba(197, 168, 128, 0.5);
-}
-.dark .field-error { border-color: rgb(248 113 113); }
-.dark .field-error:focus { border-color: rgb(248 113 113); box-shadow: 0 0 0 2px rgb(127 29 29); }
 
-/* Skeleton Shimmer Effect */
+.field:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+}
+
+.field::placeholder {
+  color: #a3a3a3;
+}
+
+.field-error {
+  border-color: #000000;
+  background-color: #fafafa;
+}
+
+.field-error:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 1px #000000;
+}
+
+/* Minimalist Skeleton Shimmer */
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
   }
 }
+
 .skeleton-shimmer {
   position: relative;
   overflow: hidden;
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: #f5f5f5;
 }
+
 .skeleton-shimmer::after {
   position: absolute;
   top: 0;
@@ -130,31 +115,33 @@ button { cursor: pointer; }
   background-image: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.04) 20%,
-    rgba(197, 168, 128, 0.08) 60%,
-    rgba(255, 255, 255, 0)
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
   );
-  animation: shimmer 2s infinite;
+  animation: shimmer 1.8s infinite;
   content: '';
 }
 
-/* Custom Scrollbars */
+/* Minimalist Clean Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: rgba(10, 10, 12, 0.6);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(197, 168, 128, 0.4);
+  background: #ffffff;
 }
 
-/* Admin application: intentionally scoped so the customer storefront remains unchanged. */
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #737373;
+}
+
+/* Admin application: scoped styles remain unchanged */
 .admin-shell { --admin-red: #8d1d28; --admin-ink: #202124; --admin-line: #e6e6e8; min-height: 100vh; display: flex; background: #f6f6f7; color: var(--admin-ink); }
 .admin-sidebar { position: fixed; z-index: 30; display: flex; min-height: 100vh; width: 244px; flex-direction: column; background: #fff; border-right: 1px solid var(--admin-line); padding: 24px 14px; }
 .admin-brand { display: flex; align-items: center; justify-content: space-between; padding: 0 10px 28px; font-size: 18px; font-weight: 900; letter-spacing: .19em; }.admin-mobile-close,.admin-menu-button { display:none; border:0; background:transparent; padding:7px; }

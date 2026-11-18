@@ -14,7 +14,7 @@ const read = (key, fallback) => {
 export function StoreProvider({ children }) {
   const [cart, setCart] = useState(() => read(CART_KEY, []));
   const [user, setUser] = useState(() => read(USER_KEY, null));
-  const [theme, setTheme] = useState(() => localStorage.getItem("anteiku_theme") || "dark");
+  const [theme, setTheme] = useState(() => localStorage.getItem("anteiku_theme") || "light");
   const [syncing, setSyncing] = useState(false);
   const [wishlists, setWishlists] = useState(null);
   const [wishlistLoading, setWishlistLoading] = useState(false);
