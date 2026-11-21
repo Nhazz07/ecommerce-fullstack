@@ -3,9 +3,9 @@ import { useContext, useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { catalogueApi } from "../api/services";
 import { messageFrom } from "../api/client";
-import { ANTEIKU_FALLBACK_IMAGE, ProductCard, ProductCardSkeleton, imageOf } from "../components/ProductCard";
+import { ProductCard, ProductCardSkeleton, imageOf } from "../components/ProductCard";
 import { StoreContext } from "../context/StoreContext";
-import { Page, Notice, Button } from "./Storefront";
+import { Page, Notice } from "./Storefront";
 
 const toCartItem = (product, variant) => ({
   productId: product.id,
@@ -104,7 +104,7 @@ export function WishlistPage() {
       actions={
         <Link
           to="/shop"
-          className="text-xs font-semibold uppercase tracking-wider text-black hover:underline underline-offset-4"
+          className="text-xs font-semibold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
         >
           Explore Collection →
         </Link>
@@ -125,7 +125,7 @@ export function WishlistPage() {
 
       {actionError && <Notice>{actionError}</Notice>}
       {feedback && (
-        <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-black">
+        <div className="mb-6 border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
           {feedback}
         </div>
       )}
@@ -136,18 +136,18 @@ export function WishlistPage() {
             const ids = wishlist.productIds || [];
             return (
               <section key={wishlist.id} aria-labelledby={`wishlist-${wishlist.id}`}>
-                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-[#E5E5E5] pb-4">
+                <div className="flex flex-wrap items-end justify-between gap-3 border-b border-zinc-200 dark:border-zinc-800 pb-4">
                   <div>
-                    <h2 id={`wishlist-${wishlist.id}`} className="text-lg font-bold text-black">
+                    <h2 id={`wishlist-${wishlist.id}`} className="text-lg font-bold text-zinc-950 dark:text-white">
                       {wishlist.name}
                     </h2>
                     {wishlist.description && (
-                      <p className="mt-1 text-xs text-[#737373]">
+                      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                         {wishlist.description}
                       </p>
                     )}
                   </div>
-                  <span className="text-xs font-semibold text-[#737373] tabular-nums">
+                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums">
                     {ids.length} {ids.length === 1 ? "item" : "items"}
                   </span>
                 </div>
@@ -164,7 +164,7 @@ export function WishlistPage() {
                               onAdd={(item, variant) => addToCart(toCartItem(item, variant))}
                             />
                           ) : (
-                            <div className="flex aspect-[4/5] flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-5 text-center text-xs text-[#737373]">
+                            <div className="flex aspect-[4/5] flex-col items-center justify-center border border-zinc-200 bg-zinc-50 p-5 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                               {productsLoading ? (
                                 <span className="animate-pulse">Loading…</span>
                               ) : (
@@ -177,7 +177,7 @@ export function WishlistPage() {
                             type="button"
                             disabled={Boolean(busyItem)}
                             onClick={() => removeProduct(wishlist.id, id)}
-                            className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 border border-[#E5E5E5] bg-white text-[11px] font-semibold uppercase tracking-wider text-[#737373] hover:border-black hover:text-black disabled:opacity-50 transition-colors"
+                            className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 border border-zinc-200 bg-transparent text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:border-zinc-950 hover:text-zinc-950 dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-200 dark:hover:text-white disabled:opacity-50 transition-colors"
                           >
                             <Trash2 size={13} />
                             <span>
@@ -189,7 +189,7 @@ export function WishlistPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="mt-6 border border-[#E5E5E5] bg-[#FAFAFA] p-8 text-center text-xs text-[#737373]">
+                  <p className="mt-6 border border-zinc-200 bg-zinc-50 p-8 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                     This wishlist is empty. Explore the shop to save items here.
                   </p>
                 )}
@@ -198,19 +198,19 @@ export function WishlistPage() {
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center border border-black bg-white text-black">
+        <div className="flex flex-col items-center justify-center border border-zinc-200 bg-zinc-50 p-16 text-center dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex h-16 w-16 items-center justify-center border border-zinc-950 bg-white text-zinc-950 dark:border-white dark:bg-zinc-950 dark:text-white">
             <Heart size={26} strokeWidth={1.5} />
           </div>
-          <h2 className="mt-4 text-lg font-bold text-black">
+          <h2 className="mt-4 text-lg font-bold text-zinc-950 dark:text-white">
             Your wishlist is empty
           </h2>
-          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[#737373]">
+          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             Save unique figures, collector hoodies, and official prints to come back to them later.
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-flex items-center gap-2 bg-black px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-[#1a1a1a] transition-colors"
+            className="mt-6 inline-flex items-center gap-2 border border-zinc-950 bg-zinc-950 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
           >
             <span>Explore The Collection</span>
             <ArrowRight size={14} />

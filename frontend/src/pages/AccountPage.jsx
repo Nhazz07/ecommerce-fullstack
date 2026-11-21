@@ -22,13 +22,13 @@ const accountError = (error, method, endpoint) => {
 
 const Field = ({ label, value, onChange, type = "text" }) => (
   <label className="block space-y-1.5 text-xs font-semibold">
-    <span className="uppercase tracking-wider text-black">{label}</span>
+    <span className="uppercase tracking-wider text-zinc-950 dark:text-zinc-100">{label}</span>
     <input
       required
       type={type}
       value={value ?? ""}
       onChange={(event) => onChange(event.target.value)}
-      className="field text-xs border-[#E5E5E5] bg-white text-black focus:border-black"
+      className="field text-xs"
     />
   </label>
 );
@@ -197,7 +197,7 @@ export function AccountPage() {
       actions={
         <Link
           to="/shop"
-          className="text-xs font-semibold uppercase tracking-wider text-black hover:underline underline-offset-4"
+          className="text-xs font-semibold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
         >
           Explore Collection →
         </Link>
@@ -207,30 +207,30 @@ export function AccountPage() {
         {/* Profile Section */}
         <section
           aria-labelledby="profile-heading"
-          className="border border-[#E5E5E5] bg-white p-6 sm:p-8 space-y-6"
+          className="border border-zinc-200 bg-white p-6 sm:p-8 space-y-6 dark:border-zinc-800 dark:bg-zinc-950"
         >
-          <div className="flex items-center gap-3 border-b border-[#E5E5E5] pb-4">
-            <div className="flex h-9 w-9 items-center justify-center border border-black bg-black text-white">
+          <div className="flex items-center gap-3 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+            <div className="flex h-9 w-9 items-center justify-center border border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950">
               <User size={16} />
             </div>
             <div>
-              <h2 id="profile-heading" className="text-base font-bold text-black">
+              <h2 id="profile-heading" className="text-base font-bold text-zinc-950 dark:text-white">
                 Collector Profile
               </h2>
-              <span className="text-[11px] text-[#737373]">
+              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 Primary contact details and credentials
               </span>
             </div>
           </div>
 
           {profileLoading ? (
-            <p className="text-xs text-[#737373]">Loading profile data…</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading profile data…</p>
           ) : profileError ? (
             <Notice>{profileError}</Notice>
           ) : profile ? (
             <form onSubmit={saveProfile} className="space-y-4">
               {profileFeedback && (
-                <div className="flex items-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-black">
+                <div className="flex items-center gap-2 border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
                   <Check size={13} className="shrink-0" />
                   {profileFeedback}
                 </div>
@@ -271,7 +271,7 @@ export function AccountPage() {
               </Button>
             </form>
           ) : (
-            <p className="text-xs text-[#737373]">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               Profile information is not available from the account response.
             </p>
           )}
@@ -280,17 +280,17 @@ export function AccountPage() {
         {/* Addresses Section */}
         <section
           aria-labelledby="addresses-heading"
-          className="border border-[#E5E5E5] bg-white p-6 sm:p-8 space-y-6"
+          className="border border-zinc-200 bg-white p-6 sm:p-8 space-y-6 dark:border-zinc-800 dark:bg-zinc-950"
         >
-          <div className="flex items-center gap-3 border-b border-[#E5E5E5] pb-4">
-            <div className="flex h-9 w-9 items-center justify-center border border-black bg-black text-white">
+          <div className="flex items-center gap-3 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+            <div className="flex h-9 w-9 items-center justify-center border border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950">
               <MapPin size={16} />
             </div>
             <div>
-              <h2 id="addresses-heading" className="text-base font-bold text-black">
+              <h2 id="addresses-heading" className="text-base font-bold text-zinc-950 dark:text-white">
                 Shipping Destinations
               </h2>
-              <span className="text-[11px] text-[#737373]">
+              <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
                 Registered delivery addresses
               </span>
             </div>
@@ -298,24 +298,24 @@ export function AccountPage() {
 
           {addressError && <Notice>{addressError}</Notice>}
           {addressFeedback && (
-            <div className="flex items-center gap-2 border border-[#E5E5E5] bg-[#FAFAFA] p-3 text-xs text-black">
+            <div className="flex items-center gap-2 border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <Check size={13} className="shrink-0" />
               {addressFeedback}
             </div>
           )}
 
           {addressesLoading ? (
-            <p className="text-xs text-[#737373]">Loading saved addresses…</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading saved addresses…</p>
           ) : addresses.length ? (
             <div className="space-y-3">
               {addresses.map((address) => (
                 <article
                   key={address.id}
-                  className="border border-[#E5E5E5] bg-[#FAFAFA] p-4 text-xs space-y-2"
+                  className="border border-zinc-200 bg-zinc-50 p-4 text-xs space-y-2 dark:border-zinc-800 dark:bg-zinc-900"
                 >
                   <div className="flex flex-wrap justify-between gap-3">
-                    <p className="text-[#737373] leading-relaxed">
-                      <span className="font-semibold text-black">{address.street}</span>
+                    <p className="text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                      <span className="font-semibold text-zinc-950 dark:text-white">{address.street}</span>
                       <br />
                       {address.city}
                       {address.state ? `, ${address.state}` : ""} {address.postalCode}
@@ -327,7 +327,7 @@ export function AccountPage() {
                       <button
                         type="button"
                         onClick={() => deleteAddress(address.id)}
-                        className="text-[#737373] hover:text-black underline underline-offset-4 transition-colors"
+                        className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white underline underline-offset-4 transition-colors"
                       >
                         Remove
                       </button>
@@ -335,7 +335,7 @@ export function AccountPage() {
                         <button
                           type="button"
                           onClick={() => makeDefault(address.id)}
-                          className="text-black font-semibold underline underline-offset-4"
+                          className="text-zinc-950 dark:text-white font-semibold underline underline-offset-4"
                         >
                           Set Default
                         </button>
@@ -343,10 +343,10 @@ export function AccountPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 pt-2 border-t border-[#E5E5E5] text-[10px] uppercase tracking-wider">
-                    <span className="text-[#737373]">{address.addressType || "Home"}</span>
+                  <div className="flex items-center gap-2 pt-2 border-t border-zinc-200 dark:border-zinc-800 text-[10px] uppercase tracking-wider">
+                    <span className="text-zinc-500 dark:text-zinc-400">{address.addressType || "Home"}</span>
                     {address.isDefault && (
-                      <span className="bg-black text-white px-1.5 py-0.5 text-[9px] font-bold tracking-widest">
+                      <span className="bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 px-1.5 py-0.5 text-[9px] font-bold tracking-widest">
                         Default
                       </span>
                     )}
@@ -356,7 +356,7 @@ export function AccountPage() {
             </div>
           ) : (
             !addressError && (
-              <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-5 text-center text-xs text-[#737373]">
+              <p className="border border-zinc-200 bg-zinc-50 p-5 text-center text-xs text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                 No saved shipping addresses registered yet.
               </p>
             )
@@ -365,9 +365,9 @@ export function AccountPage() {
           {/* Add Address Form */}
           <form
             onSubmit={addAddress}
-            className="border-t border-[#E5E5E5] pt-6 space-y-4 text-xs"
+            className="border-t border-zinc-200 dark:border-zinc-800 pt-6 space-y-4 text-xs"
           >
-            <h3 className="text-sm font-bold text-black">
+            <h3 className="text-sm font-bold text-zinc-950 dark:text-white">
               Add New Address
             </h3>
 
@@ -404,22 +404,22 @@ export function AccountPage() {
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <label className="flex items-center gap-2 text-xs text-black cursor-pointer">
+              <label className="flex items-center gap-2 text-xs text-zinc-950 dark:text-zinc-100 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.isDefault}
                   onChange={(event) => setForm({ ...form, isDefault: event.target.checked })}
-                  className="accent-black"
+                  className="accent-zinc-950 dark:accent-white"
                 />
                 <span>Set as default address</span>
               </label>
 
-              <label className="flex items-center gap-2 text-xs text-[#737373]">
+              <label className="flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                 <span>Type:</span>
                 <select
                   value={form.addressType}
                   onChange={(event) => setForm({ ...form, addressType: event.target.value })}
-                  className="bg-white border border-[#E5E5E5] px-2 py-1 text-xs text-black focus:border-black focus:outline-none"
+                  className="bg-white border border-zinc-200 px-2 py-1 text-xs text-zinc-950 focus:border-zinc-950 focus:outline-none dark:bg-zinc-950 dark:border-zinc-800 dark:text-white dark:focus:border-white"
                 >
                   <option value="Home">Home</option>
                   <option value="Work">Work</option>

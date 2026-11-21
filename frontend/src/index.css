@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -6,12 +7,37 @@
 }
 
 :root {
+  color-scheme: light;
   --bg-primary: #ffffff;
-  --text-primary: #000000;
-  --text-secondary: #737373;
-  --border-light: #e5e5e5;
   --bg-surface: #fafafa;
-  --bg-surface-secondary: #f5f5f5;
+  --bg-surface-secondary: #f4f4f5;
+  --text-primary: #09090b;
+  --text-secondary: #71717a;
+  --text-muted: #a1a1aa;
+  --border-light: #e4e4e7;
+  --border-strong: #09090b;
+  --scrollbar-track: #ffffff;
+  --scrollbar-thumb: #d4d4d8;
+  --scrollbar-thumb-hover: #71717a;
+  --shimmer-base: #f4f4f5;
+  --shimmer-highlight: rgba(255, 255, 255, 0.7);
+}
+
+.dark {
+  color-scheme: dark;
+  --bg-primary: #09090b;
+  --bg-surface: #111113;
+  --bg-surface-secondary: #18181b;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --border-light: #27272a;
+  --border-strong: #fafafa;
+  --scrollbar-track: #09090b;
+  --scrollbar-thumb: #27272a;
+  --scrollbar-thumb-hover: #52525b;
+  --shimmer-base: #18181b;
+  --shimmer-highlight: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -20,18 +46,24 @@
 
 html {
   font-family: var(--font-sans);
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   overflow-x: hidden;
-  background-color: #ffffff;
-  color: #000000;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
 }
 
 button, input, select, textarea {
@@ -42,54 +74,84 @@ button {
   cursor: pointer;
 }
 
-/* Minimalist Icon Buttons */
-.icon-button {
-  display: grid;
-  height: 40px;
-  width: 40px;
-  place-items: center;
-  color: #000000;
-  border-radius: 0px;
-  background: transparent;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
+@layer components {
+  /* Minimalist Icon Buttons */
+  .icon-button {
+    display: grid;
+    height: 38px;
+    width: 38px;
+    place-items: center;
+    color: var(--text-primary);
+    border-radius: 0px;
+    background: transparent;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
 
-.icon-button:hover {
-  background: #f5f5f5;
-  color: #000000;
-}
+  .icon-button:hover {
+    background: var(--bg-surface-secondary);
+    color: var(--text-primary);
+  }
 
-/* Minimalist Input Fields */
-.field {
-  width: 100%;
-  min-height: 44px;
-  border: 1px solid #e5e5e5;
-  background: #ffffff;
-  color: #000000;
-  padding: 0.75rem 0.875rem;
-  font-size: 0.875rem;
-  outline: none;
-  border-radius: 0px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
+  /* Minimalist Input Fields */
+  .field {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    padding: 0.65rem 0.875rem;
+    font-size: 0.8125rem;
+    outline: none;
+    border-radius: 0px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+  }
 
-.field:focus {
-  border-color: #000000;
-  box-shadow: 0 0 0 1px #000000;
-}
+  .field:focus {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
 
-.field::placeholder {
-  color: #a3a3a3;
-}
+  .field::placeholder {
+    color: var(--text-muted);
+  }
 
-.field-error {
-  border-color: #000000;
-  background-color: #fafafa;
-}
+  .field:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 
-.field-error:focus {
-  border-color: #000000;
-  box-shadow: 0 0 0 1px #000000;
+  .field-error {
+    border-color: var(--border-strong);
+    background-color: var(--bg-surface);
+  }
+
+  .field-error:focus {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 0 1px var(--border-strong);
+  }
+
+  .skeleton-shimmer {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--shimmer-base);
+  }
+
+  .skeleton-shimmer::after {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0,
+      var(--shimmer-highlight) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.8s infinite;
+    content: "";
+  }
 }
 
 /* Minimalist Skeleton Shimmer */
@@ -99,29 +161,6 @@ button {
   }
 }
 
-.skeleton-shimmer {
-  position: relative;
-  overflow: hidden;
-  background-color: #f5f5f5;
-}
-
-.skeleton-shimmer::after {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.6) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: shimmer 1.8s infinite;
-  content: '';
-}
-
 /* Minimalist Clean Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
@@ -129,16 +168,16 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-  background: #ffffff;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d4d4d4;
+  background: var(--scrollbar-thumb);
   border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #737373;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Admin application: scoped styles remain unchanged */

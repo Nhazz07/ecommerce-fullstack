@@ -29,30 +29,35 @@ import { StoreContext } from "../context/StoreContext";
 import { visibleShopProducts } from "../utils/productPrice";
 import { QRCodeSVG } from "qrcode.react";
 export const Button = ({ className = "", variant = "primary", ...props }) => {
-  const base = "inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
+  const base =
+    "inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold uppercase tracking-widest transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
   const styles = {
-    primary: "border border-black bg-black text-white hover:bg-neutral-800",
-    secondary: "border border-[#E5E5E5] bg-white text-black hover:border-black",
-    outline: "border border-black bg-transparent text-black hover:bg-black hover:text-white",
-    dark: "border border-black bg-black text-white hover:bg-neutral-800",
+    primary:
+      "border border-zinc-950 bg-zinc-950 text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200",
+    secondary:
+      "border border-zinc-200 bg-white text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:border-zinc-200",
+    outline:
+      "border border-zinc-950 bg-transparent text-zinc-950 hover:bg-zinc-950 hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-zinc-950",
+    dark:
+      "border border-zinc-950 bg-zinc-950 text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200",
   };
   return <button className={`${base} ${styles[variant] || styles.primary} ${className}`} {...props} />;
 };
 
 export const Page = ({ eyebrow, title, subtitle, children, actions }) => (
-  <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 bg-white text-black">
-    <div className="border-b border-[#E5E5E5] pb-6 mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+  <section className="mx-auto w-full min-w-0 max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 text-zinc-950 dark:text-zinc-50">
+    <div className="border-b border-zinc-200 dark:border-zinc-800 pb-6 mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
       <div>
         {eyebrow && (
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-2 text-2xl font-bold tracking-tight text-black sm:text-3xl md:text-4xl">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-zinc-950 dark:text-white sm:text-3xl md:text-4xl">
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-2 text-xs text-[#737373] max-w-2xl leading-relaxed">
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 max-w-2xl leading-relaxed">
             {subtitle}
           </p>
         )}
@@ -68,8 +73,8 @@ export const Notice = ({ children, type = "error" }) => (
     role={type === "error" ? "alert" : "status"}
     className={`my-4 flex items-start gap-3 border p-4 text-xs leading-relaxed ${
       type === "error"
-        ? "border-black bg-black text-white"
-        : "border-[#E5E5E5] bg-[#FAFAFA] text-black"
+        ? "border-zinc-300 border-l-2 border-l-zinc-950 bg-zinc-50 text-zinc-950 dark:border-zinc-800 dark:border-l-white dark:bg-zinc-900 dark:text-zinc-100"
+        : "border-zinc-200 bg-zinc-50 text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
     }`}
   >
     <div className="mt-0.5 shrink-0">
@@ -81,8 +86,8 @@ export const Notice = ({ children, type = "error" }) => (
 
 export const Loading = () => (
   <div className="mx-auto max-w-7xl px-4 py-20 text-center sm:px-6">
-    <div className="inline-flex items-center gap-3 border border-[#E5E5E5] bg-[#FAFAFA] px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-black">
-      <div className="h-2 w-2 animate-ping bg-black" />
+    <div className="inline-flex items-center gap-3 border border-zinc-200 bg-zinc-50 px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+      <div className="h-2 w-2 animate-ping bg-zinc-950 dark:bg-white" />
       <span>Consulting Archive…</span>
     </div>
   </div>
@@ -104,9 +109,10 @@ function useCatalogue() {
       catalogueApi.brands(),
     ]).then(([products, categories, brands]) => {
       const failures = [products, categories, brands].filter((result) => result.status === "rejected");
+      const uniqueErrors = [...new Set(failures.map((result) => messageFrom(result.reason)).filter(Boolean))];
       setState({
         loading: false,
-        error: failures.map((result) => messageFrom(result.reason)).join(" "),
+        error: uniqueErrors.join(" "),
         products: products.status === "fulfilled" ? products.value.content || [] : [],
         categories: categories.status === "fulfilled" ? categories.value : [],
         brands: brands.status === "fulfilled" ? brands.value : [],
@@ -164,21 +170,21 @@ export function HomePage() {
   const newArrivals = products.slice(4, 12).length > 0 ? products.slice(4, 12) : products.slice(0, 8);
 
   return (
-    <div className="space-y-16 sm:space-y-24 bg-white text-black">
-      {/* Large Hero Section */}
-      <section className="relative border-b border-[#E5E5E5] bg-[#FAFAFA] py-16 sm:py-24 lg:py-28">
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.1fr_.9fr] lg:items-center lg:gap-16">
+    <div className="space-y-16 sm:space-y-24">
+      {/* Large Editorial Hero Section */}
+      <section className="relative border-b border-zinc-200 bg-zinc-50 py-14 sm:py-20 lg:py-24 dark:border-zinc-800 dark:bg-zinc-900/50 transition-colors duration-200">
+        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:px-8 lg:grid-cols-[1.15fr_.85fr] lg:items-center lg:gap-16">
           <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 border border-black bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-black">
+            <div className="inline-flex items-center gap-2 border border-zinc-950 bg-white px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-950 dark:border-zinc-200 dark:bg-zinc-950 dark:text-zinc-100">
               <span>Authentic Anime Artefacts & Figures</span>
             </div>
 
-            <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight text-black sm:text-6xl lg:text-7xl">
+            <h1 className="text-4xl font-extrabold leading-[1.04] tracking-tight text-zinc-950 dark:text-white sm:text-6xl lg:text-7xl">
               Sculpted In Silence. <br />
-              <span className="font-light italic text-neutral-600">Defined In Monochrome.</span>
+              <span className="font-light text-zinc-500 dark:text-zinc-400">Defined In Monochrome.</span>
             </h1>
 
-            <p className="max-w-lg text-xs leading-relaxed text-[#737373] sm:text-sm">
+            <p className="max-w-lg text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-sm">
               ANTEIKU is a minimalist Tokyo archive curated for the discerning anime connoisseur.
               Explore licensed scale figures, artisan statues, and authenticated limited editions.
             </p>
@@ -186,14 +192,14 @@ export function HomePage() {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 border border-black bg-black px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
+                className="inline-flex items-center gap-2 border border-zinc-950 bg-zinc-950 px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
               >
                 <span>Shop Now</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
                 to="/series"
-                className="inline-flex items-center gap-2 border border-black bg-white px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-black hover:bg-black hover:text-white transition-colors"
+                className="inline-flex items-center gap-2 border border-zinc-950 bg-transparent px-6 py-3.5 text-xs font-bold uppercase tracking-widest text-zinc-950 hover:bg-zinc-950 hover:text-white dark:border-zinc-200 dark:text-zinc-100 dark:hover:bg-white dark:hover:text-zinc-950 transition-colors"
               >
                 <span>Browse Series</span>
               </Link>
@@ -203,30 +209,30 @@ export function HomePage() {
           {/* Hero Feature Piece Card */}
           {featuredPiece && (
             <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-              <div className="relative aspect-[4/5] overflow-hidden border border-black bg-white shadow-sm">
+              <div className="relative aspect-[4/5] overflow-hidden border border-zinc-950 bg-white dark:border-zinc-700 dark:bg-zinc-900">
                 <img
                   src={imageOf(featuredPiece)}
                   alt={featuredPiece.name}
-                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-102"
+                  className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.02]"
                   onError={(e) => {
                     e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
                   }}
                 />
-                <div className="absolute inset-x-0 bottom-0 bg-white/95 p-5 border-t border-[#E5E5E5] space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#737373]">
+                <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-sm p-5 border-t border-zinc-200 dark:bg-zinc-950/95 dark:border-zinc-800 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
                     <span>Featured Piece</span>
                     <span>{featuredPiece.categoryName || "Archive"}</span>
                   </div>
-                  <h3 className="text-base font-bold text-black line-clamp-1">
+                  <h3 className="text-base font-bold text-zinc-950 dark:text-white line-clamp-1">
                     {featuredPiece.name}
                   </h3>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-extrabold text-black">
+                    <span className="text-sm font-extrabold text-zinc-950 dark:text-white">
                       {money(featuredPiece.price)}
                     </span>
                     <Link
                       to={`/product/${featuredPiece.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-black hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
                     >
                       <span>View Details</span>
                       <ArrowRight size={13} />
@@ -240,8 +246,8 @@ export function HomePage() {
       </section>
 
       {/* Brand Value Pillars */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-px bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
               icon: Sparkles,
@@ -266,15 +272,15 @@ export function HomePage() {
           ].map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
-              className="border border-[#E5E5E5] bg-white p-6 transition-colors hover:border-black"
+              className="bg-white p-6 dark:bg-zinc-950 transition-colors"
             >
-              <div className="flex h-10 w-10 items-center justify-center border border-black bg-white text-black">
-                <Icon size={18} strokeWidth={1.75} />
+              <div className="flex h-9 w-9 items-center justify-center border border-zinc-950 text-zinc-950 dark:border-zinc-200 dark:text-zinc-100">
+                <Icon size={17} strokeWidth={1.75} />
               </div>
-              <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-black">
+              <h3 className="mt-4 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
                 {title}
               </h3>
-              <p className="mt-2 text-xs leading-relaxed text-[#737373]">
+              <p className="mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                 {desc}
               </p>
             </div>
@@ -283,19 +289,19 @@ export function HomePage() {
       </section>
 
       {/* Popular Categories Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E5E5] pb-5">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
               Curated Mediums
             </p>
-            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-black">
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">
               Popular Categories
             </h2>
           </div>
           <Link
             to="/categories"
-            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
           >
             <span>All Categories ({categories.length})</span>
             <ArrowRight size={13} />
@@ -307,21 +313,21 @@ export function HomePage() {
             <Link
               key={cat.id}
               to={`/shop?category=${cat.id}`}
-              className="group flex flex-col justify-between border border-[#E5E5E5] bg-[#FAFAFA] p-6 transition-all hover:border-black hover:bg-white"
+              className="group flex flex-col justify-between border border-zinc-200 bg-zinc-50 p-6 transition-all hover:border-zinc-950 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-200 dark:hover:bg-zinc-950"
             >
               <div>
-                <span className="text-[10px] font-mono tracking-widest text-[#737373]">
+                <span className="text-[10px] font-mono tracking-widest text-zinc-500 dark:text-zinc-400">
                   CATEGORY // 0{cat.id || 1}
                 </span>
-                <h3 className="mt-3 text-lg font-bold text-black transition-colors">
+                <h3 className="mt-3 text-lg font-bold text-zinc-950 dark:text-white transition-colors">
                   {cat.name}
                 </h3>
-                <p className="mt-2 text-xs text-[#737373] line-clamp-2 leading-relaxed">
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                   {cat.description || "Official licensed artefacts and figures."}
                 </p>
               </div>
-              <span className="mt-8 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-black group-hover:translate-x-1 transition-transform">
-                <span>Explore Category</span>
+              <span className="mt-8 inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-zinc-950 dark:text-white group-hover:translate-x-1 transition-transform">
+                <span>Explore</span>
                 <span>→</span>
               </span>
             </Link>
@@ -330,19 +336,19 @@ export function HomePage() {
       </section>
 
       {/* Featured Products Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E5E5] pb-5">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
               Curated Highlights
             </p>
-            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-black">
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">
               Featured Products
             </h2>
           </div>
           <Link
             to="/shop"
-            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
           >
             <span>View All Products</span>
             <ArrowRight size={13} />
@@ -362,18 +368,18 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Promotional Banner: Black Background & White Typography */}
-      <section className="w-full bg-black text-white py-16 sm:py-20">
+      {/* Promotional Banner */}
+      <section className="w-full border-y border-zinc-200 bg-zinc-50 text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white py-16 sm:py-20 transition-colors duration-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
             <div className="space-y-4">
-              <span className="inline-block border border-white px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.25em] text-white">
+              <span className="inline-block border border-zinc-950 dark:border-zinc-500 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.25em] text-zinc-950 dark:text-zinc-200">
                 Archival Release
               </span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-950 dark:text-white">
                 Limited Japanese Imports & Studio Masterpieces
               </h2>
-              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed max-w-xl">
+              <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-xl">
                 Direct allocations from Tokyo studios. From classic dark fantasy to modern shonen legends,
                 each piece is numbered and verified for authenticity. Complimentary worldwide shipping over $150.
               </p>
@@ -381,14 +387,14 @@ export function HomePage() {
             <div className="flex flex-col sm:flex-row items-start lg:items-center justify-start lg:justify-end gap-4">
               <Link
                 to="/shop"
-                className="inline-flex items-center gap-2 border border-white bg-white px-8 py-4 text-xs font-bold uppercase tracking-widest text-black hover:bg-neutral-200 transition-colors"
+                className="inline-flex items-center gap-2 border border-zinc-950 bg-zinc-950 px-8 py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
               >
                 <span>Shop New Releases</span>
                 <ArrowRight size={14} />
               </Link>
               <Link
                 to="/brands"
-                className="inline-flex items-center gap-2 border border-white bg-transparent px-7 py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-white hover:text-black transition-colors"
+                className="inline-flex items-center gap-2 border border-zinc-950 bg-transparent px-7 py-4 text-xs font-bold uppercase tracking-widest text-zinc-950 hover:bg-zinc-950 hover:text-white dark:border-zinc-600 dark:text-white dark:hover:border-white dark:hover:bg-white dark:hover:text-zinc-950 transition-colors"
               >
                 <span>Explore Brands</span>
               </Link>
@@ -398,19 +404,19 @@ export function HomePage() {
       </section>
 
       {/* New Arrivals Section */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-[#E5E5E5] pb-5">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
               Recently Added
             </p>
-            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-black">
+            <h2 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">
               New Arrivals
             </h2>
           </div>
           <Link
             to="/shop"
-            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
           >
             <span>View Full Archive ({products.length})</span>
             <ArrowRight size={13} />
@@ -514,7 +520,7 @@ export function ShopPage() {
     <aside className="space-y-6 text-xs">
       {/* Search Filter */}
       <div className="space-y-2">
-        <label htmlFor="shop-search-input" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+        <label htmlFor="shop-search-input" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
           Search Products
         </label>
         <div className="relative">
@@ -524,13 +530,13 @@ export function ShopPage() {
             value={q}
             onChange={(e) => update("q", e.target.value)}
             placeholder="Search figures, titles..."
-            className="field pr-8 text-xs border-[#E5E5E5] bg-white text-black focus:border-black"
+            className="field pr-8 text-xs"
           />
           {q && (
             <button
               type="button"
               onClick={() => update("q", "")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#737373] hover:text-black"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
             >
               <X size={14} />
             </button>
@@ -539,15 +545,15 @@ export function ShopPage() {
       </div>
 
       {/* Category Filter */}
-      <div className="space-y-2 border-t border-[#E5E5E5] pt-5">
-        <label htmlFor="shop-category-select" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+      <div className="space-y-2 border-t border-zinc-200 dark:border-zinc-800 pt-5">
+        <label htmlFor="shop-category-select" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
           Category
         </label>
         <select
           id="shop-category-select"
           value={category}
           onChange={(e) => update("category", e.target.value)}
-          className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
+          className="field text-xs"
         >
           <option value="">All Categories ({categories.length})</option>
           {categories.map((c) => (
@@ -559,15 +565,15 @@ export function ShopPage() {
       </div>
 
       {/* Brand / Studio Filter */}
-      <div className="space-y-2 border-t border-[#E5E5E5] pt-5">
-        <label htmlFor="shop-brand-select" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+      <div className="space-y-2 border-t border-zinc-200 dark:border-zinc-800 pt-5">
+        <label htmlFor="shop-brand-select" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
           Brand / Studio
         </label>
         <select
           id="shop-brand-select"
           value={brand}
           onChange={(e) => update("brand", e.target.value)}
-          className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
+          className="field text-xs"
         >
           <option value="">All Brands ({brands.length})</option>
           {brands.map((b) => (
@@ -580,15 +586,15 @@ export function ShopPage() {
 
       {/* Series Filter */}
       {series.length > 0 && (
-        <div className="space-y-2 border-t border-[#E5E5E5] pt-5">
-          <label htmlFor="shop-series-select" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+        <div className="space-y-2 border-t border-zinc-200 dark:border-zinc-800 pt-5">
+          <label htmlFor="shop-series-select" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
             Anime Series
           </label>
           <select
             id="shop-series-select"
             value={seriesParam}
             onChange={(e) => update("series", e.target.value)}
-            className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
+            className="field text-xs"
           >
             <option value="">All Anime Series ({series.length})</option>
             {series.map((s) => (
@@ -601,8 +607,8 @@ export function ShopPage() {
       )}
 
       {/* Price Range Filter */}
-      <div className="space-y-3 border-t border-[#E5E5E5] pt-5">
-        <span className="block text-[11px] font-bold uppercase tracking-wider text-black">
+      <div className="space-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-5">
+        <span className="block text-[11px] font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
           Price Range (USD)
         </span>
         <div className="grid grid-cols-2 gap-2">
@@ -614,7 +620,7 @@ export function ShopPage() {
               placeholder="Min ($)"
               value={minPrice}
               onChange={(e) => update("minPrice", e.target.value)}
-              className="field text-xs border-[#E5E5E5] focus:border-black"
+              className="field text-xs"
             />
           </label>
           <label className="block">
@@ -625,7 +631,7 @@ export function ShopPage() {
               placeholder="Max ($)"
               value={maxPrice}
               onChange={(e) => update("maxPrice", e.target.value)}
-              className="field text-xs border-[#E5E5E5] focus:border-black"
+              className="field text-xs"
             />
           </label>
         </div>
@@ -649,7 +655,7 @@ export function ShopPage() {
                 else next.delete("maxPrice");
                 setParams(next);
               }}
-              className="border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-[10px] font-semibold text-black hover:border-black hover:bg-white transition-colors"
+              className="border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[10px] font-semibold text-zinc-950 hover:border-zinc-950 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-200 dark:hover:bg-zinc-950 transition-colors"
             >
               {preset.label}
             </button>
@@ -658,15 +664,15 @@ export function ShopPage() {
       </div>
 
       {/* In-Stock Only Toggle */}
-      <div className="border-t border-[#E5E5E5] pt-5">
+      <div className="border-t border-zinc-200 dark:border-zinc-800 pt-5">
         <label className="flex items-center gap-2.5 cursor-pointer">
           <input
             type="checkbox"
             checked={inStock}
             onChange={(e) => update("inStock", e.target.checked)}
-            className="accent-black h-4 w-4"
+            className="accent-zinc-950 dark:accent-white h-4 w-4"
           />
-          <span className="text-xs text-black font-semibold">In-Stock Only</span>
+          <span className="text-xs text-zinc-950 dark:text-zinc-100 font-semibold">In-Stock Only</span>
         </label>
       </div>
 
@@ -675,7 +681,7 @@ export function ShopPage() {
         <button
           type="button"
           onClick={clearAllFilters}
-          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-black hover:underline pt-2"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline pt-2"
         >
           <RotateCcw size={13} />
           <span>Reset All Filters</span>
@@ -691,14 +697,14 @@ export function ShopPage() {
       subtitle="Curated official anime figures, collectables, and artefacts from Tokyo studios."
     >
       {/* Top Filter and Sort Controls Bar */}
-      <div className="flex flex-col gap-4 border-b border-[#E5E5E5] pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold tracking-wider text-[#737373]">
+          <span className="text-xs font-semibold tracking-wider text-zinc-500 dark:text-zinc-400">
             {loading ? "Loading..." : `Showing ${shown.length} ${shown.length === 1 ? "product" : "products"}`}
           </span>
 
           {activeFiltersCount > 0 && (
-            <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-black text-white">
+            <span className="inline-flex items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest bg-zinc-950 text-white dark:bg-white dark:text-zinc-950">
               {activeFiltersCount} Active {activeFiltersCount === 1 ? "Filter" : "Filters"}
             </span>
           )}
@@ -709,12 +715,12 @@ export function ShopPage() {
           <button
             type="button"
             onClick={() => setMobileFiltersOpen(true)}
-            className="flex items-center gap-2 border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black lg:hidden hover:border-black"
+            className="flex items-center gap-2 border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-950 lg:hidden hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-zinc-200"
           >
             <SlidersHorizontal size={14} />
             <span>Filter</span>
             {activeFiltersCount > 0 && (
-              <span className="flex h-4 w-4 items-center justify-center bg-black text-[9px] font-bold text-white">
+              <span className="flex h-4 w-4 items-center justify-center bg-zinc-950 text-[9px] font-bold text-white dark:bg-white dark:text-zinc-950">
                 {activeFiltersCount}
               </span>
             )}
@@ -722,14 +728,14 @@ export function ShopPage() {
 
           {/* Sort Selector */}
           <div className="flex items-center gap-2">
-            <label htmlFor="shop-sort-select" className="text-xs text-[#737373] hidden sm:inline">
+            <label htmlFor="shop-sort-select" className="text-xs text-zinc-500 dark:text-zinc-400 hidden sm:inline">
               Sort by:
             </label>
             <select
               id="shop-sort-select"
               value={sort}
               onChange={(e) => update("sort", e.target.value)}
-              className="border border-[#E5E5E5] bg-white px-3 py-2 text-xs font-semibold text-black outline-none focus:border-black"
+              className="border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-950 outline-none focus:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:focus:border-white"
             >
               <option value="featured">Featured Collection</option>
               <option value="newest">New Arrivals</option>
@@ -744,18 +750,18 @@ export function ShopPage() {
 
       {/* Active Filter Chips */}
       {activeFiltersCount > 0 && (
-        <div className="flex flex-wrap items-center gap-2 py-3 border-b border-[#E5E5E5]">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373] mr-1">
+        <div className="flex flex-wrap items-center gap-2 py-3 border-b border-zinc-200 dark:border-zinc-800">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 mr-1">
             Active Filters:
           </span>
 
           {q && (
-            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
+            <span className="inline-flex items-center gap-1.5 border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <span>Query: “{q}”</span>
               <button
                 type="button"
                 onClick={() => removeFilter("q")}
-                className="text-[#737373] hover:text-black"
+                className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
@@ -763,12 +769,12 @@ export function ShopPage() {
           )}
 
           {category && (
-            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
+            <span className="inline-flex items-center gap-1.5 border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <span>Category: {categoryName || category}</span>
               <button
                 type="button"
                 onClick={() => removeFilter("category")}
-                className="text-[#737373] hover:text-black"
+                className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
@@ -776,12 +782,12 @@ export function ShopPage() {
           )}
 
           {brand && (
-            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
+            <span className="inline-flex items-center gap-1.5 border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <span>Brand: {brandName || brand}</span>
               <button
                 type="button"
                 onClick={() => removeFilter("brand")}
-                className="text-[#737373] hover:text-black"
+                className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
@@ -789,12 +795,12 @@ export function ShopPage() {
           )}
 
           {seriesParam && (
-            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
+            <span className="inline-flex items-center gap-1.5 border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <span>Series: {seriesName || seriesParam}</span>
               <button
                 type="button"
                 onClick={() => removeFilter("series")}
-                className="text-[#737373] hover:text-black"
+                className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
@@ -802,14 +808,14 @@ export function ShopPage() {
           )}
 
           {(minPrice || maxPrice) && (
-            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
+            <span className="inline-flex items-center gap-1.5 border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <span>
                 Price: {minPrice ? `$${minPrice}` : "$0"} – {maxPrice ? `$${maxPrice}` : "∞"}
               </span>
               <button
                 type="button"
                 onClick={() => removeFilter("minPrice", "maxPrice")}
-                className="text-[#737373] hover:text-black"
+                className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
@@ -817,12 +823,12 @@ export function ShopPage() {
           )}
 
           {inStock && (
-            <span className="inline-flex items-center gap-1.5 border border-[#E5E5E5] bg-[#FAFAFA] px-2.5 py-1 text-xs text-black">
+            <span className="inline-flex items-center gap-1.5 border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-950 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
               <span>In-Stock Only</span>
               <button
                 type="button"
                 onClick={() => removeFilter("inStock")}
-                className="text-[#737373] hover:text-black"
+                className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
               >
                 <X size={12} />
               </button>
@@ -832,7 +838,7 @@ export function ShopPage() {
           <button
             type="button"
             onClick={clearAllFilters}
-            className="text-[11px] font-bold text-black hover:underline ml-2"
+            className="text-[11px] font-bold text-zinc-950 dark:text-white hover:underline ml-2"
           >
             Clear all
           </button>
@@ -845,20 +851,20 @@ export function ShopPage() {
       {mobileFiltersOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden lg:hidden" role="dialog" aria-modal="true" aria-label="Filters">
           <div
-            className="fixed inset-0 bg-black/60 transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity"
             onClick={() => setMobileFiltersOpen(false)}
           />
           <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-            <div className="w-screen max-w-xs border-l border-[#E5E5E5] bg-white p-6 flex flex-col justify-between">
+            <div className="w-screen max-w-xs border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-6 flex flex-col justify-between overflow-y-auto">
               <div>
-                <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4 mb-6">
-                  <h3 className="text-base font-bold text-black">
+                <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4 mb-6">
+                  <h3 className="text-base font-bold text-zinc-950 dark:text-white">
                     Filter Products
                   </h3>
                   <button
                     type="button"
                     onClick={() => setMobileFiltersOpen(false)}
-                    className="text-[#737373] hover:text-black p-1"
+                    className="text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white p-1"
                   >
                     <X size={20} />
                   </button>
@@ -866,7 +872,7 @@ export function ShopPage() {
                 {filterSidebar}
               </div>
 
-              <div className="pt-6 border-t border-[#E5E5E5] mt-6 space-y-2">
+              <div className="pt-6 border-t border-zinc-200 dark:border-zinc-800 mt-6 space-y-2">
                 <Button
                   onClick={() => setMobileFiltersOpen(false)}
                   className="w-full"
@@ -877,7 +883,7 @@ export function ShopPage() {
                   <button
                     type="button"
                     onClick={clearAllFilters}
-                    className="w-full text-center text-xs font-semibold text-[#737373] hover:text-black py-2"
+                    className="w-full text-center text-xs font-semibold text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white py-2"
                   >
                     Reset Filters
                   </button>
@@ -891,7 +897,7 @@ export function ShopPage() {
       {/* Main Grid Section */}
       <div className="mt-8 grid gap-10 lg:grid-cols-[240px_1fr]">
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block border-r border-[#E5E5E5] pr-8">
+        <div className="hidden lg:block border-r border-zinc-200 dark:border-zinc-800 pr-8">
           {filterSidebar}
         </div>
 
@@ -917,7 +923,7 @@ export function ShopPage() {
 
               {/* Minimalist Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-[#E5E5E5] pt-6">
+                <div className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 pt-6">
                   <button
                     type="button"
                     disabled={currentPage === 1}
@@ -925,7 +931,7 @@ export function ShopPage() {
                       setCurrentPage((p) => Math.max(1, p - 1));
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    className="border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
                   >
                     ← Previous
                   </button>
@@ -941,8 +947,8 @@ export function ShopPage() {
                         }}
                         className={`h-8 w-8 text-xs font-bold transition-colors ${
                           currentPage === num
-                            ? "bg-black text-white"
-                            : "border border-[#E5E5E5] bg-white text-black hover:border-black"
+                            ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
+                            : "border border-zinc-200 bg-white text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:border-zinc-200"
                         }`}
                       >
                         {num}
@@ -957,7 +963,7 @@ export function ShopPage() {
                       setCurrentPage((p) => Math.min(totalPages, p + 1));
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                    className="border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-zinc-200 disabled:opacity-30 disabled:pointer-events-none transition-colors"
                   >
                     Next →
                   </button>
@@ -965,20 +971,20 @@ export function ShopPage() {
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center my-8">
-              <div className="flex h-14 w-14 items-center justify-center border border-black bg-white text-black">
+            <div className="flex flex-col items-center justify-center border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-12 text-center my-8">
+              <div className="flex h-14 w-14 items-center justify-center border border-zinc-950 bg-white text-zinc-950 dark:border-white dark:bg-zinc-950 dark:text-white">
                 <Search size={22} />
               </div>
-              <h3 className="mt-4 text-base font-bold text-black">
+              <h3 className="mt-4 text-base font-bold text-zinc-950 dark:text-white">
                 No Products Found
               </h3>
-              <p className="mt-2 max-w-sm text-xs leading-relaxed text-[#737373]">
+              <p className="mt-2 max-w-sm text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                 No items match your active filters or search terms. Try broadening your criteria or clearing filters.
               </p>
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="mt-6 border border-black bg-black px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
+                className="mt-6 border border-zinc-950 bg-zinc-950 px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
               >
                 Reset All Filters
               </button>
@@ -1039,7 +1045,7 @@ export function ProductPage() {
     return (
       <Page eyebrow="Catalogue" title="Product Notice">
         <Notice>{error}</Notice>
-        <Link to="/shop" className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-black underline">
+        <Link to="/shop" className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white underline">
           ← Return to All Products
         </Link>
       </Page>
@@ -1105,14 +1111,14 @@ export function ProductPage() {
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 bg-white text-black">
+    <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 text-zinc-950 dark:text-zinc-50">
       {/* Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-xs text-[#737373] tracking-wide">
-        <Link to="/" className="hover:text-black transition-colors font-medium">
+      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400 tracking-wide">
+        <Link to="/" className="hover:text-zinc-950 dark:hover:text-white transition-colors font-medium">
           Home
         </Link>
         <span>/</span>
-        <Link to="/shop" className="hover:text-black transition-colors font-medium">
+        <Link to="/shop" className="hover:text-zinc-950 dark:hover:text-white transition-colors font-medium">
           Products
         </Link>
         {product.categoryName && (
@@ -1120,22 +1126,22 @@ export function ProductPage() {
             <span>/</span>
             <Link
               to={`/shop?category=${product.categoryId}`}
-              className="hover:text-black transition-colors font-medium"
+              className="hover:text-zinc-950 dark:hover:text-white transition-colors font-medium"
             >
               {product.categoryName}
             </Link>
           </>
         )}
         <span>/</span>
-        <span className="truncate max-w-[200px] text-black font-semibold">{product.name}</span>
+        <span className="truncate max-w-[200px] text-zinc-950 dark:text-white font-semibold">{product.name}</span>
       </nav>
 
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-start">
         {/* Gallery Column */}
         <div className="space-y-4">
-          <div className="relative aspect-[4/5] w-full overflow-hidden border border-[#E5E5E5] bg-[#FAFAFA]">
+          <div className="relative aspect-[4/5] w-full overflow-hidden border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
             <img
-              className="h-full w-full object-cover transition-transform duration-500 hover:scale-102"
+              className="h-full w-full object-cover transition-transform duration-500 hover:scale-[1.02]"
               src={images[index]?.imageUrl || ANTEIKU_FALLBACK_IMAGE}
               alt={images[index]?.altText || product.name}
               onError={(event) => {
@@ -1153,8 +1159,8 @@ export function ProductPage() {
                   onClick={() => setIndex(i)}
                   className={`h-20 w-16 shrink-0 overflow-hidden border transition-all duration-150 ${
                     i === index
-                      ? "border-black ring-1 ring-black"
-                      : "border-[#E5E5E5] opacity-60 hover:opacity-100"
+                      ? "border-zinc-950 ring-1 ring-zinc-950 dark:border-white dark:ring-white"
+                      : "border-zinc-200 opacity-60 hover:opacity-100 dark:border-zinc-800"
                   }`}
                 >
                   <img
@@ -1173,34 +1179,34 @@ export function ProductPage() {
 
         {/* Product Information Column */}
         <div className="space-y-6">
-          <div className="space-y-2 border-b border-[#E5E5E5] pb-6">
+          <div className="space-y-2 border-b border-zinc-200 dark:border-zinc-800 pb-6">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+              <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
                 {product.brandName || "ANTEIKU ARCHIVE"}
               </span>
               {product.seriesName && (
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   {product.seriesName}
                 </span>
               )}
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-black sm:text-3xl lg:text-4xl">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white sm:text-3xl lg:text-4xl">
               {product.name}
             </h1>
 
             <div className="flex items-baseline gap-4 pt-2">
-              <span className="text-2xl font-bold tracking-tight text-black">
+              <span className="text-2xl font-bold tracking-tight text-zinc-950 dark:text-white">
                 {money(selected?.price ?? product.price)}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider border border-black bg-white text-black px-2 py-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider border border-zinc-950 bg-transparent text-zinc-950 dark:border-zinc-200 dark:text-zinc-100 px-2 py-0.5">
                 {unavailable ? "Archived / Unavailable" : "In Stock · Direct Tokyo Dispatch"}
               </span>
             </div>
           </div>
 
           {/* Description */}
-          <div className="text-xs leading-relaxed text-[#737373] space-y-3">
+          <div className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 space-y-3">
             <p className="whitespace-pre-line">
               {product.description ||
                 "Acquired directly from verified Tokyo creators and licensed Japanese workshops. Hand-inspected prior to archival dispatch."}
@@ -1210,7 +1216,7 @@ export function ProductPage() {
           {/* Variant Selection */}
           {product.productVariants?.length > 0 && (
             <div className="space-y-3 pt-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-black">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
                 Select Option / Edition
               </span>
               <div className="flex flex-wrap gap-2">
@@ -1221,8 +1227,8 @@ export function ProductPage() {
                     onClick={() => setSelected(variant)}
                     className={`border px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-all ${
                       selected?.id === variant.id
-                        ? "border-black bg-black text-white"
-                        : "border-[#E5E5E5] bg-white text-black hover:border-black"
+                        ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950"
+                        : "border-zinc-200 bg-white text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:border-zinc-200"
                     }`}
                   >
                     {variant.name || [variant.size, variant.color].filter(Boolean).join(" / ") || variant.sku}
@@ -1236,24 +1242,24 @@ export function ProductPage() {
           <div className="space-y-3 pt-4">
             <div className="flex items-center gap-3">
               {/* Stepper */}
-              <div className="flex h-12 items-center border border-[#E5E5E5] bg-white">
+              <div className="flex h-12 items-center border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
                 <button
                   type="button"
                   aria-label="Decrease quantity"
                   disabled={quantity === 1}
                   onClick={() => setQuantity((v) => Math.max(1, v - 1))}
-                  className="px-3.5 h-full flex items-center justify-center text-[#737373] hover:text-black disabled:opacity-30 transition-colors"
+                  className="px-3.5 h-full flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white disabled:opacity-30 transition-colors"
                 >
                   <Minus size={14} />
                 </button>
-                <span className="w-8 text-center text-xs font-bold tabular-nums text-black">
+                <span className="w-8 text-center text-xs font-bold tabular-nums text-zinc-950 dark:text-white">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   aria-label="Increase quantity"
                   onClick={() => setQuantity((v) => v + 1)}
-                  className="px-3.5 h-full flex items-center justify-center text-[#737373] hover:text-black transition-colors"
+                  className="px-3.5 h-full flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition-colors"
                 >
                   <Plus size={14} />
                 </button>
@@ -1266,8 +1272,8 @@ export function ProductPage() {
                 disabled={unavailable || !selected}
                 className={`flex-1 h-12 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${
                   added
-                    ? "bg-neutral-800 text-white"
-                    : "bg-black text-white hover:bg-neutral-800 disabled:opacity-40"
+                    ? "bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-950"
+                    : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 disabled:opacity-40"
                 }`}
               >
                 {added ? (
@@ -1292,8 +1298,8 @@ export function ProductPage() {
                 aria-label={wished ? "Remove from wishlist" : "Save to wishlist"}
                 className={`h-12 w-12 flex items-center justify-center border transition-colors ${
                   wished
-                    ? "border-black bg-black text-white"
-                    : "border-[#E5E5E5] bg-white text-black hover:border-black"
+                    ? "border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950"
+                    : "border-zinc-200 bg-white text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-zinc-200"
                 }`}
               >
                 <Heart size={18} fill={wished ? "currentColor" : "none"} />
@@ -1301,36 +1307,36 @@ export function ProductPage() {
             </div>
 
             {wishMessage && (
-              <p role="status" className="text-xs font-semibold text-black pt-1">
+              <p role="status" className="text-xs font-semibold text-zinc-950 dark:text-white pt-1">
                 {wishMessage}
               </p>
             )}
           </div>
 
           {/* Specifications Table */}
-          <dl className="mt-8 grid grid-cols-2 gap-y-3 border-t border-[#E5E5E5] pt-6 text-xs">
-            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Category</dt>
-            <dd className="text-black font-semibold">{product.categoryName || "—"}</dd>
+          <dl className="mt-8 grid grid-cols-2 gap-y-3 border-t border-zinc-200 dark:border-zinc-800 pt-6 text-xs">
+            <dt className="text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">Category</dt>
+            <dd className="text-zinc-950 dark:text-white font-semibold">{product.categoryName || "—"}</dd>
 
-            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Series</dt>
-            <dd className="text-black font-semibold">{product.seriesName || "—"}</dd>
+            <dt className="text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">Series</dt>
+            <dd className="text-zinc-950 dark:text-white font-semibold">{product.seriesName || "—"}</dd>
 
-            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Studio / Brand</dt>
-            <dd className="text-black font-semibold">{product.brandName || "ANTEIKU"}</dd>
+            <dt className="text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">Studio / Brand</dt>
+            <dd className="text-zinc-950 dark:text-white font-semibold">{product.brandName || "ANTEIKU"}</dd>
 
-            <dt className="text-[#737373] uppercase tracking-wider font-semibold">Item SKU</dt>
-            <dd className="text-black font-mono font-semibold">{selected?.sku || product.sku || "—"}</dd>
+            <dt className="text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">Item SKU</dt>
+            <dd className="text-zinc-950 dark:text-white font-mono font-semibold">{selected?.sku || product.sku || "—"}</dd>
           </dl>
 
           {/* Guarantee Badges */}
-          <div className="border-t border-[#E5E5E5] pt-6 grid grid-cols-2 gap-4 text-xs text-[#737373]">
+          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6 grid grid-cols-2 gap-4 text-xs text-zinc-500 dark:text-zinc-400">
             <div className="flex items-center gap-2">
-              <ShieldCheck size={16} className="text-black" />
-              <span className="font-semibold text-black">Official License Certificate</span>
+              <ShieldCheck size={16} className="text-zinc-950 dark:text-white" />
+              <span className="font-semibold text-zinc-950 dark:text-white">Official License Certificate</span>
             </div>
             <div className="flex items-center gap-2">
-              <Truck size={16} className="text-black" />
-              <span className="font-semibold text-black">Archival Double-Boxing</span>
+              <Truck size={16} className="text-zinc-950 dark:text-white" />
+              <span className="font-semibold text-zinc-950 dark:text-white">Archival Double-Boxing</span>
             </div>
           </div>
         </div>
@@ -1338,17 +1344,17 @@ export function ProductPage() {
 
       {/* Related Products Section */}
       {related.length > 0 && (
-        <div className="mt-20 border-t border-[#E5E5E5] pt-12">
+        <div className="mt-20 border-t border-zinc-200 dark:border-zinc-800 pt-12">
           <div className="flex items-end justify-between pb-6">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+              <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
                 Curated Suggestions
               </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-black">
+              <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-950 dark:text-white">
                 Related Products
               </h2>
             </div>
-            <Link to="/shop" className="text-xs font-bold uppercase tracking-wider text-black hover:underline">
+            <Link to="/shop" className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4">
               View All →
             </Link>
           </div>
@@ -1434,35 +1440,35 @@ export function ProductReviewsPage() {
   };
 
   return (
-    <section className="mx-auto w-full min-w-0 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 bg-white text-black">
-      <div className="border-t border-[#E5E5E5] pt-12">
+    <section className="mx-auto w-full min-w-0 max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 text-zinc-950 dark:text-zinc-50">
+      <div className="border-t border-zinc-200 dark:border-zinc-800 pt-12">
         <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
               Customer Reviews
             </p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-black">
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-950 dark:text-white">
               Verified Collector Feedback
             </h2>
           </div>
-          <span className="text-xs font-semibold text-[#737373]">
+          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
             {reviews.length} {reviews.length === 1 ? "Review" : "Reviews"}
           </span>
         </div>
 
         {!user ? (
-          <div className="mt-6 border border-[#E5E5E5] bg-[#FAFAFA] p-6 text-center text-xs text-[#737373]">
+          <div className="mt-6 border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
             <p>Sign in to read client reviews and share your impressions of this piece.</p>
             <Link
               to={`/login?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`}
               state={{ notice: "Sign in to view and write product reviews." }}
-              className="mt-3 inline-block font-bold uppercase tracking-wider text-black underline"
+              className="mt-3 inline-block font-bold uppercase tracking-wider text-zinc-950 dark:text-white underline underline-offset-4"
             >
               Sign In to Your Account
             </Link>
           </div>
         ) : loading ? (
-          <p className="mt-6 text-xs text-[#737373]">Loading reviews…</p>
+          <p className="mt-6 text-xs text-zinc-500 dark:text-zinc-400">Loading reviews…</p>
         ) : (
           <div className="mt-8 grid gap-10 lg:grid-cols-[1fr_360px]">
             {/* Reviews List */}
@@ -1471,40 +1477,44 @@ export function ProductReviewsPage() {
               {feedback && <Notice type="info">{feedback}</Notice>}
 
               {reviews.length === 0 ? (
-                <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-8 text-center text-xs text-[#737373]">
+                <div className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-8 text-center text-xs text-zinc-500 dark:text-zinc-400">
                   No collector reviews have been registered for this piece yet.
                 </div>
               ) : (
-                <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] bg-white">
+                <div className="divide-y divide-zinc-200 border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950">
                   {reviews.map((review) => (
                     <article key={review.id} className="p-5 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-black">
+                          <span className="text-sm font-bold text-zinc-950 dark:text-white">
                             {review.userName || "Verified Collector"}
                           </span>
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-black bg-[#F5F5F5] px-1.5 py-0.5 border border-[#E5E5E5]">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-950 bg-zinc-100 px-1.5 py-0.5 border border-zinc-200 dark:text-zinc-100 dark:bg-zinc-900 dark:border-zinc-700">
                             Verified
                           </span>
                         </div>
-                        <span className="text-[10px] text-[#737373]">
+                        <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
                           {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : "Date unavailable"}
                         </span>
                       </div>
 
                       {/* Stars */}
-                      <div className="flex items-center gap-1 text-black">
+                      <div className="flex items-center gap-1 text-zinc-950 dark:text-white">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <Star
                             key={i}
                             size={12}
                             fill={i < (review.rating || 5) ? "currentColor" : "none"}
-                            className={i < (review.rating || 5) ? "text-black" : "text-[#E5E5E5]"}
+                            className={
+                              i < (review.rating || 5)
+                                ? "text-zinc-950 dark:text-white"
+                                : "text-zinc-300 dark:text-zinc-700"
+                            }
                           />
                         ))}
                       </div>
 
-                      <p className="text-xs leading-relaxed text-[#737373] whitespace-pre-line pt-1">
+                      <p className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 whitespace-pre-line pt-1">
                         {review.comment}
                       </p>
                     </article>
@@ -1514,20 +1524,20 @@ export function ProductReviewsPage() {
             </div>
 
             {/* Submit Review Form */}
-            <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 h-fit space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-black">
+            <div className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-6 h-fit space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
                 Write a Review
               </h3>
 
               <form onSubmit={submit} className="space-y-4 text-xs">
                 <label className="block space-y-1.5">
-                  <span className="font-bold uppercase tracking-wider text-black">
+                  <span className="font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
                     Rating
                   </span>
                   <select
                     value={rating}
                     onChange={(e) => setRating(e.target.value)}
-                    className="field text-xs bg-white text-black border-[#E5E5E5] focus:border-black"
+                    className="field text-xs"
                   >
                     <option value="5">★★★★★ — 5 (Museum Quality)</option>
                     <option value="4">★★★★☆ — 4 (Excellent)</option>
@@ -1538,7 +1548,7 @@ export function ProductReviewsPage() {
                 </label>
 
                 <label className="block space-y-1.5">
-                  <span className="font-bold uppercase tracking-wider text-black">
+                  <span className="font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
                     Your Review
                   </span>
                   <textarea
@@ -1547,10 +1557,10 @@ export function ProductReviewsPage() {
                     rows="4"
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="field text-xs resize-y border-[#E5E5E5] bg-white text-black focus:border-black"
+                    className="field text-xs resize-y"
                     placeholder="Describe detail, authenticity, packaging, and display quality..."
                   />
-                  <span className="block text-[10px] text-[#737373]">
+                  <span className="block text-[10px] text-zinc-500 dark:text-zinc-400">
                     Maximum 1,000 characters.
                   </span>
                 </label>
@@ -1583,19 +1593,19 @@ export function CartPage() {
       subtitle="Review your selected anime figures and merchandise before proceeding to checkout."
     >
       {cart.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] p-16 text-center">
-          <div className="flex h-16 w-16 items-center justify-center border border-black bg-white text-black">
+        <div className="flex flex-col items-center justify-center border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-16 text-center">
+          <div className="flex h-16 w-16 items-center justify-center border border-zinc-950 bg-white text-zinc-950 dark:border-white dark:bg-zinc-950 dark:text-white">
             <ShoppingBag size={24} strokeWidth={1.75} />
           </div>
-          <h2 className="mt-4 text-lg font-bold text-black">
+          <h2 className="mt-4 text-lg font-bold text-zinc-950 dark:text-white">
             Your shopping cart is empty
           </h2>
-          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[#737373]">
+          <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             Discover official Japanese figurines, exclusive releases, and collection pieces.
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-flex items-center gap-2 border border-black bg-black px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
+            className="mt-6 inline-flex items-center gap-2 border border-zinc-950 bg-zinc-950 px-7 py-3.5 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
           >
             <span>Explore The Collection</span>
             <ArrowRight size={14} />
@@ -1604,13 +1614,13 @@ export function CartPage() {
       ) : (
         <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
           {/* Items List */}
-          <div className="border border-[#E5E5E5] bg-white divide-y divide-[#E5E5E5]">
+          <div className="border border-zinc-200 bg-white divide-y divide-zinc-200 dark:border-zinc-800 dark:bg-zinc-950 dark:divide-zinc-800">
             {cart.map((item) => (
               <div key={item.variantId} className="flex gap-5 p-5 sm:p-6">
                 <img
                   src={item.image || ANTEIKU_FALLBACK_IMAGE}
                   alt=""
-                  className="h-28 w-24 shrink-0 border border-[#E5E5E5] bg-[#FAFAFA] object-cover"
+                  className="h-28 w-24 shrink-0 border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 object-cover"
                   onError={(e) => {
                     e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
                   }}
@@ -1621,7 +1631,7 @@ export function CartPage() {
                     <div className="flex items-start justify-between gap-2">
                       <Link
                         to={`/product/${item.productId}`}
-                        className="text-sm font-bold text-black hover:underline transition-colors"
+                        className="text-sm font-bold text-zinc-950 dark:text-white hover:underline transition-colors"
                       >
                         {item.name}
                       </Link>
@@ -1629,47 +1639,47 @@ export function CartPage() {
                         type="button"
                         aria-label={`Remove ${item.name}`}
                         onClick={() => removeFromCart(item.variantId)}
-                        className="text-[#737373] hover:text-black transition-colors p-1"
+                        className="text-zinc-400 hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white transition-colors p-1"
                       >
                         <Trash2 size={16} />
                       </button>
                     </div>
 
                     {item.variantName && (
-                      <p className="text-xs text-[#737373] mt-1 font-medium">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
                         {item.variantName}
                       </p>
                     )}
-                    <p className="text-xs font-bold text-black mt-1">
+                    <p className="text-xs font-bold text-zinc-950 dark:text-white mt-1">
                       {money(item.price)} each
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between pt-3">
                     {/* Stepper */}
-                    <div className="flex items-center border border-[#E5E5E5] bg-white">
+                    <div className="flex items-center border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
                       <button
                         type="button"
                         aria-label="Decrease quantity"
                         onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                        className="px-2.5 py-1 text-[#737373] hover:text-black transition-colors"
+                        className="px-2.5 py-1 text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition-colors"
                       >
                         <Minus size={13} />
                       </button>
-                      <span className="w-8 text-center text-xs font-bold tabular-nums text-black">
+                      <span className="w-8 text-center text-xs font-bold tabular-nums text-zinc-950 dark:text-white">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         aria-label="Increase quantity"
                         onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                        className="px-2.5 py-1 text-[#737373] hover:text-black transition-colors"
+                        className="px-2.5 py-1 text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white transition-colors"
                       >
                         <Plus size={13} />
                       </button>
                     </div>
 
-                    <span className="text-sm font-bold text-black">
+                    <span className="text-sm font-bold text-zinc-950 dark:text-white">
                       {money(item.price * item.quantity)}
                     </span>
                   </div>
@@ -1679,21 +1689,21 @@ export function CartPage() {
           </div>
 
           {/* Summary Sidebar */}
-          <aside className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 h-fit space-y-5">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-black border-b border-[#E5E5E5] pb-3">
+          <aside className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-6 h-fit space-y-5">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white border-b border-zinc-200 dark:border-zinc-800 pb-3">
               Order Summary
             </h2>
 
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between text-[#737373]">
+              <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
                 <span>Items Subtotal</span>
-                <span className="font-bold text-black">{money(total)}</span>
+                <span className="font-bold text-zinc-950 dark:text-white">{money(total)}</span>
               </div>
-              <div className="flex justify-between text-[#737373]">
+              <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
                 <span>Shipping & Insurance</span>
                 <span>Calculated at checkout</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-black border-t border-[#E5E5E5] pt-3">
+              <div className="flex justify-between text-sm font-bold text-zinc-950 dark:text-white border-t border-zinc-200 dark:border-zinc-800 pt-3">
                 <span>Subtotal</span>
                 <span className="font-extrabold">{money(total)}</span>
               </div>
@@ -1712,7 +1722,7 @@ export function CartPage() {
             </Button>
 
             {!user && (
-              <p className="text-[11px] leading-relaxed text-[#737373] text-center">
+              <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400 text-center">
                 You can browse as a guest. An account is required to complete dispatch and track your order.
               </p>
             )}
@@ -1770,13 +1780,13 @@ function AuthPage({ register = false }) {
   };
 
   return (
-    <section className="mx-auto max-w-md px-4 py-16 sm:py-24 bg-white text-black">
-      <div className="border border-[#E5E5E5] bg-white p-8 sm:p-10 shadow-sm">
+    <section className="mx-auto max-w-md px-4 py-16 sm:py-24 text-zinc-950 dark:text-zinc-50">
+      <div className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-8 sm:p-10">
         <div className="text-center space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#737373]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-zinc-500 dark:text-zinc-400">
             Anteiku Member Access
           </p>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-black">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 dark:text-white">
             {register ? "Create Account" : "Sign In"}
           </h1>
         </div>
@@ -1838,11 +1848,11 @@ function AuthPage({ register = false }) {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-[#737373]">
+        <p className="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-400">
           {register ? "Already registered with Anteiku?" : "New to the Archive?"}{" "}
           <Link
             to={`${register ? "/login" : "/register"}?returnTo=${encodeURIComponent(returnTo)}`}
-            className="text-black underline font-bold"
+            className="text-zinc-950 dark:text-white underline underline-offset-4 font-bold"
           >
             {register ? "Sign In" : "Create Account"}
           </Link>
@@ -1854,7 +1864,7 @@ function AuthPage({ register = false }) {
 
 const Input = ({ label, type = "text", value, onChange }) => (
   <label className="block space-y-1.5">
-    <span className="font-bold uppercase tracking-wider text-black text-[11px]">
+    <span className="font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100 text-[11px]">
       {label}
     </span>
     <input
@@ -1862,7 +1872,7 @@ const Input = ({ label, type = "text", value, onChange }) => (
       required
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="field text-xs border-[#E5E5E5] bg-white text-black focus:border-black"
+      className="field text-xs"
     />
   </label>
 );
@@ -2069,18 +2079,18 @@ const created = await accountApi.createOrder(payload);
 
   const field = (name, label, props = {}) => (
     <label className="block space-y-1.5 text-xs font-bold" htmlFor={`shipping-${name}`}>
-      <span className="uppercase tracking-wider text-black text-[11px]">{label}</span>
+      <span className="uppercase tracking-wider text-zinc-950 dark:text-zinc-100 text-[11px]">{label}</span>
       <input
         id={`shipping-${name}`}
         name={name}
         value={shipping[name]}
         onChange={(event) => updateShipping(name, event.target.value)}
         aria-invalid={Boolean(fieldErrors[name])}
-        className={`field text-xs border-[#E5E5E5] bg-white text-black focus:border-black ${fieldErrors[name] ? "field-error" : ""}`}
+        className={`field text-xs ${fieldErrors[name] ? "field-error" : ""}`}
         {...props}
       />
       {fieldErrors[name] && (
-        <span className="block text-[11px] text-red-600 font-normal">
+        <span className="block text-[11px] text-zinc-950 dark:text-zinc-100 font-semibold underline underline-offset-2">
           {fieldErrors[name]}
         </span>
       )}
@@ -2090,29 +2100,29 @@ const created = await accountApi.createOrder(payload);
   if (done) {
     return (
       <Page eyebrow="Confirmation" title="Order Confirmed">
-        <div className="border border-[#E5E5E5] bg-white p-6 sm:p-10 max-w-3xl space-y-6">
-          <div className="flex items-start gap-4 border-b border-[#E5E5E5] pb-6">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-black bg-black text-white">
+        <div className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-6 sm:p-10 max-w-3xl space-y-6">
+          <div className="flex items-start gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-6">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center border border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950">
               <Check size={24} />
             </span>
             <div className="min-w-0">
-              <h2 className="text-xl font-bold text-black">
+              <h2 className="text-xl font-bold text-zinc-950 dark:text-white">
                 Order Placed Successfully
               </h2>
-              <p className="mt-1 text-xs text-[#737373] font-mono">
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 font-mono">
                 {done.orderNumber != null ? `Order Reference: #${done.orderNumber}` : `Record ID: ${done.id}`}
               </p>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-black">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
               Purchased Items
             </h3>
             <OrderItems items={done.orderItems} />
           </div>
 
-          <dl className="space-y-2 border-t border-[#E5E5E5] py-4 text-xs">
+          <dl className="space-y-2 border-t border-zinc-200 dark:border-zinc-800 py-4 text-xs">
             {[
               ["Subtotal", done.subTotal],
               ["Shipping Fee", done.shippingFee],
@@ -2120,31 +2130,31 @@ const created = await accountApi.createOrder(payload);
             ].map(
               ([lbl, amt]) =>
                 amt != null && (
-                  <div key={lbl} className="flex justify-between text-[#737373]">
+                  <div key={lbl} className="flex justify-between text-zinc-500 dark:text-zinc-400">
                     <span>{lbl}</span>
-                    <span className="text-black font-semibold">{money(amt)}</span>
+                    <span className="text-zinc-950 dark:text-white font-semibold">{money(amt)}</span>
                   </div>
                 )
             )}
           </dl>
 
-          <div className="flex items-center justify-between border-t border-[#E5E5E5] pt-4 text-sm font-bold text-black">
+          <div className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 pt-4 text-sm font-bold text-zinc-950 dark:text-white">
             <span>Order Total</span>
-            <span className="text-black font-extrabold">{money(done.totalAmount)}</span>
+            <span className="font-extrabold">{money(done.totalAmount)}</span>
           </div>
 
           {done.payment?.qrCode && (
-            <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 space-y-4">
+            <div className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-6 space-y-4">
               <div className="text-center">
-                <h3 className="text-sm font-bold uppercase tracking-widest text-black">
+                <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-950 dark:text-white">
                   Complete Your Payment
                 </h3>
-                <p className="mt-2 text-xs text-[#737373]">
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
                   Scan this KHQR code using Bakong or a supported banking app.
                 </p>
               </div>
 
-              <div className="flex justify-center border border-[#E5E5E5] bg-white p-5">
+              <div className="flex justify-center border border-zinc-200 bg-white p-5">
                 <QRCodeSVG
                   value={done.payment.qrCode}
                   size={240}
@@ -2154,19 +2164,19 @@ const created = await accountApi.createOrder(payload);
               </div>
 
               <div className="text-center space-y-2">
-                <p className="text-xs text-[#737373]">Amount to Pay</p>
-                <p className="text-2xl font-extrabold text-black">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">Amount to Pay</p>
+                <p className="text-2xl font-extrabold text-zinc-950 dark:text-white">
                   {new Intl.NumberFormat("en-US", {
                     maximumFractionDigits: 0,
                   }).format(Number(done.payment.amount ?? 0))} ៛
                 </p>
 
-                <p className="text-xs font-semibold text-black">
+                <p className="text-xs font-semibold text-zinc-950 dark:text-white">
                   Payment Status: {done.payment.status ?? "PENDING"}
                 </p>
 
                 {done.payment.expiresAt && (
-                  <p className="text-xs text-[#737373]">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     QR expires: {new Date(done.payment.expiresAt).toLocaleString()}
                   </p>
                 )}
@@ -2191,16 +2201,16 @@ const created = await accountApi.createOrder(payload);
       <form onSubmit={submit} noValidate className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8">
           {/* Shipping Address */}
-          <fieldset className="border border-[#E5E5E5] bg-white p-6 space-y-5">
-            <legend className="text-sm font-bold uppercase tracking-wider text-black px-2">
+          <fieldset className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-6 space-y-5">
+            <legend className="text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white px-2">
               Shipping Address
             </legend>
 
             {addressesLoading ? (
-              <p className="text-xs text-[#737373]">Loading saved addresses…</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading saved addresses…</p>
             ) : addresses.length ? (
-              <div className="space-y-2 border-b border-[#E5E5E5] pb-4">
-                <span className="block text-xs font-bold uppercase tracking-wider text-black">
+              <div className="space-y-2 border-b border-zinc-200 dark:border-zinc-800 pb-4">
+                <span className="block text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
                   Select Saved Address
                 </span>
                 <div className="grid gap-2">
@@ -2209,8 +2219,8 @@ const created = await accountApi.createOrder(payload);
                       key={address.id}
                       className={`block cursor-pointer border p-3 text-xs transition-colors ${
                         String(address.id) === selectedAddressId
-                          ? "border-black bg-[#FAFAFA] text-black font-semibold"
-                          : "border-[#E5E5E5] hover:border-black text-[#737373]"
+                          ? "border-zinc-950 bg-zinc-50 text-zinc-950 font-semibold dark:border-white dark:bg-zinc-900 dark:text-white"
+                          : "border-zinc-200 hover:border-zinc-950 text-zinc-500 dark:border-zinc-800 dark:hover:border-zinc-200 dark:text-zinc-400"
                       }`}
                     >
                       <span className="flex items-start gap-3">
@@ -2219,12 +2229,12 @@ const created = await accountApi.createOrder(payload);
                           name="saved-address"
                           checked={String(address.id) === selectedAddressId}
                           onChange={() => selectAddress(address)}
-                          className="mt-0.5 accent-black"
+                          className="mt-0.5 accent-zinc-950 dark:accent-white"
                         />
                         <span>
                           {address.street} · {address.city}, {address.state} {address.postalCode} · {address.country}
                           {address.isDefault && (
-                            <span className="ml-2 inline-block text-[10px] font-bold text-black uppercase">
+                            <span className="ml-2 inline-block text-[10px] font-bold text-zinc-950 dark:text-white uppercase">
                               [Default]
                             </span>
                           )}
@@ -2237,7 +2247,7 @@ const created = await accountApi.createOrder(payload);
             ) : null}
 
             {addressError && (
-              <p className="text-xs text-red-600">
+              <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-200">
                 Saved addresses could not be loaded. Enter shipping destination below.
               </p>
             )}
@@ -2255,13 +2265,13 @@ const created = await accountApi.createOrder(payload);
             <div className="grid gap-4 sm:grid-cols-2">
               {field("postalCode", "Postal Code", { autoComplete: "postal-code" })}
               <label className="block space-y-1.5 text-xs font-bold">
-                <span className="uppercase tracking-wider text-black text-[11px]">Country</span>
+                <span className="uppercase tracking-wider text-zinc-950 dark:text-zinc-100 text-[11px]">Country</span>
                 <select
                   id="shipping-country"
                   name="country"
                   value={shipping.country}
                   onChange={(event) => updateShipping("country", event.target.value)}
-                  className={`field text-xs bg-white text-black border-[#E5E5E5] focus:border-black ${fieldErrors.country ? "field-error" : ""}`}
+                  className={`field text-xs ${fieldErrors.country ? "field-error" : ""}`}
                 >
                   <option value="">Select country</option>
                   {countries.map((c) => (
@@ -2271,7 +2281,7 @@ const created = await accountApi.createOrder(payload);
                   ))}
                 </select>
                 {fieldErrors.country && (
-                  <span className="block text-[11px] text-red-600 font-normal">
+                  <span className="block text-[11px] text-zinc-950 dark:text-zinc-100 font-semibold underline underline-offset-2">
                     {fieldErrors.country}
                   </span>
                 )}
@@ -2280,8 +2290,8 @@ const created = await accountApi.createOrder(payload);
           </fieldset>
 
           {/* Payment Method */}
-          <fieldset className="border border-[#E5E5E5] bg-white p-6 space-y-4">
-            <legend className="text-sm font-bold uppercase tracking-wider text-black px-2">
+          <fieldset className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-6 space-y-4">
+            <legend className="text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white px-2">
               Payment Method
             </legend>
 
@@ -2291,8 +2301,8 @@ const created = await accountApi.createOrder(payload);
                   key={opt.value}
                   className={`flex items-start gap-3 border p-4 text-xs transition-colors ${
                     opt.available
-                      ? "cursor-pointer border-[#E5E5E5] bg-white text-black hover:border-black"
-                      : "cursor-not-allowed border-[#E5E5E5] opacity-40 text-[#737373]"
+                      ? "cursor-pointer border-zinc-200 bg-white text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-zinc-200"
+                      : "cursor-not-allowed border-zinc-200 opacity-40 text-zinc-500 dark:border-zinc-800 dark:text-zinc-500"
                   }`}
                 >
                   <input
@@ -2302,11 +2312,11 @@ const created = await accountApi.createOrder(payload);
                     checked={paymentMethod === opt.value}
                     disabled={!opt.available || busy || syncing}
                     onChange={() => opt.available && setPaymentMethod(opt.value)}
-                    className="mt-0.5 accent-black"
+                    className="mt-0.5 accent-zinc-950 dark:accent-white"
                   />
                   <div className="flex-1 flex justify-between">
-                    <span className="font-bold text-black">{opt.label}</span>
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#737373]">
+                    <span className="font-bold text-zinc-950 dark:text-white">{opt.label}</span>
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-zinc-500 dark:text-zinc-400">
                       {opt.available ? "Available" : "Unavailable"}
                     </span>
                   </div>
@@ -2314,25 +2324,25 @@ const created = await accountApi.createOrder(payload);
               ))}
             </div>
 
-            <p className="text-xs text-[#737373] leading-relaxed">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
               Anteiku adheres to secure collector order processing. Cash on Delivery is currently selected for your region.
             </p>
           </fieldset>
         </div>
 
         {/* Order Summary Sidebar */}
-        <aside className="border border-[#E5E5E5] bg-[#FAFAFA] p-6 h-fit space-y-5">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-black border-b border-[#E5E5E5] pb-3">
+        <aside className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-6 h-fit space-y-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-950 dark:text-white border-b border-zinc-200 dark:border-zinc-800 pb-3">
             Order Summary
           </h2>
 
-          <div className="space-y-3 divide-y divide-[#E5E5E5] text-xs">
+          <div className="space-y-3 divide-y divide-zinc-200 dark:divide-zinc-800 text-xs">
             {cart.map((item) => (
               <div key={item.variantId} className="flex justify-between pt-2">
-                <span className="text-black font-medium">
+                <span className="text-zinc-950 dark:text-zinc-100 font-medium">
                   {item.name} × {item.quantity}
                 </span>
-                <span className="font-bold text-black">
+                <span className="font-bold text-zinc-950 dark:text-white">
                   {money(item.price * item.quantity)}
                 </span>
               </div>
@@ -2340,8 +2350,8 @@ const created = await accountApi.createOrder(payload);
           </div>
 
           {/* Coupon Code Section */}
-          <div className="border-t border-[#E5E5E5] pt-4 space-y-2">
-            <label htmlFor="coupon-code-checkout" className="block text-[11px] font-bold uppercase tracking-wider text-black">
+          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 space-y-2">
+            <label htmlFor="coupon-code-checkout" className="block text-[11px] font-bold uppercase tracking-wider text-zinc-950 dark:text-zinc-100">
               Discount Code / Coupon
             </label>
             <div className="flex gap-2">
@@ -2354,13 +2364,13 @@ const created = await accountApi.createOrder(payload);
                   setCouponFeedback(null);
                 }}
                 placeholder="Enter coupon code"
-                className="field text-xs flex-1 border-[#E5E5E5] bg-white text-black focus:border-black"
+                className="field text-xs flex-1"
               />
               {appliedCoupon ? (
                 <button
                   type="button"
                   onClick={removeCoupon}
-                  className="border border-black px-3 text-xs font-bold text-black hover:bg-black hover:text-white transition-colors"
+                  className="border border-zinc-950 px-3 text-xs font-bold text-zinc-950 hover:bg-zinc-950 hover:text-white dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-zinc-950 transition-colors"
                 >
                   Remove
                 </button>
@@ -2369,7 +2379,7 @@ const created = await accountApi.createOrder(payload);
                   type="button"
                   onClick={applyCoupon}
                   disabled={!couponCode.trim() || couponBusy || busy}
-                  className="border border-black bg-black px-4 text-xs font-bold uppercase text-white hover:bg-neutral-800 disabled:opacity-40 transition-colors"
+                  className="border border-zinc-950 bg-zinc-950 px-4 text-xs font-bold uppercase text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors"
                 >
                   {couponBusy ? "Checking…" : "Apply"}
                 </button>
@@ -2379,7 +2389,9 @@ const created = await accountApi.createOrder(payload);
             {couponFeedback && (
               <p
                 className={`text-xs font-semibold ${
-                  couponFeedback.type === "error" ? "text-red-600" : "text-black"
+                  couponFeedback.type === "error"
+                    ? "text-zinc-950 dark:text-white underline underline-offset-2"
+                    : "text-zinc-700 dark:text-zinc-300"
                 }`}
               >
                 {couponFeedback.message}
@@ -2387,18 +2399,18 @@ const created = await accountApi.createOrder(payload);
             )}
           </div>
 
-          <div className="border-t border-[#E5E5E5] pt-3 space-y-2 text-xs">
-            <div className="flex justify-between text-[#737373]">
+          <div className="border-t border-zinc-200 dark:border-zinc-800 pt-3 space-y-2 text-xs">
+            <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
               <span>Items Total</span>
-              <span className="font-bold text-black">{money(total)}</span>
+              <span className="font-bold text-zinc-950 dark:text-white">{money(total)}</span>
             </div>
             {appliedCoupon && (
-              <div className="flex justify-between text-black font-semibold">
+              <div className="flex justify-between text-zinc-950 dark:text-white font-semibold">
                 <span>Coupon ({appliedCoupon.code})</span>
                 <span>Applied</span>
               </div>
             )}
-            <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-[#E5E5E5]">
+            <div className="flex justify-between text-sm font-bold text-zinc-950 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
               <span>Total Due</span>
               <span className="font-extrabold">{money(total)}</span>
             </div>
@@ -2467,18 +2479,18 @@ export function SeriesPage() {
               key={item.id}
               to={`/series/${item.id}`}
               state={{ seriesName: item.name }}
-              className="group border border-[#E5E5E5] bg-[#FAFAFA] p-6 transition-all hover:border-black hover:bg-white"
+              className="group border border-zinc-200 bg-zinc-50 p-6 transition-all hover:border-zinc-950 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-200 dark:hover:bg-zinc-950"
             >
-              <span className="text-[10px] font-mono tracking-widest text-[#737373]">
+              <span className="text-[10px] font-mono tracking-widest text-zinc-500 dark:text-zinc-400">
                 SERIES RECORD #{item.id}
               </span>
-              <h2 className="mt-2 text-lg font-bold text-black transition-colors">
+              <h2 className="mt-2 text-lg font-bold text-zinc-950 dark:text-white transition-colors">
                 {item.name}
               </h2>
-              <p className="mt-3 text-xs font-semibold text-[#737373]">
+              <p className="mt-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                 {item.count} {item.count === 1 ? "product piece" : "product pieces"}
               </p>
-              <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black group-hover:translate-x-1 transition-transform">
+              <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white group-hover:translate-x-1 transition-transform">
                 <span>View Products</span>
                 <span>→</span>
               </span>
@@ -2486,7 +2498,7 @@ export function SeriesPage() {
           ))}
         </div>
       ) : (
-        <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center text-xs text-[#737373]">
+        <p className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-12 text-center text-xs text-zinc-500 dark:text-zinc-400">
           No series records are currently listed in the catalogue.
         </p>
       )}
@@ -2537,7 +2549,7 @@ export function SeriesDetailPage() {
     return (
       <Page eyebrow="Series" title={state.name || "Series Details"}>
         <Notice>{state.error}</Notice>
-        <Link to="/series" className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-black hover:underline">
+        <Link to="/series" className="mt-4 inline-block text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline">
           ← Back to series index
         </Link>
       </Page>
@@ -2552,7 +2564,7 @@ export function SeriesDetailPage() {
       actions={
         <Link
           to="/series"
-          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline"
+          className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline"
         >
           <span>← All Series</span>
         </Link>
@@ -2569,7 +2581,7 @@ export function SeriesDetailPage() {
           ))}
         </div>
       ) : (
-        <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center text-xs text-[#737373]">
+        <p className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-12 text-center text-xs text-zinc-500 dark:text-zinc-400">
           No products are currently listed for this series.
         </p>
       )}
@@ -2601,15 +2613,15 @@ export function BrowsePage({ type }) {
             onClick={() =>
               navigate(`/shop?${type === "categories" ? "category" : "brand"}=${item.id}`)
             }
-            className="group border border-[#E5E5E5] bg-[#FAFAFA] p-6 text-left transition-all hover:border-black hover:bg-white cursor-pointer"
+            className="group border border-zinc-200 bg-zinc-50 p-6 text-left transition-all hover:border-zinc-950 hover:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-200 dark:hover:bg-zinc-950 cursor-pointer"
           >
-            <p className="text-lg font-bold text-black transition-colors">
+            <p className="text-lg font-bold text-zinc-950 dark:text-white transition-colors">
               {item.name}
             </p>
-            <p className="mt-2 text-xs leading-relaxed text-[#737373] line-clamp-2">
+            <p className="mt-2 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 line-clamp-2">
               {item.description || `Shop authentic items from ${item.name}.`}
             </p>
-            <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black group-hover:translate-x-1 transition-transform">
+            <span className="mt-6 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white group-hover:translate-x-1 transition-transform">
               <span>Explore Collection →</span>
             </span>
           </button>
@@ -2617,7 +2629,7 @@ export function BrowsePage({ type }) {
       </div>
 
       {!items.length && (
-        <p className="border border-[#E5E5E5] bg-[#FAFAFA] p-12 text-center text-xs text-[#737373]">
+        <p className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-12 text-center text-xs text-zinc-500 dark:text-zinc-400">
           No {label.toLowerCase()} are currently listed.
         </p>
       )}
@@ -2638,14 +2650,14 @@ const orderDate = (value) =>
     : "Date unavailable";
 
 const OrderStatus = ({ status }) => (
-  <span className="inline-flex border border-black bg-black text-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+  <span className="inline-flex border border-zinc-950 bg-zinc-950 text-white dark:border-white dark:bg-white dark:text-zinc-950 px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
     {status ? status.replaceAll("_", " ") : "Status unavailable"}
   </span>
 );
 
 const OrderItems = ({ items }) =>
   items?.length ? (
-    <div className="divide-y divide-[#E5E5E5] border border-[#E5E5E5] bg-white mt-4">
+    <div className="divide-y divide-zinc-200 border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-950 mt-4">
       {items.map((item, index) => (
         <div key={item.id ?? index} className="flex items-center gap-4 p-4">
           <img
@@ -2654,23 +2666,23 @@ const OrderItems = ({ items }) =>
             onError={(e) => {
               e.currentTarget.src = ANTEIKU_FALLBACK_IMAGE;
             }}
-            className="h-16 w-14 shrink-0 border border-[#E5E5E5] bg-[#FAFAFA] object-cover"
+            className="h-16 w-14 shrink-0 border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-black truncate">
+            <p className="text-sm font-bold text-zinc-950 dark:text-white truncate">
               {item.productName || "Product information unavailable"}
             </p>
             {(item.variantName || item.variantSku) && (
-              <p className="text-xs text-[#737373] mt-0.5">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {item.variantName || item.variantSku}
               </p>
             )}
-            <p className="text-xs text-[#737373] mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               Qty: {item.quantity ?? 1} · {item.unitPrice != null && money(item.unitPrice)}
             </p>
           </div>
           <div className="shrink-0 text-right">
-            <span className="text-xs font-bold text-black font-mono">
+            <span className="text-xs font-bold text-zinc-950 dark:text-white font-mono">
               {item.subTotal != null ? money(item.subTotal) : "—"}
             </span>
           </div>
@@ -2678,7 +2690,7 @@ const OrderItems = ({ items }) =>
       ))}
     </div>
   ) : (
-    <p className="text-xs text-[#737373]">No items listed in this order record.</p>
+    <p className="text-xs text-zinc-500 dark:text-zinc-400">No items listed in this order record.</p>
   );
 
 export function OrdersPage() {
@@ -2720,7 +2732,7 @@ export function OrdersPage() {
       actions={
         <Link
           to="/shop"
-          className="text-xs font-bold uppercase tracking-wider text-black hover:underline"
+          className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
         >
           Explore Collection →
         </Link>
@@ -2731,14 +2743,14 @@ export function OrdersPage() {
           {orders.map((order) => (
             <article
               key={order.id}
-              className="border border-[#E5E5E5] bg-white p-5 sm:p-6 transition-colors hover:border-black"
+              className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-5 sm:p-6 transition-colors hover:border-zinc-950 dark:hover:border-zinc-200"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-[#737373] font-semibold">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold">
                     Placed {orderDate(order.orderDate)}
                   </span>
-                  <h2 className="text-base font-bold text-black mt-1">
+                  <h2 className="text-base font-bold text-zinc-950 dark:text-white mt-1">
                     {order.orderNumber != null ? `Order #${order.orderNumber}` : `Record #${order.id}`}
                   </h2>
                 </div>
@@ -2746,16 +2758,16 @@ export function OrdersPage() {
                 <div className="flex flex-wrap items-center gap-4">
                   <OrderStatus status={order.status} />
                   <div className="sm:text-right">
-                    <span className="text-[10px] uppercase tracking-wider text-[#737373] block font-semibold">
+                    <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 block font-semibold">
                       Total
                     </span>
-                    <span className="text-sm font-bold text-black">
+                    <span className="text-sm font-bold text-zinc-950 dark:text-white">
                       {order.totalAmount != null ? money(order.totalAmount) : "—"}
                     </span>
                   </div>
                   <Link
                     to={`/orders/${order.id}`}
-                    className="border border-[#E5E5E5] bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-black hover:border-black transition-colors"
+                    className="border border-zinc-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-zinc-200 transition-colors"
                   >
                     View Details
                   </Link>
@@ -2765,16 +2777,16 @@ export function OrdersPage() {
           ))}
         </div>
       ) : (
-        <div className="border border-[#E5E5E5] bg-[#FAFAFA] p-16 text-center">
-          <p className="text-base font-bold text-black">
+        <div className="border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 p-16 text-center">
+          <p className="text-base font-bold text-zinc-950 dark:text-white">
             No order records found
           </p>
-          <p className="mt-1 text-xs text-[#737373]">
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             Orders placed with your account will appear here.
           </p>
           <Link
             to="/shop"
-            className="mt-6 inline-flex items-center gap-2 border border-black bg-black px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-neutral-800 transition-colors"
+            className="mt-6 inline-flex items-center gap-2 border border-zinc-950 bg-zinc-950 px-6 py-3 text-xs font-bold uppercase tracking-widest text-white hover:bg-zinc-800 dark:border-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 transition-colors"
           >
             <span>Explore Collection</span>
             <ArrowRight size={14} />
@@ -2821,7 +2833,7 @@ export function OrderPage() {
     return (
       <Page eyebrow="Account" title="Order Record Error">
         <Notice>{error}</Notice>
-        <Link to="/orders" className="text-xs uppercase tracking-wider text-black underline font-bold">
+        <Link to="/orders" className="text-xs uppercase tracking-wider text-zinc-950 dark:text-white underline font-bold">
           ← Back to Orders
         </Link>
       </Page>
@@ -2838,54 +2850,54 @@ export function OrderPage() {
       actions={
         <Link
           to="/orders"
-          className="text-xs font-bold uppercase tracking-wider text-black hover:underline"
+          className="text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4"
         >
           ← Back to Orders
         </Link>
       }
     >
-      <div className="border border-[#E5E5E5] bg-white p-6 sm:p-8 max-w-3xl space-y-6">
-        <div className="flex items-center justify-between border-b border-[#E5E5E5] pb-4">
-          <span className="text-xs font-mono text-[#737373]">
+      <div className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 p-6 sm:p-8 max-w-3xl space-y-6">
+        <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
+          <span className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
             Record ID: {order.id}
           </span>
           <OrderStatus status={order.status} />
         </div>
 
         <div>
-          <h3 className="text-sm font-bold text-black uppercase tracking-wider">
+          <h3 className="text-sm font-bold text-zinc-950 dark:text-white uppercase tracking-wider">
             Purchased Items
           </h3>
           <OrderItems items={order.orderItems} />
         </div>
 
-        <div className="border-t border-[#E5E5E5] pt-4 space-y-1.5 text-xs">
-          <h3 className="text-sm font-bold text-black uppercase tracking-wider pb-1">
+        <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 space-y-1.5 text-xs">
+          <h3 className="text-sm font-bold text-zinc-950 dark:text-white uppercase tracking-wider pb-1">
             Shipping Destination
           </h3>
-          <p className="whitespace-pre-line text-[#737373] leading-relaxed">
+          <p className="whitespace-pre-line text-zinc-500 dark:text-zinc-400 leading-relaxed">
             {order.shippingAddress || "Shipping coordinates not provided."}
           </p>
         </div>
 
-        <div className="border-t border-[#E5E5E5] pt-4 space-y-2 text-xs">
-          <div className="flex justify-between text-[#737373]">
+        <div className="border-t border-zinc-200 dark:border-zinc-800 pt-4 space-y-2 text-xs">
+          <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
             <span>Subtotal</span>
-            <span className="font-bold text-black">{money(order.subTotal)}</span>
+            <span className="font-bold text-zinc-950 dark:text-white">{money(order.subTotal)}</span>
           </div>
           {order.shippingFee != null && (
-            <div className="flex justify-between text-[#737373]">
+            <div className="flex justify-between text-zinc-500 dark:text-zinc-400">
               <span>Shipping Fee</span>
-              <span className="font-bold text-black">{money(order.shippingFee)}</span>
+              <span className="font-bold text-zinc-950 dark:text-white">{money(order.shippingFee)}</span>
             </div>
           )}
           {order.discountAmount != null && (
-            <div className="flex justify-between text-black font-semibold">
+            <div className="flex justify-between text-zinc-950 dark:text-white font-semibold">
               <span>Discount</span>
               <span>-{money(order.discountAmount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-sm font-bold text-black pt-2 border-t border-[#E5E5E5]">
+          <div className="flex justify-between text-sm font-bold text-zinc-950 dark:text-white pt-2 border-t border-zinc-200 dark:border-zinc-800">
             <span>Total Amount</span>
             <span className="font-extrabold">{money(order.totalAmount)}</span>
           </div>

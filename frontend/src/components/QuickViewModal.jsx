@@ -21,7 +21,6 @@ export function QuickViewModal() {
     }
   }, [quickViewProduct]);
 
-  // Handle escape key
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape" && quickViewProduct) {
@@ -38,7 +37,8 @@ export function QuickViewModal() {
     ? quickViewProduct.productImages
     : [{ imageUrl: imageOf(quickViewProduct), altText: quickViewProduct.name }];
 
-  const unavailable = quickViewProduct.status !== "ACTIVE" || (quickViewProduct.productVariants || []).length === 0;
+  const unavailable =
+    quickViewProduct.status !== "ACTIVE" || (quickViewProduct.productVariants || []).length === 0;
 
   const handleAdd = () => {
     if (!selectedVariant || unavailable) return;
@@ -64,17 +64,17 @@ export function QuickViewModal() {
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 transition-opacity"
+        className="fixed inset-0 bg-black/65 backdrop-blur-[2px] transition-opacity"
         onClick={closeQuickView}
       />
 
       {/* Modal Dialog */}
-      <div className="relative w-full max-w-3xl overflow-hidden border border-[#E5E5E5] bg-white text-black shadow-2xl">
+      <div className="relative w-full max-w-3xl overflow-hidden border border-zinc-200 bg-white text-zinc-950 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50">
         <button
           type="button"
           onClick={closeQuickView}
           aria-label="Close modal"
-          className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center border border-[#E5E5E5] bg-white text-black hover:bg-[#F5F5F5] transition-colors"
+          className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center border border-zinc-200 bg-white text-zinc-950 hover:border-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white dark:hover:border-white transition-colors"
         >
           <X size={16} />
         </button>
@@ -82,7 +82,7 @@ export function QuickViewModal() {
         <div className="grid gap-8 md:grid-cols-2 p-6 sm:p-8">
           {/* Images */}
           <div className="space-y-3">
-            <div className="aspect-[4/5] w-full overflow-hidden border border-[#E5E5E5] bg-[#FAFAFA]">
+            <div className="aspect-[4/5] w-full overflow-hidden border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900">
               <img
                 src={images[activeImageIndex]?.imageUrl || ANTEIKU_FALLBACK_IMAGE}
                 alt={images[activeImageIndex]?.altText || quickViewProduct.name}
@@ -102,8 +102,8 @@ export function QuickViewModal() {
                     onClick={() => setActiveImageIndex(i)}
                     className={`h-16 w-16 shrink-0 overflow-hidden border transition-all ${
                       i === activeImageIndex
-                        ? "border-black ring-1 ring-black"
-                        : "border-[#E5E5E5] opacity-60 hover:opacity-100"
+                        ? "border-zinc-950 ring-1 ring-zinc-950 dark:border-white dark:ring-white"
+                        : "border-zinc-200 opacity-60 hover:opacity-100 dark:border-zinc-800"
                     }`}
                   >
                     <img
@@ -121,31 +121,31 @@ export function QuickViewModal() {
           <div className="flex flex-col justify-between space-y-4">
             <div className="space-y-3">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#737373]">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                   {quickViewProduct.brandName || quickViewProduct.categoryName || "ANTEIKU ARCHIVE"}
                 </p>
-                <h2 className="text-xl font-bold tracking-tight text-black sm:text-2xl">
+                <h2 className="text-xl font-bold tracking-tight text-zinc-950 dark:text-white sm:text-2xl">
                   {quickViewProduct.name}
                 </h2>
               </div>
 
               <div className="flex items-baseline gap-3">
-                <span className="text-xl font-bold tracking-tight text-black">
+                <span className="text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
                   {money(selectedVariant?.price ?? quickViewProduct.price)}
                 </span>
                 {quickViewProduct.status === "ACTIVE" ? (
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-black">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-950 dark:text-white">
                     In Stock
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                     Archived
                   </span>
                 )}
               </div>
 
               {quickViewProduct.description && (
-                <p className="text-xs leading-relaxed text-[#737373] line-clamp-3">
+                <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 line-clamp-3">
                   {quickViewProduct.description}
                 </p>
               )}
@@ -153,7 +153,7 @@ export function QuickViewModal() {
               {/* Variants */}
               {quickViewProduct.productVariants && quickViewProduct.productVariants.length > 1 && (
                 <div className="space-y-2 pt-2">
-                  <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-black">
+                  <label className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-950 dark:text-white">
                     Select Edition / Option
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -164,8 +164,8 @@ export function QuickViewModal() {
                         onClick={() => setSelectedVariant(v)}
                         className={`px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-all ${
                           selectedVariant?.id === v.id
-                            ? "bg-black text-white border border-black"
-                            : "bg-white text-black border border-[#E5E5E5] hover:border-black"
+                            ? "bg-zinc-950 text-white border border-zinc-950 dark:bg-white dark:text-zinc-950 dark:border-white"
+                            : "bg-white text-zinc-950 border border-zinc-200 hover:border-zinc-950 dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800 dark:hover:border-zinc-200"
                         }`}
                       >
                         {v.name}
@@ -177,27 +177,27 @@ export function QuickViewModal() {
             </div>
 
             {/* Stepper & Add Button */}
-            <div className="space-y-3 pt-4 border-t border-[#E5E5E5]">
+            <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
               {!unavailable ? (
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 items-center border border-[#E5E5E5] bg-white">
+                  <div className="flex h-11 items-center border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
                     <button
                       type="button"
                       aria-label="Decrease quantity"
                       disabled={quantity === 1}
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="px-3 h-full flex items-center justify-center text-[#737373] hover:text-black disabled:opacity-30"
+                      className="px-3 h-full flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white disabled:opacity-30"
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="w-8 text-center text-xs font-bold tabular-nums text-black">
+                    <span className="w-8 text-center text-xs font-bold tabular-nums text-zinc-950 dark:text-white">
                       {quantity}
                     </span>
                     <button
                       type="button"
                       aria-label="Increase quantity"
                       onClick={() => setQuantity((q) => q + 1)}
-                      className="px-3 h-full flex items-center justify-center text-[#737373] hover:text-black"
+                      className="px-3 h-full flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
                     >
                       <Plus size={14} />
                     </button>
@@ -208,8 +208,8 @@ export function QuickViewModal() {
                     onClick={handleAdd}
                     className={`flex h-11 flex-1 items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors ${
                       added
-                        ? "bg-neutral-800 text-white"
-                        : "bg-black text-white hover:bg-neutral-800"
+                        ? "bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-950"
+                        : "bg-zinc-950 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
                     }`}
                   >
                     {added ? (
@@ -226,7 +226,7 @@ export function QuickViewModal() {
                   </button>
                 </div>
               ) : (
-                <div className="flex h-11 items-center justify-center border border-[#E5E5E5] bg-[#FAFAFA] text-xs font-bold uppercase tracking-widest text-[#737373]">
+                <div className="flex h-11 items-center justify-center border border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
                   Item Unavailable
                 </div>
               )}
@@ -234,7 +234,7 @@ export function QuickViewModal() {
               <Link
                 to={`/product/${quickViewProduct.id}`}
                 onClick={closeQuickView}
-                className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider text-black hover:underline py-1"
+                className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider text-zinc-950 dark:text-white hover:underline underline-offset-4 py-1"
               >
                 <span>View Complete Product Details</span>
                 <ArrowRight size={13} />

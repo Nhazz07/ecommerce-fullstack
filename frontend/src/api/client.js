@@ -42,7 +42,12 @@ client.interceptors.response.use(
   },
 );
 
-export const messageFrom = (error) =>
-  error.response?.data?.message || error.message || "Something went wrong. Please try again.";
+export const messageFrom = (error) => {
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.code === "ERR_NETWORK" || error?.message === "Network Error") {
+    return "Unable to reach the store server. Please ensure the backend service is running.";
+  }
+  return error?.message || "Something went wrong. Please try again.";
+};
 
 export default client;
